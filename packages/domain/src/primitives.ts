@@ -69,17 +69,29 @@ export const AgentCategorySchema = z.enum(["REBALANCING", "GRID", "YIELD", "HEAL
 export type AgentCategory = z.infer<typeof AgentCategorySchema>;
 
 /**
- * Rolling spend periods.
+ * Spend periods.
  *
- * These mirror the periods an enforcement layer can express. MANDATE never
- * invents a period the enforcement layer cannot actually apply, because an
- * unenforceable period would make the displayed authority a claim rather than a
- * boundary.
+ * These are CALENDAR-ALIGNED BUCKETS, not rolling windows. Verified against the
+ * deployed BSC account implementation: `startOfSpendPeriod` truncates to the UTC
+ * minute/hour/day, to the preceding Monday for a week, to the 1st for a month
+ * and to 1 January for a year, and the accumulated total hard-resets when the
+ * bucket rolls over.
+ *
+ * The practical consequence has to be stated wherever a limit is displayed: a
+ * `day` cap permits the full limit at 23:59 UTC and the full limit again at
+ * 00:01 UTC. Describing that as a "rolling 24-hour limit" would be false, so
+ * MANDATE says "per UTC day" and discloses the boundary.
  */
 export const SpendPeriodSchema = z.enum(["minute", "hour", "day", "week", "month", "year"]);
 export type SpendPeriod = z.infer<typeof SpendPeriodSchema>;
 
-/** Length of each rolling spend period in seconds. */
+/**
+ * Nominal length of each period in seconds.
+ *
+ * For display and estimation only. `month` and `year` are not constant lengths,
+ * and these values must never be used to decide whether one period contains
+ * another — use `spendPeriodContains` for that.
+ */
 export const SPEND_PERIOD_SECONDS: Record<SpendPeriod, number> = {
   minute: 60,
   hour: 3_600,
@@ -88,6 +100,39 @@ export const SPEND_PERIOD_SECONDS: Record<SpendPeriod, number> = {
   month: 2_592_000,
   year: 31_536_000,
 };
+
+/**
+ * Which periods each bucket provably contains.
+ *
+ * Containment, not duration, is what makes a spend comparison sound. Every
+ * calendar day sits inside exactly one calendar week, so a `week` cap of L
+ * bounds any single day at L. A calendar WEEK does not sit inside a calendar
+ * month — a week straddling the 1st touches two month buckets — so a `month`
+ * cap of L permits 2L inside one week, and `month` therefore does not contain
+ * `week`.
+ *
+ * Getting this wrong is not academic: comparing durations would accept a
+ * `100 per month` grant against a `100 per week` trial and silently permit
+ * double the tested burst.
+ */
+const SPEND_PERIOD_DESCENDANTS: Record<SpendPeriod, readonly SpendPeriod[]> = {
+  minute: [],
+  hour: ["minute"],
+  day: ["hour", "minute"],
+  week: ["day", "hour", "minute"],
+  month: ["day", "hour", "minute"],
+  year: ["month", "day", "hour", "minute"],
+};
+
+/**
+ * True when every `inner` bucket falls entirely within one `outer` bucket.
+ *
+ * Reflexive: a period contains itself. `week` and `month` are incomparable in
+ * both directions.
+ */
+export function spendPeriodContains(outer: SpendPeriod, inner: SpendPeriod): boolean {
+  return outer === inner || SPEND_PERIOD_DESCENDANTS[outer].includes(inner);
+}
 
 export function uint256ToBigInt(value: Uint256String): bigint {
   return BigInt(value);

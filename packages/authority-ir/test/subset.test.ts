@@ -230,6 +230,47 @@ describe("isSubset — spend limits", () => {
     expect(rules(result)).toContain("granted-spend-limit-not-greater");
   });
 
+  it("rejects a month grant against a week trial, which calendar buckets do not nest", () => {
+    // #given a trial that capped 100 per calendar week
+    const testedWeekly = withSpend(TESTED, [{ token: USDT, limit: "100", period: "week" }]);
+
+    // #when a grant asks for the same 100 per calendar month
+    const granted = withSpend(TESTED, [{ token: USDT, limit: "100", period: "month" }]);
+    const result = isSubset(granted, testedWeekly);
+
+    // #then it is refused: a week straddling the 1st touches two month buckets,
+    // so the grant could spend 200 inside a single tested week even though a
+    // month is the longer period
+    expect(result.subset).toBe(false);
+    expect(rules(result)).toContain("granted-spend-period-not-shorter");
+  });
+
+  it("accepts a week grant against a day trial, which do nest", () => {
+    // #given a trial that capped 50 per calendar day
+    const testedDaily = withSpend(TESTED, [{ token: USDT, limit: "50", period: "day" }]);
+
+    // #when a grant asks for 50 per calendar week
+    const granted = withSpend(TESTED, [{ token: USDT, limit: "50", period: "week" }]);
+
+    // #then it is accepted, because every day sits inside exactly one week
+    expect(isSubset(granted, testedDaily).subset).toBe(true);
+  });
+
+  it("accepts a year grant against a month trial", () => {
+    const testedMonthly = withSpend(TESTED, [{ token: USDT, limit: "50", period: "month" }]);
+    const granted = withSpend(TESTED, [{ token: USDT, limit: "50", period: "year" }]);
+    expect(isSubset(granted, testedMonthly).subset).toBe(true);
+  });
+
+  it("rejects a week grant against a month trial in the other direction too", () => {
+    // #given the incomparable pair reversed
+    const testedMonthly = withSpend(TESTED, [{ token: USDT, limit: "100", period: "month" }]);
+    const granted = withSpend(TESTED, [{ token: USDT, limit: "100", period: "week" }]);
+
+    // #then it is still refused, since 100 per week permits far more per month
+    expect(isSubset(granted, testedMonthly).subset).toBe(false);
+  });
+
   it("rejects spending a token the trial never covered", () => {
     // #given a grant for a different token
     const granted = withSpend(TESTED, [

@@ -1,0 +1,184 @@
+/**
+ * MANDATE design tokens.
+ *
+ * The system is "Duna": a warm, near-achromatic editorial surface. Elevation
+ * comes from hairline borders and background tint rather than shadow, controls
+ * are pill-shaped, and display type carries aggressive negative tracking. The
+ * intent is a document you would trust with money, not a dashboard.
+ *
+ * One deliberate extension is recorded here rather than buried in components.
+ * Duna asks for a 99% achromatic interface and forbids a blue or green accent.
+ * MANDATE still has to distinguish SUCCESS from BLOCKED at a glance, and doing
+ * that in pure greyscale would be both unreadable and — since colour alone must
+ * never carry status — insufficient anyway. So status uses three signals
+ * together: a glyph, a text label, and a desaturated warm tone drawn from the
+ * same family as the neutrals. `--status-blocked` is a muted terracotta, not a
+ * signal red; `--status-verified` is the aubergine ink already in the palette.
+ * Neither is ever used as a decorative accent.
+ */
+
+:root {
+  /* --- Brand ---------------------------------------------------------- */
+  --color-aubergine-ink: #1b0624;
+  --color-espresso: #160f0c;
+
+  /* --- Neutrals ------------------------------------------------------- */
+  --color-onyx: #0d0d0d;
+  --color-smoke: #1a1816;
+  --color-charcoal: #292421;
+  --color-graphite: #444444;
+  --color-warm-ash: #766a7c;
+  --color-stone: #898683;
+  --color-bone: #edece7;
+  --color-mist: #eeeeee;
+  --color-linen: #f7f7f5;
+  --color-paper-white: #ffffff;
+
+  /* --- Surfaces ------------------------------------------------------- */
+  --surface-canvas: var(--color-linen);
+  --surface-card: var(--color-paper-white);
+  --surface-panel: var(--color-bone);
+  --surface-input: var(--color-mist);
+  --surface-inverse: var(--color-espresso);
+
+  /* --- Text ----------------------------------------------------------- */
+  --text-primary: var(--color-aubergine-ink);
+  --text-body: var(--color-graphite);
+  --text-muted: var(--color-warm-ash);
+  --text-tertiary: var(--color-stone);
+  --text-inverse: var(--color-paper-white);
+
+  /* --- Borders -------------------------------------------------------- */
+  --border-hairline: rgba(27, 6, 36, 0.12);
+  --border-strong: var(--color-graphite);
+  --border-subtle: rgba(27, 6, 36, 0.06);
+
+  /* --- Status --------------------------------------------------------- */
+  /* Always paired with a glyph and a text label; never used alone. */
+  --status-verified: var(--color-aubergine-ink);
+  --status-verified-surface: rgba(27, 6, 36, 0.05);
+  --status-blocked: #8c3a24;
+  --status-blocked-surface: rgba(140, 58, 36, 0.07);
+  --status-pending: var(--color-warm-ash);
+  --status-pending-surface: rgba(118, 106, 124, 0.08);
+  --status-stale: var(--color-stone);
+  --status-stale-surface: rgba(137, 134, 131, 0.08);
+
+  /* --- Typography ----------------------------------------------------- */
+  --font-display:
+    "GT America", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-body: var(--font-display);
+  /* Tabular figures keep spend counters from shifting as they tick. */
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  --text-micro: 12px;
+  --leading-micro: 1.2;
+  --text-caption: 14px;
+  --leading-caption: 1.5;
+  --text-body-sm: 16px;
+  --leading-body-sm: 1.6;
+  --text-body-md: 18px;
+  --leading-body-md: 1.5;
+  --text-body-lg: 20px;
+  --leading-body-lg: 1.4;
+  --tracking-body-lg: -0.2px;
+  --text-subheading: 24px;
+  --leading-subheading: 1.3;
+  --tracking-subheading: -0.48px;
+  --text-heading: 32px;
+  --leading-heading: 1.2;
+  --tracking-heading: -0.96px;
+  --text-heading-lg: 44px;
+  --leading-heading-lg: 1.1;
+  --tracking-heading-lg: -2.2px;
+  --text-display: 72px;
+  --leading-display: 1;
+  --tracking-display: -4.32px;
+
+  /* --- Spacing -------------------------------------------------------- */
+  --spacing-unit: 4px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-60: 60px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-128: 128px;
+  --spacing-140: 140px;
+  --spacing-240: 240px;
+
+  /* --- Layout --------------------------------------------------------- */
+  --page-max-width: 1200px;
+  --section-gap: 96px;
+  --card-padding: 32px;
+  --element-gap: 16px;
+
+  /* --- Radius --------------------------------------------------------- */
+  --radius-inputs: 8px;
+  --radius-cards: 16px;
+  --radius-images: 24px;
+  --radius-large-buttons: 60px;
+  --radius-buttons: 999px;
+  --radius-badges: 999px;
+
+  /* --- Elevation ------------------------------------------------------ */
+  /* Duna's entire elevation system is a 1px inset ring. There is no drop shadow. */
+  --shadow-subtle: rgba(0, 0, 0, 0.05) 0 0 0 1px inset;
+
+  /* --- Motion --------------------------------------------------------- */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.13, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+/**
+ * The palette is a single committed light theme. Duna's warmth is load-bearing
+ * for the product's tone, and a mechanically inverted dark variant would read as
+ * a different, colder product. Surfaces are painted explicitly so the page never
+ * inherits a host background.
+ */
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+  font-weight: var(--font-weight-regular);
+  /* GT America character features, harmless when the fallback is in use. */
+  font-feature-settings: "cv03", "cv04", "cv09", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric readouts must not reflow as digits change. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "zero";
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-espresso);
+  outline-offset: 2px;
+}

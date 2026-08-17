@@ -21,7 +21,7 @@
  *    permitted, which is always allowed.
  */
 import {
-  SPEND_PERIOD_SECONDS,
+  spendPeriodContains,
   type AmountConstraint,
   type ApprovalEffect,
   type AuthorityCall,
@@ -209,16 +209,26 @@ function checkSemanticConstraints(
 /**
  * Does a tested spend allowance cover a granted one?
  *
- * Rate comparison alone is unsound: `100/week` has a lower rate than `25/day`
- * yet permits spending 100 in a single hour, which `25/day` never allows. The
- * sound rule is that the granted burst must not be larger and the granted window
- * must not be shorter — then any window the tested limit governs contains at
- * most the granted limit, which is at most the tested one.
+ * Two wrong rules are worth naming, because both look right.
+ *
+ * Comparing RATES is unsound: `100 per week` has a lower rate than `25 per day`
+ * yet permits spending 100 within a single hour, which `25 per day` never does.
+ * The burst is what matters, so the granted limit must not exceed the tested one.
+ *
+ * Comparing DURATIONS is also unsound, because the enforcement layer uses
+ * calendar buckets rather than sliding windows. A calendar week is shorter than
+ * a calendar month, but a week straddling the 1st touches two month buckets — so
+ * a `100 per month` grant can spend 200 inside one tested week. The granted
+ * period must therefore CONTAIN the tested period in the calendar sense, which
+ * `week` and `month` never do in either direction.
+ *
+ * With both conditions, the granted spend in any tested bucket is at most the
+ * granted limit, which is at most the tested limit.
  */
 function spendCovers(tested: SpendLimit, granted: SpendLimit): boolean {
   if (tested.token !== granted.token) return false;
   if (BigInt(granted.limit) > BigInt(tested.limit)) return false;
-  return SPEND_PERIOD_SECONDS[granted.period] >= SPEND_PERIOD_SECONDS[tested.period];
+  return spendPeriodContains(granted.period, tested.period);
 }
 
 function approvalCovers(tested: ApprovalEffect, granted: ApprovalEffect): boolean {
@@ -332,7 +342,7 @@ export function isSubset(granted: AuthorityIR, tested: AuthorityIR): SubsetResul
           violations,
           "granted-spend-period-not-shorter",
           path,
-          `granted period ${grantedSpend.period} for ${grantedSpend.token} is shorter than tested ${testedSpend.period}, which raises the rate`,
+          `granted period "${grantedSpend.period}" for ${grantedSpend.token} does not contain the tested period "${testedSpend.period}", so it cannot bound it`,
         );
       }
     }

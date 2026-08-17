@@ -19,3 +19,4 @@ contracts/broadcast/
 .vercel/
 playwright-report/
 test-results/
+artifacts/phase-2/

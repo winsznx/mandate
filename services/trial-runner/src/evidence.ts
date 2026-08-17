@@ -25,6 +25,7 @@ import type {
 } from "@mandate/domain";
 import type { Proposal } from "@mandate/agent-runtime";
 import type { Address, Hex } from "viem";
+import type { ReferencePolicy } from "@mandate/reference-health-factor";
 import type { ForkHandle } from "./anvil.js";
 import type { InvocationRecord } from "./invoke.js";
 import { RUNNER_VERSION } from "./identity.js";
@@ -55,13 +56,33 @@ export interface EvidenceInput {
   readonly postState: RawProtocolObservation;
   readonly transactions: readonly TransactionEvidence[];
   readonly referenceImplementationHash: Hex;
-  readonly referenceInputsHash: Hex;
+  /**
+   * The non-observation inputs the model was run with.
+   *
+   * Disclosed rather than only committed to. `inputsHash` proves nothing
+   * changed after publication; it does not let a reader re-run the model, and
+   * an expectation nobody can recompute is a claim rather than a check.
+   */
+  readonly referenceInputs: ReferenceInputs;
   readonly reference: ReferenceResult;
   readonly evaluatorImplementationHash: Hex;
   readonly checks: readonly EvaluationCheck[];
   readonly result: "PASS" | "FAIL";
   readonly failureReason?: string;
   readonly observedAt: number;
+}
+
+/**
+ * What the reference model was configured with, beside the observation.
+ *
+ * The observation itself is not repeated here: it is already carried whole under
+ * `observations.preState`, and a second copy would be a second thing that can
+ * disagree with the first.
+ */
+export interface ReferenceInputs {
+  readonly actionableMarket: Address;
+  readonly repaySelector: Hex;
+  readonly policy: ReferencePolicy;
 }
 
 /** The agent's answer in the artifact's shape. */
@@ -123,6 +144,20 @@ export function assembleEvidence(
   wallet: Address,
   skill: string,
 ): AssembledEvidence {
+  const disclosedInputs: CanonicalValue = {
+    actionableMarket: input.referenceInputs.actionableMarket,
+    repaySelector: input.referenceInputs.repaySelector,
+    policy: {
+      policyId: input.referenceInputs.policy.policyId,
+      interventionThresholdMantissa:
+        input.referenceInputs.policy.interventionThresholdMantissa.toString(10),
+      targetHealthFactorMantissa:
+        input.referenceInputs.policy.targetHealthFactorMantissa.toString(10),
+      minimumRepayUsdMantissa: input.referenceInputs.policy.minimumRepayUsdMantissa.toString(10),
+      amountToleranceBps: input.referenceInputs.policy.amountToleranceBps,
+    },
+  };
+
   const document: CanonicalValue = {
     schemaVersion: TRIAL_EVIDENCE_SCHEMA_VERSION,
     category: input.category,
@@ -157,7 +192,12 @@ export function assembleEvidence(
     },
     reference: {
       implementationHash: input.referenceImplementationHash,
-      inputsHash: input.referenceInputsHash,
+      // The commitment is over the DISCLOSED inputs, so a reader can rehash what
+      // they were given and see it is what was published. A hash of the
+      // observation instead would commit to something nobody can check against
+      // this field.
+      inputsHash: canonicalHash(disclosedInputs),
+      inputs: disclosedInputs,
       output: input.reference as unknown as CanonicalValue,
     },
     evaluator: {

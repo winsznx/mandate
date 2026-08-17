@@ -18,7 +18,8 @@
     "contracts:test": "cd contracts && forge test -vv",
     "verify:trial": "pnpm --filter @mandate/verifier exec tsx src/cli.ts trial",
     "verify:mandate": "pnpm --filter @mandate/verifier exec tsx src/cli.ts mandate",
-    "proof:phase2": "pnpm --filter @mandate/authority-proof exec tsx src/prove.ts"
+    "proof:phase2": "pnpm --filter @mandate/authority-proof exec tsx src/prove.ts",
+    "proof:phase7": "pnpm --filter @mandate/authority-proof exec tsx src/prove-phase7.ts"
   },
   "devDependencies": {
     "@types/node": "26.2.0",

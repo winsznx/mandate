@@ -25,9 +25,15 @@ import {
  * This suite exists so that any future simplification which reintroduces
  * getAssetsIn as the complete position set fails CI rather than shipping.
  *
- * The fixture cannot be re-captured at its original block from a public RPC —
- * BSC testnet dataseeds retain roughly 2,048 blocks — which is precisely why it
- * is committed rather than fetched.
+ * The fixture cannot be re-captured at its original block, which is precisely
+ * why it is committed rather than fetched. The reason is measured rather than
+ * assumed: `packages/rpc-capabilities` bisected
+ * `bsc-testnet-rpc.publicnode.com` and found anvil able to build a fork genesis
+ * 9,375 blocks back, while a plain historical `eth_call` reached 1.8 million.
+ * Neither figure is the "~2,048 blocks" the research notes record, both move,
+ * and no constant should be written down in their place.
+ *
+ * The other three invariants live in `venus-accounting-002` through `-004`.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));

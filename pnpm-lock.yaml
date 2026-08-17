@@ -214,6 +214,12 @@ importers:
       '@mandate/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@mandate/reference-health-factor':
+        specifier: workspace:*
+        version: link:../../reference/health-factor
+      '@mandate/venus-bsc':
+        specifier: workspace:*
+        version: link:../../packages/venus-bsc
       viem:
         specifier: 2.55.17
         version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
@@ -372,6 +378,21 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
 
+  packages/rpc-capabilities:
+    devDependencies:
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
+      tsx:
+        specifier: 4.23.12
+        version: 4.23.12
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
+
   packages/venus-bsc:
     dependencies:
       viem:
@@ -418,9 +439,18 @@ importers:
       '@altananetwork/sdk':
         specifier: 0.7.1
         version: 0.7.1(@wagmi/core@3.6.4(typescript@7.0.2)(viem@2.55.17(typescript@7.0.2)(zod@4.4.3)))(typescript@7.0.2)(zod@4.4.3)
+      '@mandate/agent-health-factor-a':
+        specifier: workspace:*
+        version: link:../../agents/reference/health-factor-a
+      '@mandate/agent-runtime':
+        specifier: workspace:*
+        version: link:../../packages/agent-runtime
       '@mandate/altana':
         specifier: workspace:*
         version: link:../../packages/altana
+      '@mandate/authority-analyzer':
+        specifier: workspace:*
+        version: link:../../packages/authority-analyzer
       '@mandate/authority-compiler':
         specifier: workspace:*
         version: link:../../packages/authority-compiler
@@ -430,6 +460,18 @@ importers:
       '@mandate/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@mandate/reference-health-factor':
+        specifier: workspace:*
+        version: link:../../reference/health-factor
+      '@mandate/trial-runner':
+        specifier: workspace:*
+        version: link:../trial-runner
+      '@mandate/venus-bsc':
+        specifier: workspace:*
+        version: link:../../packages/venus-bsc
+      '@mandate/verifier':
+        specifier: workspace:*
+        version: link:../../apps/verifier
       viem:
         specifier: 2.55.17
         version: 2.55.17(typescript@7.0.2)(zod@4.4.3)

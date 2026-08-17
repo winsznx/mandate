@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/strategy.ts"
+    ".": "./src/strategy.ts",
+    "./policy": "./src/policy.ts",
+    "./venus": "./src/venus/index.ts"
   },
   "scripts": {
     "start": "tsx src/main.ts",

@@ -10,6 +10,7 @@ import type { InvocationRecord } from "../src/invoke.js";
 import {
   ACCOUNT,
   AT_RISK,
+  POLICY,
   REPAY_BORROW_SELECTOR,
   SPEND_CAP_RAW_UNITS,
   VUSDT,
@@ -82,7 +83,11 @@ function input(overrides: Partial<EvidenceInput> = {}): EvidenceInput {
     postState: observation({ ...AT_RISK, usdtBorrow: (AT_RISK.usdtBorrow ?? 0n) - CORRECT_AMOUNT }),
     transactions: [transaction({ index: 0 })],
     referenceImplementationHash: REFERENCE_HASH,
-    referenceInputsHash: `0x${"3".repeat(64)}` as Hex,
+    referenceInputs: {
+      actionableMarket: VUSDT,
+      repaySelector: REPAY_BORROW_SELECTOR,
+      policy: POLICY,
+    },
     reference: reference(AT_RISK),
     evaluatorImplementationHash: evaluatorImplementationHash(),
     checks: verdict.checks,

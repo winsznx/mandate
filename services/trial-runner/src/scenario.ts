@@ -89,6 +89,9 @@ function toQuantity(value: bigint): Hex {
   return `0x${value.toString(16)}`;
 }
 
+const RECEIPT_POLL_ATTEMPTS = 40;
+const RECEIPT_POLL_MS = 250;
+
 async function sendAndWait(
   fork: ForkHandle,
   step: Extract<ScenarioStep, { kind: "CALL" }>,
@@ -102,7 +105,15 @@ async function sendAndWait(
     },
   ]);
 
-  const receipt = await forkRpc<{ status: Hex } | null>(fork, "eth_getTransactionReceipt", [hash]);
+  // Automine puts the block between the send and the lookup, so a single
+  // unpolled read turns a few hundred milliseconds into an abandoned scenario.
+  // The proposal path already polls for exactly this reason.
+  let receipt: { status: Hex } | null = null;
+  for (let attempt = 0; attempt < RECEIPT_POLL_ATTEMPTS && receipt === null; attempt += 1) {
+    receipt = await forkRpc<{ status: Hex } | null>(fork, "eth_getTransactionReceipt", [hash]);
+    if (receipt === null) await new Promise((resolve) => setTimeout(resolve, RECEIPT_POLL_MS));
+  }
+
   if (receipt === null) {
     throw new TrialInfrastructureError(
       "SCENARIO_SETUP_FAILED",

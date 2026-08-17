@@ -5,16 +5,24 @@
   "type": "module",
   "scripts": {
     "prove": "tsx src/prove.ts",
+    "prove:phase7": "tsx src/prove-phase7.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@altananetwork/sdk": "0.7.1",
+    "@mandate/agent-health-factor-a": "workspace:*",
+    "@mandate/agent-runtime": "workspace:*",
     "@mandate/altana": "workspace:*",
+    "@mandate/authority-analyzer": "workspace:*",
     "@mandate/authority-compiler": "workspace:*",
     "@mandate/authority-ir": "workspace:*",
     "@mandate/domain": "workspace:*",
+    "@mandate/reference-health-factor": "workspace:*",
+    "@mandate/trial-runner": "workspace:*",
+    "@mandate/venus-bsc": "workspace:*",
+    "@mandate/verifier": "workspace:*",
     "viem": "2.55.17"
   },
   "devDependencies": {

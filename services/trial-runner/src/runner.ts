@@ -19,7 +19,6 @@ import type { AgentExecutor, Proposal } from "@mandate/agent-runtime";
 import type { VenusDeployment } from "@mandate/venus-bsc";
 import {
   referenceImplementationHash,
-  referenceInputsHash,
   runReferenceModel,
   type ReferencePolicy,
 } from "@mandate/reference-health-factor";
@@ -358,7 +357,11 @@ export async function runTrial(request: TrialRequest): Promise<TrialRunResult> {
         postState: toProtocolObservation(postState),
         transactions,
         referenceImplementationHash: referenceImplementationHash(),
-        referenceInputsHash: referenceInputsHash(preState),
+        referenceInputs: {
+          actionableMarket: request.scenario.actionableMarket,
+          repaySelector: request.authorisedSelector,
+          policy: request.policy,
+        },
         reference,
         evaluatorImplementationHash: evaluatorImplementationHash(),
         checks: outcome.checks,

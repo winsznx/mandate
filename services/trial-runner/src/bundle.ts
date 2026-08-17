@@ -14,21 +14,23 @@
  * a service must not depend on the application that reads its output. The
  * mirror is asserted against the real schema in `test/bundle.test.ts`.
  *
- * KNOWN DIVERGENCE. The bundle's `artifact` slot is typed as the flat
- * `EvidenceArtifact`, which predates the richer `TrialEvidence` this runner
- * produces and cannot carry it — the bundle is `.strict()`, so there is no
- * field to put the fuller document in either. Rather than diverge from a schema
- * another lane owns, the runner projects its artifact down to the flat form and
- * records the full document's hash inside `referenceOutcome.notes`, so the
- * commitment chain still reaches it. That note is a stopgap: the durable fix is
- * for `artifact` to become a union dispatching on `schemaVersion`, which would
- * let the receipt commit to the richer document directly.
+ * The `artifact` slot is a union dispatching on `schemaVersion`, and this runner
+ * fills it with the rich `mandate.trial-evidence/1` document. The flat
+ * `EvidenceArtifact` cannot carry the two raw observations, and without them a
+ * verifier can only compare two lists of numbers the publisher wrote — it cannot
+ * re-run the reference model over the observation and check that the published
+ * result follows from it. Publishing the rich form is what turns the reference
+ * result from a claim into something a third party recomputes.
+ *
+ * `toEvidenceArtifact` stays exported for readers that only understand the flat
+ * form. It is a lossy projection and it is not what the receipt commits to.
  */
 import { z } from "zod";
 import {
   AuthorityIRSchema,
   EvidenceArtifactSchema,
   EVIDENCE_ARTIFACT_SCHEMA_VERSION,
+  TrialEvidenceSchema,
   TrialSpecSchema,
   canonicalHash,
 } from "@mandate/domain";
@@ -49,7 +51,7 @@ export const EVIDENCE_BUNDLE_SCHEMA_VERSION = "mandate.evidence-bundle/1" as con
 export const EvidenceBundleSchema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_BUNDLE_SCHEMA_VERSION),
-    artifact: EvidenceArtifactSchema,
+    artifact: z.union([TrialEvidenceSchema, EvidenceArtifactSchema]),
     trialSpec: TrialSpecSchema,
     testedAuthority: AuthorityIRSchema,
   })
@@ -64,7 +66,7 @@ export class BundleAssemblyError extends Error {
   }
 }
 
-/** Label binding the flat artifact to the full document it was projected from. */
+/** Label binding a flat projection back to the full document it came from. */
 export const TRIAL_EVIDENCE_NOTE_PREFIX = "mandate.trial-evidence/1 hash: ";
 
 /**
@@ -283,10 +285,11 @@ export function assembleBundle(
   trialSpec: TrialSpec,
 ): AssembledBundle {
   const testedAuthority: AuthorityIR = trialSpec.authority;
+  void evidenceHash;
 
   const document: CanonicalValue = {
     schemaVersion: EVIDENCE_BUNDLE_SCHEMA_VERSION,
-    artifact: toEvidenceArtifact(evidence, evidenceHash) as unknown as CanonicalValue,
+    artifact: evidence as unknown as CanonicalValue,
     trialSpec: trialSpec as unknown as CanonicalValue,
     testedAuthority: testedAuthority as unknown as CanonicalValue,
   };

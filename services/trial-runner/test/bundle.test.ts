@@ -21,6 +21,7 @@ import type { Hex } from "viem";
 import {
   ACCOUNT,
   AT_RISK,
+  POLICY,
   REPAY_BORROW_SELECTOR,
   SPEND_CAP_RAW_UNITS,
   VUSDT,
@@ -115,7 +116,11 @@ function evidence(): { evidence: TrialEvidence; evidenceHash: Hex } {
     postState: post,
     transactions: [transaction({ index: 0 })],
     referenceImplementationHash: `0x${"b".repeat(64)}` as Hex,
-    referenceInputsHash: `0x${"3".repeat(64)}` as Hex,
+    referenceInputs: {
+      actionableMarket: VUSDT,
+      repaySelector: REPAY_BORROW_SELECTOR,
+      policy: POLICY,
+    },
     reference: reference(AT_RISK),
     evaluatorImplementationHash: evaluatorImplementationHash(),
     checks: verdict.checks,
@@ -209,43 +214,63 @@ describe("the hash chain", () => {
     expect(again.bundleHash).toBe(assembled.bundleHash);
   });
 
-  it("binds the full artifact the projection was made from", () => {
-    // #given the flat artifact inside the bundle
-    const note = assembled.bundle.artifact.referenceOutcome.notes.find((entry) =>
-      entry.startsWith(TRIAL_EVIDENCE_NOTE_PREFIX),
-    );
+  it("carries the rich document rather than a summary of it", () => {
+    // #given the artifact slot of an assembled bundle
+    const artifact = assembled.bundle.artifact;
 
-    // #then it names the richer document's hash, so a reader holding only the
-    // bundle can still demand and verify the full evidence rather than taking
-    // the summary on trust. This is a stopgap for the bundle's `artifact` slot
-    // being typed as the flat schema.
-    expect(note).toBe(`${TRIAL_EVIDENCE_NOTE_PREFIX}${built.evidenceHash}`);
+    // #then it is the full trial evidence, which is the only form carrying the
+    // two raw observations a verifier needs to re-run the reference model. A
+    // flat projection would leave the verifier comparing two lists of numbers
+    // the publisher chose.
+    expect(artifact.schemaVersion).toBe("mandate.trial-evidence/1");
+    expect(canonicalHash(artifact as unknown as CanonicalValue)).toBe(built.evidenceHash);
+  });
+
+  it("commits the reference inputs hash to the inputs it disclosed", () => {
+    // #given the rich artifact's reference section
+    const artifact = assembled.bundle.artifact as TrialEvidence;
+
+    // #then rehashing the disclosed inputs reproduces the commitment, so the
+    // disclosure cannot be swapped for a friendlier one after publication
+    expect(canonicalHash(artifact.reference.inputs as unknown as CanonicalValue)).toBe(
+      artifact.reference.inputsHash,
+    );
   });
 });
 
 describe("the projection to the flat artifact", () => {
+  const flat = toEvidenceArtifact(built.evidence, built.evidenceHash);
+
+  it("binds the full artifact the projection was made from", () => {
+    // #given the flat projection
+    const note = flat.referenceOutcome.notes.find((entry) =>
+      entry.startsWith(TRIAL_EVIDENCE_NOTE_PREFIX),
+    );
+
+    // #then it names the richer document's hash, so a reader holding only the
+    // projection can still demand and verify the full evidence rather than
+    // taking the summary on trust
+    expect(note).toBe(`${TRIAL_EVIDENCE_NOTE_PREFIX}${built.evidenceHash}`);
+  });
+
   it("preserves the verdict and every check", () => {
     // #given the projected artifact
-    const artifact = assembled.bundle.artifact;
-
     // #then the outcome and the checks behind it survive intact
-    expect(artifact.result).toBe(built.evidence.evaluator.result);
-    expect(artifact.checks).toHaveLength(built.evidence.evaluator.checks.length);
-    expect(artifact.checks.every((check) => check.passed)).toBe(true);
+    expect(flat.result).toBe(built.evidence.evaluator.result);
+    expect(flat.checks).toHaveLength(built.evidence.evaluator.checks.length);
+    expect(flat.checks.every((check) => check.passed)).toBe(true);
   });
 
   it("preserves the transaction trace", () => {
     // #given the projected artifact
     // #then every transaction is present with its success flag
-    expect(assembled.bundle.artifact.trace).toHaveLength(built.evidence.observations.txs.length);
-    expect(assembled.bundle.artifact.trace[0]?.success).toBe(true);
+    expect(flat.trace).toHaveLength(built.evidence.observations.txs.length);
+    expect(flat.trace[0]?.success).toBe(true);
   });
 
   it("carries the reference model's figures as reference-sourced readings", () => {
     // #given the projected artifact's pre-state
-    const modelled = assembled.bundle.artifact.preState.filter(
-      (reading) => reading.source === "REFERENCE_MODEL",
-    );
+    const modelled = flat.preState.filter((reading) => reading.source === "REFERENCE_MODEL");
 
     // #then the model's conclusion is attributed to the model rather than
     // presented as something the chain said

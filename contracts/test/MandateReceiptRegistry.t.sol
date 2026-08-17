@@ -14,6 +14,7 @@ contract MandateReceiptRegistryTest is Test {
     address private constant IDENTITY_REGISTRY = address(0x1111);
     address private constant WALLET = address(0x4444);
     string private constant URI = "r2://mandate-evidence/trial-0001.json";
+    string private constant DISCLOSURE_URI = "r2://mandate/granted-authority-0001.json";
 
     function setUp() public {
         registry = new MandateReceiptRegistry();
@@ -131,7 +132,7 @@ contract MandateReceiptRegistryTest is Test {
         vm.prank(PUBLISHER);
         registry.publishReceipt(other, URI);
         vm.prank(WALLET);
-        registry.recordActivation(id, WALLET, keccak256("session"), keccak256("granted"), 0);
+        registry.recordActivation(id, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
 
         assertEq(keccak256(abi.encode(registry.getReceipt(id))), before, "stored receipt changed");
     }
@@ -201,7 +202,7 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.prank(WALLET);
         bytes32 mandateId =
-            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0);
+            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
 
         IMandateReceiptRegistry.Activation memory activation = registry.getActivation(mandateId);
         assertEq(activation.trialReceiptId, receiptId);
@@ -218,14 +219,14 @@ contract MandateReceiptRegistryTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(IMandateReceiptRegistry.ReceiptDidNotPass.selector, receiptId)
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
     }
 
     function test_recordActivation_revertsForAnUnknownReceipt() public {
         bytes32 missing = keccak256("nope");
 
         vm.expectRevert(abi.encodeWithSelector(IMandateReceiptRegistry.UnknownReceipt.selector, missing));
-        registry.recordActivation(missing, WALLET, keccak256("session"), keccak256("granted"), 0);
+        registry.recordActivation(missing, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
     }
 
     function test_recordActivation_revertsOnDuplicateActivation() public {
@@ -233,12 +234,12 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.startPrank(WALLET);
         bytes32 mandateId =
-            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0);
+            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
 
         vm.expectRevert(
             abi.encodeWithSelector(IMandateReceiptRegistry.MandateAlreadyActivated.selector, mandateId)
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
         vm.stopPrank();
     }
 
@@ -248,14 +249,68 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.startPrank(WALLET);
         bytes32 first =
-            registry.recordActivation(receiptId, WALLET, keccak256("session-1"), keccak256("granted"), 0);
+            registry.recordActivation(receiptId, WALLET, keccak256("session-1"), keccak256("granted"), 0, DISCLOSURE_URI);
         bytes32 second =
-            registry.recordActivation(receiptId, WALLET, keccak256("session-2"), keccak256("granted"), 1);
+            registry.recordActivation(receiptId, WALLET, keccak256("session-2"), keccak256("granted"), 1, DISCLOSURE_URI);
         vm.stopPrank();
 
         assertTrue(first != second);
         assertEq(registry.getActivation(first).sessionKeyHash, keccak256("session-1"));
         assertEq(registry.getActivation(second).sessionKeyHash, keccak256("session-2"));
+    }
+
+    /// @notice A judge with only chain access must be able to OBTAIN the granted
+    ///         authority, not merely check one they were handed.
+    /// @dev Without a disclosure URI the hash commits to a document that exists
+    ///      only in MANDATE's database, so the subset relation becomes
+    ///      unverifiable from chain alone.
+    function test_recordActivation_storesAndEmitsTheDisclosureURI() public {
+        bytes32 receiptId = _publish(true);
+
+        vm.prank(WALLET);
+        bytes32 mandateId = registry.recordActivation(
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI
+        );
+
+        assertEq(registry.getActivation(mandateId).disclosureURI, DISCLOSURE_URI);
+    }
+
+    function test_recordActivation_rejectsAnEmptyDisclosureURI() public {
+        bytes32 receiptId = _publish(true);
+
+        vm.prank(WALLET);
+        vm.expectRevert(
+            abi.encodeWithSelector(IMandateReceiptRegistry.InvalidReceiptField.selector, "disclosureURI")
+        );
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, "");
+    }
+
+    function test_recordActivation_rejectsAnOversizedDisclosureURI() public {
+        bytes32 receiptId = _publish(true);
+        string memory long = new string(513);
+
+        vm.prank(WALLET);
+        vm.expectRevert(abi.encodeWithSelector(IMandateReceiptRegistry.EvidenceURITooLong.selector, 513));
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, long);
+    }
+
+    /// @notice The disclosure URI is not part of the mandate identity.
+    /// @dev The hash is what is trusted; the URI only says where the bytes live.
+    ///      Binding it into the id would give the same mandate a different
+    ///      identity per mirror.
+    function test_recordActivation_mandateIdIgnoresTheDisclosureURI() public {
+        bytes32 receiptId = _publish(true);
+
+        bytes32 expected = ScopeHashLib.mandateId(
+            block.chainid, WALLET, receiptId, keccak256("granted"), 0
+        );
+
+        vm.prank(WALLET);
+        bytes32 mandateId = registry.recordActivation(
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, "ipfs://a-different-mirror"
+        );
+
+        assertEq(mandateId, expected);
     }
 
     function test_recordActivation_rejectsAZeroGrantedAuthorityHash() public {
@@ -267,7 +322,7 @@ contract MandateReceiptRegistryTest is Test {
                 IMandateReceiptRegistry.InvalidReceiptField.selector, "grantedAuthorityHash"
             )
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), bytes32(0), 0);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), bytes32(0), 0, DISCLOSURE_URI);
     }
 
     // --- fuzz ----------------------------------------------------------------

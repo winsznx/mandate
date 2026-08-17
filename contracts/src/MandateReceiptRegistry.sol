@@ -88,7 +88,8 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
         address wallet,
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
-        uint32 sequence
+        uint32 sequence,
+        string calldata disclosureURI
     ) external returns (bytes32 mandateId) {
         StoredReceipt storage stored = _receipts[trialReceiptId];
         if (stored.publishedAt == 0) revert UnknownReceipt(trialReceiptId);
@@ -97,6 +98,13 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
         if (wallet == address(0)) revert InvalidReceiptField("wallet");
         if (sessionKeyHash == bytes32(0)) revert InvalidReceiptField("sessionKeyHash");
         if (grantedAuthorityHash == bytes32(0)) revert InvalidReceiptField("grantedAuthorityHash");
+
+        // An activation nobody can fetch the granted authority for is a
+        // commitment to a document that exists only in MANDATE's database, which
+        // defeats the point of committing to it.
+        uint256 uriLength = bytes(disclosureURI).length;
+        if (uriLength == 0) revert InvalidReceiptField("disclosureURI");
+        if (uriLength > MAX_EVIDENCE_URI_LENGTH) revert EvidenceURITooLong(uriLength);
 
         mandateId = ScopeHashLib.mandateId(
             block.chainid, wallet, trialReceiptId, grantedAuthorityHash, sequence
@@ -110,11 +118,18 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
             sessionKeyHash: sessionKeyHash,
             grantedAuthorityHash: grantedAuthorityHash,
             attestedBy: msg.sender,
-            activatedAt: uint64(block.timestamp)
+            activatedAt: uint64(block.timestamp),
+            disclosureURI: disclosureURI
         });
 
         emit MandateActivated(
-            mandateId, trialReceiptId, wallet, sessionKeyHash, grantedAuthorityHash, msg.sender
+            mandateId,
+            trialReceiptId,
+            wallet,
+            sessionKeyHash,
+            grantedAuthorityHash,
+            msg.sender,
+            disclosureURI
         );
     }
 

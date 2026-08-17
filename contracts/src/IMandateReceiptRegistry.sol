@@ -40,6 +40,13 @@ interface IMandateReceiptRegistry {
         bytes32 grantedAuthorityHash;
         address attestedBy;
         uint64 activatedAt;
+        /// @dev Where the granted AuthorityIR can be fetched.
+        ///      Without it, `grantedAuthorityHash` lets a reader CHECK a document
+        ///      they were handed but never OBTAIN one, so an independent verifier
+        ///      working from chain alone could not evaluate the subset relation at
+        ///      all. The hash remains what is trusted; this is only how to find
+        ///      the bytes.
+        string disclosureURI;
     }
 
     event ReceiptPublished(
@@ -61,7 +68,8 @@ interface IMandateReceiptRegistry {
         address indexed wallet,
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
-        address attestedBy
+        address attestedBy,
+        string disclosureURI
     );
 
     error ReceiptAlreadyPublished(bytes32 receiptId);
@@ -82,7 +90,8 @@ interface IMandateReceiptRegistry {
         address wallet,
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
-        uint32 sequence
+        uint32 sequence,
+        string calldata disclosureURI
     ) external returns (bytes32 mandateId);
 
     function getReceipt(bytes32 receiptId) external view returns (StoredReceipt memory);

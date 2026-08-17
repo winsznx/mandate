@@ -558,9 +558,46 @@ export const TrialEvidenceSchema = z
         implementationHash: Bytes32Schema,
         /** Canonical hash of exactly the observation the model was given. */
         inputsHash: Bytes32Schema,
+        /**
+         * The non-observation inputs the model was run with, disclosed in full.
+         *
+         * `inputsHash` alone commits to them without revealing them, which makes
+         * it unverifiable: a reader could confirm nothing changed after
+         * publication but could never re-run the model to check that `output`
+         * follows from `inputs`. Disclosing them is what turns the reference
+         * result from a claim into something a verifier recomputes.
+         *
+         * The observation is not repeated here — it is already carried in full
+         * under `observations.preState`.
+         */
+        inputs: z
+          .object({
+            /** The market the agent was permitted to act on. */
+            actionableMarket: AddressSchema,
+            repaySelector: z.string().regex(/^0x[0-9a-f]{8}$/),
+            /** Risk policy: thresholds, targets and the tolerance on the action amount. */
+            policy: z
+              .object({
+                policyId: SlugSchema,
+                interventionThresholdMantissa: Uint256Schema,
+                targetHealthFactorMantissa: Uint256Schema,
+                /** Below this a repay costs more in gas and disruption than the health it buys. */
+                minimumRepayUsdMantissa: Uint256Schema,
+                amountToleranceBps: z.number().int().min(0).max(10_000),
+              })
+              .strict(),
+          })
+          .strict(),
         output: ReferenceResultSchema,
       })
-      .strict(),
+      .strict()
+      .refine(
+        (reference) => reference.inputs.policy.amountToleranceBps === reference.output.amountToleranceBps,
+        {
+          message: "the disclosed tolerance must match the one the model reported using",
+          path: ["inputs", "policy", "amountToleranceBps"],
+        },
+      ),
 
     evaluator: z
       .object({

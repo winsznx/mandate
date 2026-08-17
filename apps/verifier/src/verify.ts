@@ -36,6 +36,8 @@ import {
 } from "./registry.js";
 import type { OnChainActivation, OnChainReceipt } from "./registry.js";
 import { replayEvaluation } from "./replay.js";
+import { replayRichEvidence } from "./replay-rich.js";
+import { healthFactorModelRunner } from "./reference-binding.js";
 import type { ReplayResult } from "./replay.js";
 import { decideVerdict, fail, orderSteps, pass, skip } from "./steps.js";
 import type { Step, Verdict } from "./steps.js";
@@ -131,6 +133,24 @@ interface EvidenceState {
   unavailable?: string;
   /** True once a hash mismatch has ruled the document out entirely. */
   poisoned: boolean;
+}
+
+/**
+ * Replay whichever form was published.
+ *
+ * A rich artifact whose projection fails yields `undefined`, so the
+ * reference-result step SKIPs with a stated reason rather than passing on a
+ * comparison that never ran.
+ */
+function replayFor(artifact: EvidenceArtifact | TrialEvidence | undefined): ReplayResult | undefined {
+  if (artifact === undefined) return undefined;
+  if (isFlatArtifact(artifact)) return replayEvaluation(artifact);
+
+  const outcome = replayRichEvidence({
+    artifact,
+    model: healthFactorModelRunner(artifact.reference.implementationHash),
+  });
+  return outcome.ok ? outcome.replay : undefined;
 }
 
 async function loadEvidence(receipt: OnChainReceipt, options: VerifyOptions): Promise<EvidenceState> {
@@ -559,14 +579,11 @@ async function gatherTrial(
     receipt,
     chainId: options.target.chainId,
     evidence,
-    // The richer form carries its post-state as a raw protocol observation
-    // rather than as named readings, so the flat replay cannot run over it.
-    // Left undefined so the reference-result step SKIPs with a stated reason
-    // instead of passing on a comparison that never happened.
-    replay:
-      evidence.artifact !== undefined && isFlatArtifact(evidence.artifact)
-        ? replayEvaluation(evidence.artifact)
-        : undefined,
+    // Each form gets the strongest replay it supports, and both produce the
+    // same ReplayResult so every downstream check stays single-implementation.
+    // The rich path re-runs the reference model over the disclosed observation
+    // rather than comparing figures the publisher chose.
+    replay: replayFor(evidence.artifact),
     identityProbe,
   };
 }

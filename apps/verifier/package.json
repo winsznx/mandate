@@ -17,7 +17,9 @@
     "@mandate/authority-ir": "workspace:*",
     "@mandate/domain": "workspace:*",
     "viem": "2.55.17",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@mandate/reference-health-factor": "workspace:*",
+    "@mandate/venus-bsc": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "26.2.0",

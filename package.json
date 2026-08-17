@@ -1,0 +1,29 @@
+{
+  "name": "mandate",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "description": "MANDATE — the BNB Agent Studio marketplace where financial agents receive no more enforceable authority than they proved.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test -vv",
+    "verify:trial": "pnpm --filter @mandate/verifier exec tsx src/cli.ts trial",
+    "verify:mandate": "pnpm --filter @mandate/verifier exec tsx src/cli.ts mandate"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "tsx": "4.23.12",
+    "turbo": "2.10.10",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

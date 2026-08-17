@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "services/*"
+  - "agents/reference/*"
+allowBuilds:
+  esbuild: set this to true or false
+minimumReleaseAgeExclude:
+  - viem@2.55.17
+onlyBuiltDependencies:
+  - esbuild

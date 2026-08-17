@@ -1,0 +1,27 @@
+{
+  "name": "@mandate/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./canonical": "./src/canonical.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./fixtures": "./src/fixtures.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "viem": "2.55.17",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

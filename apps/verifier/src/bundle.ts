@@ -26,6 +26,7 @@ import {
   AuthorityIRSchema,
   Bytes32Schema,
   EvidenceArtifactSchema,
+  TrialEvidenceSchema,
   TrialSpecSchema,
 } from "@mandate/domain/schemas";
 
@@ -35,8 +36,21 @@ export const MANDATE_DISCLOSURE_SCHEMA_VERSION = "mandate.mandate-disclosure/1" 
 export const EvidenceBundleSchema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_BUNDLE_SCHEMA_VERSION),
-    /** The run itself: trace, checks, reference outcome. Hashes are checked against the receipt. */
-    artifact: EvidenceArtifactSchema,
+    /**
+     * The run itself: trace, checks, reference outcome.
+     *
+     * A union dispatching on the document's own `schemaVersion`, so the richer
+     * `mandate.trial-evidence/1` can be committed to directly. The flat form
+     * projects both conclusions down into `StateReading` lists, which loses the
+     * one distinction the trial exists to make: a reader cannot tell from it
+     * whether the reference model enumerated the same debt the agent did.
+     *
+     * The alternative — publishing the flat form and recording the richer
+     * document's hash in a free-text notes field — would put a commitment
+     * somewhere nothing validates. Both forms are accepted so a runner emitting
+     * either still verifies.
+     */
+    artifact: z.union([TrialEvidenceSchema, EvidenceArtifactSchema]),
     /** The frozen question. Must canonical-hash to the receipt's `trialSpecHash`. */
     trialSpec: TrialSpecSchema,
     /**
@@ -88,7 +102,7 @@ export type EvidenceDocumentKind = "BUNDLE" | "ARTIFACT_ONLY";
 export interface ParsedEvidenceDocument {
   kind: EvidenceDocumentKind;
   bundle?: EvidenceBundle;
-  artifact: z.infer<typeof EvidenceArtifactSchema>;
+  artifact: z.infer<typeof EvidenceArtifactSchema> | z.infer<typeof TrialEvidenceSchema>;
 }
 
 /**

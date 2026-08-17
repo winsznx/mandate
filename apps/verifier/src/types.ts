@@ -11,4 +11,10 @@ import type { StateReadingSchema } from "@mandate/domain/schemas";
 
 export type StateReading = z.infer<typeof StateReadingSchema>;
 
-export type { AuthorityIR, EvidenceArtifact, TrialOutcome } from "@mandate/domain/schemas";
+export type {
+  AuthorityIR,
+  EvidenceArtifact,
+  /** The richer trial document. A bundle may commit to either form. */
+  TrialEvidence,
+  TrialOutcome,
+} from "@mandate/domain/schemas";

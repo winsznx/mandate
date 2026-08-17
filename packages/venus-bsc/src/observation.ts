@@ -25,8 +25,15 @@ export const VENUS_OBSERVATION_SCHEMA_VERSION = "mandate.venus-observation/1" as
 export interface RawMarketObservation {
   readonly vToken: Address;
   readonly underlying: Address | null;
-  /** Read from the underlying token. `vBNB` has no underlying, so this is the native 18. */
-  readonly underlyingDecimals: number;
+  /**
+   * Read from the underlying token. `vBNB` has no underlying, so this is the native 18.
+   *
+   * `null` when `decimals()` could not be read. That makes the market
+   * unpriceable rather than 18-decimal: the oracle scale is
+   * `1e(36 - decimals)`, so guessing wrong is an error of twelve orders of
+   * magnitude, not a rounding difference.
+   */
+  readonly underlyingDecimals: number | null;
   /**
    * Market metadata, or `null` when the Comptroller refused to return it.
    *
@@ -186,7 +193,13 @@ export function marketsWithUnpricedExposure(
       (market.vTokenBalance !== null && BigInt(market.vTokenBalance) > 0n) ||
       (market.borrowBalance !== null && BigInt(market.borrowBalance) > 0n);
     if (!hasBalance) return false;
-    return market.priceMantissa === null || market.liquidationThresholdMantissa === null;
+    // Decimals set the oracle scale, so an unknown decimals value makes the
+    // price unusable even when the oracle answered.
+    return (
+      market.priceMantissa === null ||
+      market.liquidationThresholdMantissa === null ||
+      market.underlyingDecimals === null
+    );
   });
 }
 

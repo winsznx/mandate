@@ -14,7 +14,7 @@ import { getAddress } from "viem";
 import type { Address, Hex, PublicClient } from "viem";
 import { COMPTROLLER_ABI, ERC20_ABI, ORACLE_ABI, VAI_CONTROLLER_ABI, VTOKEN_ABI } from "./abis.js";
 import type { VenusDeployment } from "./addresses.js";
-import { NATIVE_UNDERLYING_DECIMALS, VenusReadError } from "./errors.js";
+import { NATIVE_UNDERLYING_DECIMALS } from "./errors.js";
 import {
   VENUS_OBSERVATION_SCHEMA_VERSION,
   type RawMarketObservation,
@@ -71,15 +71,22 @@ async function observeMarket(
     .then((value) => normalize(value))
     .catch(() => null);
 
-  const underlyingDecimals =
+  // Degrade like every other read here rather than throwing. A transient RPC
+  // hiccup on one market of forty-six would otherwise abort an entire trial,
+  // and an aborted trial is indistinguishable from an agent failure at the
+  // point where it matters. Recording the absence keeps the fail-closed path in
+  // charge: a market with a balance and unknown decimals cannot be priced, so
+  // `marketsWithUnpricedExposure` catches it.
+  const decimals =
     underlying === null
-      ? NATIVE_UNDERLYING_DECIMALS
+      ? { value: NATIVE_UNDERLYING_DECIMALS as number | null, reason: undefined as string | undefined }
       : await client
           .readContract({ address: underlying, abi: ERC20_ABI, functionName: "decimals", ...at })
-          .then((value) => Number(value))
-          .catch(() => {
-            throw new VenusReadError(`Could not read decimals for underlying ${underlying}`);
-          });
+          .then((value) => ({ value: Number(value) as number | null, reason: undefined as string | undefined }))
+          .catch((error: Error) => ({
+            value: null,
+            reason: error.message.split("\n")[0] ?? `decimals() reverted for ${underlying}`,
+          }));
 
   // A market whose oracle refuses to price it is recorded as unpriced, never as
   // free. Testnet carries several such markets.
@@ -99,16 +106,18 @@ async function observeMarket(
     ? `getAccountSnapshot returned error ${balances.snap![0]}`
     : balances.reason;
 
+  const metadataReason = metadata.reason ?? decimals.reason;
+
   return {
     vToken,
     underlying,
-    underlyingDecimals,
+    underlyingDecimals: decimals.value,
     isListed: metadata.value === null ? null : metadata.value[0],
     collateralFactorMantissa: metadata.value === null ? null : metadata.value[1].toString(10),
     // Field 4, not field 1. Decoding markets() as the legacy 3-tuple leaves the
     // collateral factor sitting where the liquidation threshold belongs.
     liquidationThresholdMantissa: metadata.value === null ? null : metadata.value[3].toString(10),
-    ...(metadata.reason === undefined ? {} : { metadataUnavailableReason: metadata.reason }),
+    ...(metadataReason === undefined ? {} : { metadataUnavailableReason: metadataReason }),
     vTokenBalance: readable ? balances.snap![1].toString(10) : null,
     exchangeRateMantissa: readable ? balances.snap![3].toString(10) : null,
     borrowBalance: readable && balances.borrow !== null ? balances.borrow.toString(10) : null,

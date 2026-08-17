@@ -41,7 +41,17 @@ import { decideVerdict, fail, orderSteps, pass, skip } from "./steps.js";
 import type { Step, Verdict } from "./steps.js";
 import { EvidenceUnavailableError, fetchEvidenceBytes } from "./uri.js";
 import type { FetchOptions } from "./uri.js";
-import type { AuthorityIR, EvidenceArtifact } from "./types.js";
+import type { AuthorityIR, EvidenceArtifact, TrialEvidence } from "./types.js";
+import {
+  artifactChecks,
+  isFlatArtifact,
+  artifactModificationLabel,
+  artifactReferenceModelId,
+  artifactReferenceModelVersion,
+  artifactResult,
+  artifactStateModified,
+  artifactTrialSpecHash,
+} from "./artifact-view.js";
 
 /** ERC-8004 identity registries are ERC-721s, so ownership is how existence is probed. */
 const ERC721_ABI = [
@@ -114,7 +124,8 @@ export interface VerificationReport {
 /** Loaded evidence, or the reason there is none to work with. */
 interface EvidenceState {
   integrity?: EvidenceIntegrityResult;
-  artifact?: EvidenceArtifact;
+  /** Either the flat form or the richer `mandate.trial-evidence/1`, whichever was published. */
+  artifact?: EvidenceArtifact | TrialEvidence;
   bundle?: EvidenceBundle;
   /** Set when the document could not be retrieved or read at all. */
   unavailable?: string;
@@ -271,11 +282,11 @@ function stepTrialReceipt(
   }
 
   if (evidence.artifact !== undefined) {
-    if (evidence.artifact.trialSpecHash.toLowerCase() !== receipt.trialSpecHash.toLowerCase()) {
+    if (artifactTrialSpecHash(evidence.artifact).toLowerCase() !== receipt.trialSpecHash.toLowerCase()) {
       return fail(
         "trial receipt",
         "the evidence artifact names a different TrialSpec than the receipt does",
-        { "on chain": receipt.trialSpecHash, "in artifact": evidence.artifact.trialSpecHash },
+        { "on chain": receipt.trialSpecHash, "in artifact": artifactTrialSpecHash(evidence.artifact) },
       );
     }
   }
@@ -438,29 +449,29 @@ function stepReferenceResult(
     }
   }
 
-  if (replay.derived !== artifact.result) {
+  if (replay.derived !== artifactResult(artifact)) {
     return fail(
       "reference result",
-      `the evidence supports ${replay.derived} but the artifact claims ${artifact.result}: ${replay.reasons.join("; ")}`,
+      `the evidence supports ${replay.derived} but the artifact claims ${artifactResult(artifact)}: ${replay.reasons.join("; ")}`,
     );
   }
 
   const onChainResult = receipt.passed ? "PASS" : "FAIL";
-  if (artifact.result !== onChainResult) {
+  if (artifactResult(artifact) !== onChainResult) {
     return fail("reference result", "the artifact's result contradicts the receipt published on chain", {
       "on chain": onChainResult,
-      "in artifact": artifact.result,
+      "in artifact": artifactResult(artifact),
     });
   }
 
   const detail: Record<string, string> = {
-    result: artifact.result,
-    "reference model": `${artifact.referenceOutcome.modelId}@${artifact.referenceOutcome.modelVersion}`,
-    checks: `${artifact.checks.length} recorded, ${replay.failedCheckIds.length} failing`,
+    result: artifactResult(artifact),
+    "reference model": `${artifactReferenceModelId(artifact)}@${artifactReferenceModelVersion(artifact)}`,
+    checks: `${artifactChecks(artifact).length} recorded, ${replay.failedCheckIds.length} failing`,
     expectations: `${replay.expectations.filter((entry) => entry.status === "MATCHED").length}/${replay.expectations.length} matched`,
   };
-  if (artifact.environment.stateModified) {
-    detail["environment"] = artifact.environment.modificationLabel ?? "state modified";
+  if (artifactStateModified(artifact)) {
+    detail["environment"] = artifactModificationLabel(artifact) ?? "state modified";
   }
 
   return pass(
@@ -548,7 +559,14 @@ async function gatherTrial(
     receipt,
     chainId: options.target.chainId,
     evidence,
-    replay: evidence.artifact === undefined ? undefined : replayEvaluation(evidence.artifact),
+    // The richer form carries its post-state as a raw protocol observation
+    // rather than as named readings, so the flat replay cannot run over it.
+    // Left undefined so the reference-result step SKIPs with a stated reason
+    // instead of passing on a comparison that never happened.
+    replay:
+      evidence.artifact !== undefined && isFlatArtifact(evidence.artifact)
+        ? replayEvaluation(evidence.artifact)
+        : undefined,
     identityProbe,
   };
 }

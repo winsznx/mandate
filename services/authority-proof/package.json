@@ -1,0 +1,26 @@
+{
+  "name": "@mandate/authority-proof",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prove": "tsx src/prove.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@altananetwork/sdk": "0.7.1",
+    "@mandate/altana": "workspace:*",
+    "@mandate/authority-compiler": "workspace:*",
+    "@mandate/authority-ir": "workspace:*",
+    "@mandate/domain": "workspace:*",
+    "viem": "2.55.17"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

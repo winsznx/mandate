@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "mandate.protocol-safety-profile/1",
+  "profileId": "venus-vusdt-repayborrow-97",
+  "chainId": 97,
+  "protocolId": "venus",
+  "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+  "selector": "0x0e752702",
+  "signature": "repayBorrow(uint256)",
+  "runtimeCodeHash": "0x064370ceee002fe570b8800e8f1b69231a6448667dc40f65e58047778d408813",
+  "implementation": "0x73ff75092da265b87b25ffb943c47c90419a04a6",
+  "implementationCodeHash": "0x07be7d50696863d816c35478f99af270669c02c9c76be536a19682b4f02d3192",
+  "proxyType": "DELEGATOR",
+  "upgradeable": true,
+  "upgradeAdmin": "0xce10739590001705f7ff231611ba4a48b2820327",
+  "arbitraryRecipient": false,
+  "arbitraryAsset": false,
+  "arbitraryDownstreamTarget": false,
+  "delegateCallReachable": false,
+  "multicallReachable": false,
+  "createsPersistentApproval": true,
+  "callbackReachable": false,
+  "verdict": "DIRECT_SAFE",
+  "supportedConstraints": [
+    "target",
+    "selector",
+    "spend-cap",
+    "expiry"
+  ],
+  "unresolvedRisks": [],
+  "analyzedAtBlock": "125585726",
+  "analyzedAt": 1786959958,
+  "analyzerVersion": "1.0.0"
+}

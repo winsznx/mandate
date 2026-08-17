@@ -18,6 +18,7 @@
  * leaves its status where it was, and the manifest reports that, rather than the
  * run inventing a terminal result for work it did not finish.
  */
+import { randomBytes } from "node:crypto";
 import { createClient as createAltanaClient, BNB_TESTNET, signerFromPrivateKey } from "@altananetwork/sdk";
 import type { GrantSessionResult } from "@altananetwork/sdk";
 import {
@@ -348,9 +349,10 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   });
   result.grantedAuthority = grantedAuthority;
 
-  const sessionSigner = signerFromPrivateKey(
-    `0x${Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex")}`,
-  );
+  // A fresh keypair every run. Altana revocation is monotonic, so a revoked
+  // keyId can never be reactivated and reusing one would produce a session that
+  // silently cannot act.
+  const sessionSigner = signerFromPrivateKey(`0x${randomBytes(32).toString("hex")}`);
 
   const compiled = compileAuthority({
     tested: context.testedAuthority,

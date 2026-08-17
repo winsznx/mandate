@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { canonicalHash, ProtocolSafetyProfileSchema } from "@mandate/domain";
 import type {
   AgentRef,
+  ApprovalEffect,
   AuthorityIR,
   CanonicalValue,
   ProtocolSafetyProfile,
@@ -146,6 +147,29 @@ export interface AuthorityInputs {
 }
 
 /**
+ * The standing approval the mandate creates, as a declared durable effect.
+ *
+ * It appears in the TESTED envelope as well as in the granted one. The subset
+ * comparator requires every granted approval to be covered by a tested one, and
+ * that rule is right: an allowance the trial never exercised is authority
+ * nobody measured. Declaring it here is what makes the ceiling explicit rather
+ * than making the comparator lenient.
+ */
+function standingApproval(inputs: AuthorityInputs, maxAmount: bigint): ApprovalEffect {
+  return {
+    token: inputs.underlying,
+    spender: inputs.vToken,
+    maxAmount: maxAmount.toString(10),
+    createdBy: "ADMIN",
+    // The account force-zeroes session-path approvals but never touches an
+    // admin-path one, so revocation leaves this behind and the user has to be
+    // told.
+    expiresWithSession: false,
+    cleanupRequired: true,
+  };
+}
+
+/**
  * The envelope the trial certifies.
  *
  * `wallet` is the zero address because a tested authority belongs to an agent
@@ -174,7 +198,10 @@ export function buildTestedAuthority(inputs: AuthorityInputs): AuthorityIR {
       { token: inputs.underlying, limit: DAILY_SPEND_CAP_RAW.toString(10), period: "day" },
       { token: "NATIVE", limit: NATIVE_DAILY_CAP_WEI.toString(10), period: "day" },
     ],
-    durableEffects: emptyDurableEffects(),
+    durableEffects: {
+      ...emptyDurableEffects(),
+      approvals: [standingApproval(inputs, standingAllowancePlan().standingAllowance)],
+    },
     downstreamPolicy: closedDownstreamPolicy(),
     lifetime: { maxDurationSeconds: MANDATE_LIFETIME_SECONDS },
   };
@@ -196,21 +223,8 @@ export function buildGrantedAuthority(
     ...tested,
     subject: { ...tested.subject, wallet: inputs.wallet.toLowerCase() as Address },
     durableEffects: {
-      approvals: [
-        {
-          token: inputs.underlying,
-          spender: inputs.vToken,
-          maxAmount: inputs.standingAllowance.toString(10),
-          createdBy: "ADMIN",
-          // The account force-zeroes session-path approvals but never touches an
-          // admin-path one, so revocation leaves this behind and the user has to
-          // be told.
-          expiresWithSession: false,
-          cleanupRequired: true,
-        },
-      ],
-      signatureCheckers: [],
-      other: [],
+      ...emptyDurableEffects(),
+      approvals: [standingApproval(inputs, inputs.standingAllowance)],
     },
     lifetime: { maxDurationSeconds: MANDATE_LIFETIME_SECONDS, notAfter: inputs.expiry },
   };

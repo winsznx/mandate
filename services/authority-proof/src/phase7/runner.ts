@@ -168,293 +168,319 @@ export async function runPhase7(network: NetworkName, env = process.env): Promis
     return finish("BLOCKED", 1);
   };
 
-  if (haltsRun(blockers)) return stopBlocked();
+  /**
+   * The lanes, wrapped so a crash still leaves a record.
+   *
+   * An exception escaping here would take the journal with it, and the one
+   * situation where the manifest matters most is a process that died between
+   * submitting a transaction and seeing its receipt.
+   */
+  const execute = async (): Promise<RunOutcome> => {
+    if (haltsRun(blockers)) return stopBlocked();
 
-  // ---- the read-only lane --------------------------------------------------
-  journal.begin("reference-agent");
-  const executor = createReferenceAgent(config.chainId, config.rpcUrl);
-  if (!executor.skills.some((skill) => skill.id === RESTORE_HEALTH_FACTOR_SKILL_ID)) {
-    journal.fail("reference-agent", `${executor.slug} does not declare ${RESTORE_HEALTH_FACTOR_SKILL_ID}`);
-    blockers.push(
-      writeBlocker("REFERENCE_AGENT_UNAVAILABLE", [
-        ["agent", executor.slug],
-        ["expectedSkill", RESTORE_HEALTH_FACTOR_SKILL_ID],
-      ]),
-    );
-    return stopBlocked();
-  }
-  const agentVersionHash = agentVersionHashOf(executor);
-  journal.pass("reference-agent", `${executor.slug} declares ${executor.skills.length} skill(s)`, [
-    { label: "agentVersionHash", value: agentVersionHash },
-    { label: "endpoint", value: AGENT_PUBLISHED_ENDPOINT },
-  ]);
+    // ---- the read-only lane --------------------------------------------------
+    journal.begin("reference-agent");
+    const executor = createReferenceAgent(config.chainId, config.rpcUrl);
+    if (!executor.skills.some((skill) => skill.id === RESTORE_HEALTH_FACTOR_SKILL_ID)) {
+      journal.fail("reference-agent", `${executor.slug} does not declare ${RESTORE_HEALTH_FACTOR_SKILL_ID}`);
+      blockers.push(
+        writeBlocker("REFERENCE_AGENT_UNAVAILABLE", [
+          ["agent", executor.slug],
+          ["expectedSkill", RESTORE_HEALTH_FACTOR_SKILL_ID],
+        ]),
+      );
+      return stopBlocked();
+    }
+    const agentVersionHash = agentVersionHashOf(executor);
+    journal.pass("reference-agent", `${executor.slug} declares ${executor.skills.length} skill(s)`, [
+      { label: "agentVersionHash", value: agentVersionHash },
+      { label: "endpoint", value: AGENT_PUBLISHED_ENDPOINT },
+    ]);
 
-  journal.begin("trial-spec");
-  const profile = loadVenusProfile(config.chainId);
-  const protocolVersionHash = profile.implementationCodeHash ?? profile.runtimeCodeHash;
-  const agentIdentity = { identityRegistry: config.identityRegistry, agentId: config.agentId };
-  const testedAuthority = buildTestedAuthority({
-    chainId: config.chainId,
-    vToken: config.venus.vToken,
-    underlying: config.venus.underlying,
-    protocolVersionHash,
-    agentIdentity,
-    agentVersionHash,
-  });
-
-  const pinBlock = preflight.facts.blockNumber - FORK_PIN_DEPTH;
-  const parameters = await readMarketParameters(client, config.venus, pinBlock);
-  const policy = referencePolicy();
-  const sizing = solvePosition({
-    parameters,
-    openingHealthFactorMantissa: OPENING_HEALTH_FACTOR_MANTISSA,
-    targetHealthFactorMantissa: policy.targetHealthFactorMantissa,
-    desiredRepayRaw: DESIRED_REPAY_RAW,
-    underlyingUnit: 10n ** BigInt(config.venus.underlyingDecimals),
-  });
-  const build = buildScenario({
-    rpcUrl: config.rpcUrl,
-    deployment: config.venus,
-    blockNumber: pinBlock,
-    sizing,
-  });
-
-  const hashes = trialImplementationHashes();
-  const taskParameters = { account: build.scenario.account, market: config.venus.vToken };
-  const trialSpec = buildTrialSpec({
-    chainId: config.chainId,
-    snapshotBlock: pinBlock,
-    nonce: freshNonce(),
-    agentIdentity,
-    agentVersionHash,
-    registrationUriHash: canonicalHash(config.agentRegistrationUri),
-    endpointHash: canonicalHash(AGENT_PUBLISHED_ENDPOINT),
-    skillHashes: skillHashesOf(executor),
-    testedAuthority,
-    scenarioId: build.scenario.scenarioId,
-    scenarioVersion: build.scenario.version,
-    scenarioHash: build.scenarioHash,
-    evaluatorCodeHash: hashes.evaluatorCodeHash,
-    referenceModelHash: hashes.referenceModelHash,
-    taskInputHash: canonicalHash(taskParameters),
-    taskParametersHash: canonicalHash({
-      policyId: policy.policyId,
-      interventionThresholdMantissa: policy.interventionThresholdMantissa.toString(10),
-      targetHealthFactorMantissa: policy.targetHealthFactorMantissa.toString(10),
-      minimumRepayUsdMantissa: policy.minimumRepayUsdMantissa.toString(10),
-      amountToleranceBps: policy.amountToleranceBps,
-    }),
-    createdAt: startedAt,
-  });
-  const trialSpecHash = canonicalHash(trialSpec as unknown as CanonicalValue);
-
-  lines.push(
-    `${"scenario".padEnd(32)}supply ${sizing.supplyRaw} raw, borrow ${sizing.borrowRaw} raw, implies a ${sizing.impliedRepayRaw} raw repayment`,
-  );
-  journal.pass("trial-spec", `frozen at ${trialSpecHash}`, [
-    { label: "trialSpecHash", value: trialSpecHash },
-    { label: "scenarioHash", value: build.scenarioHash },
-    { label: "snapshotBlock", value: pinBlock.toString(10) },
-    { label: "testedAuthorityHash", value: authorityHash(testedAuthority) },
-  ]);
-
-  journal.begin("trial-run");
-  const outcome = await runTrial(
-    buildTrialRequest({
+    journal.begin("trial-spec");
+    const profile = loadVenusProfile(config.chainId);
+    const protocolVersionHash = profile.implementationCodeHash ?? profile.runtimeCodeHash;
+    const agentIdentity = { identityRegistry: config.identityRegistry, agentId: config.agentId };
+    const testedAuthority = buildTestedAuthority({
       chainId: config.chainId,
-      build,
-      trialSpec,
-      parameters: taskParameters,
-    }),
-  );
+      vToken: config.venus.vToken,
+      underlying: config.venus.underlying,
+      protocolVersionHash,
+      agentIdentity,
+      agentVersionHash,
+    });
 
-  if (outcome.status === "ERROR") {
-    // A trial that could not run halts everything: there is no evidence to
-    // publish and no verdict to derive a mandate from, whatever else is present.
-    journal.fail("trial-run", `${outcome.kind}: ${outcome.detail}`);
-    blockers.push(
-      fatalBlocker("TRIAL_DID_NOT_RUN", [
-        ["kind", outcome.kind],
-        ["detail", outcome.detail],
-        ["pausesQueue", String(outcome.pausesQueue)],
-      ]),
+    const pinBlock = preflight.facts.blockNumber - FORK_PIN_DEPTH;
+    const parameters = await readMarketParameters(client, config.venus, pinBlock);
+    const policy = referencePolicy();
+    const sizing = solvePosition({
+      parameters,
+      openingHealthFactorMantissa: OPENING_HEALTH_FACTOR_MANTISSA,
+      targetHealthFactorMantissa: policy.targetHealthFactorMantissa,
+      desiredRepayRaw: DESIRED_REPAY_RAW,
+      underlyingUnit: 10n ** BigInt(config.venus.underlyingDecimals),
+    });
+    const build = buildScenario({
+      rpcUrl: config.rpcUrl,
+      deployment: config.venus,
+      blockNumber: pinBlock,
+      sizing,
+    });
+
+    const hashes = trialImplementationHashes();
+    const taskParameters = { account: build.scenario.account, market: config.venus.vToken };
+    const trialSpec = buildTrialSpec({
+      chainId: config.chainId,
+      snapshotBlock: pinBlock,
+      nonce: freshNonce(),
+      agentIdentity,
+      agentVersionHash,
+      registrationUriHash: canonicalHash(config.agentRegistrationUri),
+      endpointHash: canonicalHash(AGENT_PUBLISHED_ENDPOINT),
+      skillHashes: skillHashesOf(executor),
+      testedAuthority,
+      scenarioId: build.scenario.scenarioId,
+      scenarioVersion: build.scenario.version,
+      scenarioHash: build.scenarioHash,
+      evaluatorCodeHash: hashes.evaluatorCodeHash,
+      referenceModelHash: hashes.referenceModelHash,
+      taskInputHash: canonicalHash(taskParameters),
+      taskParametersHash: canonicalHash({
+        policyId: policy.policyId,
+        interventionThresholdMantissa: policy.interventionThresholdMantissa.toString(10),
+        targetHealthFactorMantissa: policy.targetHealthFactorMantissa.toString(10),
+        minimumRepayUsdMantissa: policy.minimumRepayUsdMantissa.toString(10),
+        amountToleranceBps: policy.amountToleranceBps,
+      }),
+      createdAt: startedAt,
+    });
+    const trialSpecHash = canonicalHash(trialSpec as unknown as CanonicalValue);
+
+    lines.push(
+      `${"scenario".padEnd(32)}supply ${sizing.supplyRaw} raw, borrow ${sizing.borrowRaw} raw, implies a ${sizing.impliedRepayRaw} raw repayment`,
     );
-    return stopBlocked();
-  }
+    journal.pass("trial-spec", `frozen at ${trialSpecHash}`, [
+      { label: "trialSpecHash", value: trialSpecHash },
+      { label: "scenarioHash", value: build.scenarioHash },
+      { label: "snapshotBlock", value: pinBlock.toString(10) },
+      { label: "testedAuthorityHash", value: authorityHash(testedAuthority) },
+    ]);
 
-  journal.pass(
-    "trial-run",
-    `${outcome.evidence.evaluator.result} on a ${outcome.evidence.environment.rpcSourceClass} fork at block ${outcome.evidence.environment.forkBlock}`,
-    [
-      { label: "forkBlock", value: outcome.evidence.environment.forkBlock },
-      { label: "rpcSourceClass", value: outcome.evidence.environment.rpcSourceClass },
-      { label: "evidenceBundleHash", value: outcome.bundleHash },
-      { label: "trialEvidenceHash", value: outcome.evidenceHash },
-    ],
-  );
+    journal.begin("trial-run");
+    const outcome = await runTrial(
+      buildTrialRequest({
+        chainId: config.chainId,
+        build,
+        trialSpec,
+        parameters: taskParameters,
+      }),
+    );
 
-  journal.begin("reference-replay");
-  const replay = replayTrialVerdict(outcome.evidence);
-  const replayAgrees = replay.derived === outcome.evidence.evaluator.result;
-  const replayEvidence = replay.reasons.map((reason, index) => ({
-    label: `reason-${index}`,
-    value: reason,
-  }));
-  if (replayAgrees) {
+    if (outcome.status === "ERROR") {
+      // A trial that could not run halts everything: there is no evidence to
+      // publish and no verdict to derive a mandate from, whatever else is present.
+      journal.fail("trial-run", `${outcome.kind}: ${outcome.detail}`);
+      blockers.push(
+        fatalBlocker("TRIAL_DID_NOT_RUN", [
+          ["kind", outcome.kind],
+          ["detail", outcome.detail],
+          ["pausesQueue", String(outcome.pausesQueue)],
+        ]),
+      );
+      return stopBlocked();
+    }
+
     journal.pass(
-      "reference-replay",
-      `recomputed ${replay.derived} from the evidence without reading the stated result`,
-      replayEvidence,
+      "trial-run",
+      `${outcome.evidence.evaluator.result} on a ${outcome.evidence.environment.rpcSourceClass} fork at block ${outcome.evidence.environment.forkBlock}`,
+      [
+        { label: "forkBlock", value: outcome.evidence.environment.forkBlock },
+        { label: "rpcSourceClass", value: outcome.evidence.environment.rpcSourceClass },
+        { label: "evidenceBundleHash", value: outcome.bundleHash },
+        { label: "trialEvidenceHash", value: outcome.evidenceHash },
+      ],
     );
-  } else {
-    journal.fail(
-      "reference-replay",
-      `the evidence supports ${replay.derived} but the run recorded ${outcome.evidence.evaluator.result}`,
-      replayEvidence,
-    );
-  }
 
-  journal.begin("trial-verdict");
-  const passed = outcome.evidence.evaluator.result === "PASS" && replayAgrees;
-  trial = {
-    trialSpecHash,
-    testedAuthorityHash: outcome.testedAuthorityHash,
-    evidenceBundleHash: outcome.bundleHash,
-    trialEvidenceHash: outcome.evidenceHash,
-    scenarioHash: build.scenarioHash,
-    forkBlock: outcome.evidence.environment.forkBlock,
-    rpcSourceClass: outcome.evidence.environment.rpcSourceClass,
-    result: outcome.evidence.evaluator.result,
-    replayDerived: replay.derived,
+    journal.begin("reference-replay");
+    const replay = replayTrialVerdict(outcome.evidence);
+    const replayAgrees = replay.derived === outcome.evidence.evaluator.result;
+    const replayEvidence = replay.reasons.map((reason, index) => ({
+      label: `reason-${index}`,
+      value: reason,
+    }));
+    if (replayAgrees) {
+      journal.pass(
+        "reference-replay",
+        `recomputed ${replay.derived} from the evidence without reading the stated result`,
+        replayEvidence,
+      );
+    } else {
+      journal.fail(
+        "reference-replay",
+        `the evidence supports ${replay.derived} but the run recorded ${outcome.evidence.evaluator.result}`,
+        replayEvidence,
+      );
+    }
+
+    journal.begin("trial-verdict");
+    const passed = outcome.evidence.evaluator.result === "PASS" && replayAgrees;
+    trial = {
+      trialSpecHash,
+      testedAuthorityHash: outcome.testedAuthorityHash,
+      evidenceBundleHash: outcome.bundleHash,
+      trialEvidenceHash: outcome.evidenceHash,
+      scenarioHash: build.scenarioHash,
+      forkBlock: outcome.evidence.environment.forkBlock,
+      rpcSourceClass: outcome.evidence.environment.rpcSourceClass,
+      result: outcome.evidence.evaluator.result,
+      replayDerived: replay.derived,
+    };
+
+    const directory = artifactDirectoryFor(runId);
+    const emitted = await emitTrial(outcome, directory.absolute);
+    artifacts.push(
+      `${directory.relative}/evidence-bundle.json`,
+      `${directory.relative}/trial-evidence.json`,
+      `${directory.relative}/receipt-fields.json`,
+    );
+    void emitted;
+
+    if (!passed) {
+      // A failed trial can never back a live mandate; the registry enforces that
+      // on chain and there is nothing to gain by finding out the hard way.
+      journal.fail(
+        "trial-verdict",
+        `${outcome.evidence.evaluator.result} with replay ${replay.derived}: ${outcome.evidence.evaluator.failureReason ?? "no reason recorded"}`,
+      );
+      journal.skipRemaining("the trial did not pass, so no mandate may be derived from it");
+      lines.push("", `TRIAL DID NOT PASS: ${outcome.evidence.evaluator.failureReason ?? replay.reasons.join("; ")}`);
+      return finish("FAILED", 1);
+    }
+
+    journal.pass("trial-verdict", "PASS, and the replay agrees", [
+      { label: "result", value: outcome.evidence.evaluator.result },
+      { label: "replayDerived", value: replay.derived },
+    ]);
+
+    // ---- the boundary --------------------------------------------------------
+    if (blockers.length > 0) return stopBlocked();
+
+    if (!config.confirmed) {
+      journal.skipRemaining("PROOF_CONFIRM=1 was not set, so the run stopped before the first write");
+      lines.push(
+        "",
+        "Preflight passed and the trial produced a passing receipt. The next step publishes it on chain.",
+        "Granting a session spends real tBNB and cannot be undone.",
+        "Set PROOF_CONFIRM=1 to execute the write sequence.",
+        "",
+        "Halted before the first write. Nothing was published, granted or spent.",
+      );
+      return finish("INCOMPLETE", 0);
+    }
+
+    // ---- the write lane ------------------------------------------------------
+    const registry = config.registryAddress as Address;
+    const wallet = (config.walletAddress ?? preflight.facts.deployerAddress) as Address;
+    const evidenceURI = evidenceUriFor(config, runId, "evidence-bundle.json");
+
+    const receiptFields: ReceiptFields = {
+      identityRegistry: config.identityRegistry,
+      agentId: BigInt(config.agentId),
+      agentVersionHash,
+      trialSpecHash,
+      testedAuthorityHash: outcome.testedAuthorityHash,
+      scenarioHash: build.scenarioHash,
+      evaluatorHash: hashes.evaluatorCodeHash,
+      referenceModelHash: hashes.referenceModelHash,
+      evidenceHash: outcome.bundleHash,
+      snapshotBlock: pinBlock,
+      createdAt: BigInt(startedAt),
+      freshUntil: BigInt(startedAt + EVIDENCE_MAX_AGE_SECONDS),
+      passed: true,
+    };
+
+    const sequence = await runWriteSequence({
+      journal,
+      config,
+      client,
+      registry,
+      wallet,
+      profile,
+      testedAuthority,
+      allowance: preflight.facts.allowance,
+      receiptFields,
+      evidenceURI,
+      bucketStart: (preflight.facts as PreflightFacts).bucket?.bucketStart ?? 0n,
+      now: startedAt,
+      writeDisclosure: (input) => {
+        const relativePath = writeArtifact(runId, DISCLOSURE_FILENAME, disclosureDocument(input));
+        artifacts.push(relativePath);
+        return { uri: evidenceUriFor(config, runId, DISCLOSURE_FILENAME), relativePath };
+      },
+    });
+
+    executions.push(...sequence.executions);
+    receipt = sequence.receipt;
+    mandate = sequence.mandate;
+
+    if (sequence.haltReason !== undefined) {
+      journal.skipRemaining(`stopped: ${sequence.haltReason}`);
+      lines.push("", `STOPPED: ${sequence.haltReason}`);
+      return finish("FAILED", 1);
+    }
+
+    // ---- the independent check -----------------------------------------------
+    journal.begin("independent-verifier");
+    verifier = await runIndependentVerifier({
+      config,
+      registry,
+      receiptId: receipt?.receiptId,
+      mandateId: mandate?.mandateId,
+      disclosureUri: mandate?.disclosureURI,
+    });
+    const verifierEvidence = [
+      { label: "trialVerdict", value: verifier.trialVerdict },
+      { label: "mandateVerdict", value: verifier.mandateVerdict },
+    ];
+    if (verifier.trialExitCode === 0 && verifier.mandateExitCode === 0) {
+      journal.pass("independent-verifier", "VERIFIED from chain and evidence alone", verifierEvidence);
+    } else {
+      journal.fail(
+        "independent-verifier",
+        `trial ${verifier.trialVerdict}, mandate ${verifier.mandateVerdict}`,
+        verifierEvidence,
+      );
+    }
+
+    journal.begin("proof-manifest");
+    const status: Phase7RunStatus = journal
+      .all()
+      .filter((step: Phase7StepResult) => step.id !== "proof-manifest")
+      .every((step) => step.status === "PASS")
+      ? "PASS"
+      : "FAILED";
+    journal.pass("proof-manifest", `written to ${artifactDirectoryFor(runId).relative}/${MANIFEST_FILENAME}`);
+
+    lines.push("", summarizeSteps(journal.all()));
+    return finish(status, status === "PASS" ? 0 : 1);
   };
 
-  const directory = artifactDirectoryFor(runId);
-  const emitted = await emitTrial(outcome, directory.absolute);
-  artifacts.push(
-    `${directory.relative}/evidence-bundle.json`,
-    `${directory.relative}/trial-evidence.json`,
-    `${directory.relative}/receipt-fields.json`,
-  );
-  void emitted;
-
-  if (!passed) {
-    // A failed trial can never back a live mandate; the registry enforces that
-    // on chain and there is nothing to gain by finding out the hard way.
-    journal.fail(
-      "trial-verdict",
-      `${outcome.evidence.evaluator.result} with replay ${replay.derived}: ${outcome.evidence.evaluator.failureReason ?? "no reason recorded"}`,
-    );
-    journal.skipRemaining("the trial did not pass, so no mandate may be derived from it");
-    lines.push("", `TRIAL DID NOT PASS: ${outcome.evidence.evaluator.failureReason ?? replay.reasons.join("; ")}`);
-    return finish("FAILED", 1);
-  }
-
-  journal.pass("trial-verdict", "PASS, and the replay agrees", [
-    { label: "result", value: outcome.evidence.evaluator.result },
-    { label: "replayDerived", value: replay.derived },
-  ]);
-
-  // ---- the boundary --------------------------------------------------------
-  if (blockers.length > 0) return stopBlocked();
-
-  if (!config.confirmed) {
-    journal.skipRemaining("PROOF_CONFIRM=1 was not set, so the run stopped before the first write");
+  try {
+    return await execute();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const inFlight = journal.resumePoint();
+    if (inFlight !== undefined && inFlight.status === "RUNNING") {
+      journal.fail(inFlight.id, `the run crashed inside this step: ${message}`);
+    }
     lines.push(
       "",
-      "Preflight passed and the trial produced a passing receipt. The next step publishes it on chain.",
-      "Granting a session spends real tBNB and cannot be undone.",
-      "Set PROOF_CONFIRM=1 to execute the write sequence.",
-      "",
-      "Halted before the first write. Nothing was published, granted or spent.",
+      `CRASHED in ${inFlight?.id ?? "an unrecorded step"}: ${message}`,
+      "Nothing is resumed automatically. The manifest names the step that was in flight;",
+      "read the on-chain state it lists before starting another run.",
     );
-    return finish("INCOMPLETE", 0);
+    return finish("INCOMPLETE", 1);
   }
-
-  // ---- the write lane ------------------------------------------------------
-  const registry = config.registryAddress as Address;
-  const wallet = (config.walletAddress ?? preflight.facts.deployerAddress) as Address;
-  const evidenceURI = evidenceUriFor(config, runId, "evidence-bundle.json");
-
-  const receiptFields: ReceiptFields = {
-    identityRegistry: config.identityRegistry,
-    agentId: BigInt(config.agentId),
-    agentVersionHash,
-    trialSpecHash,
-    testedAuthorityHash: outcome.testedAuthorityHash,
-    scenarioHash: build.scenarioHash,
-    evaluatorHash: hashes.evaluatorCodeHash,
-    referenceModelHash: hashes.referenceModelHash,
-    evidenceHash: outcome.bundleHash,
-    snapshotBlock: pinBlock,
-    createdAt: BigInt(startedAt),
-    freshUntil: BigInt(startedAt + EVIDENCE_MAX_AGE_SECONDS),
-    passed: true,
-  };
-
-  const sequence = await runWriteSequence({
-    journal,
-    config,
-    client,
-    registry,
-    wallet,
-    profile,
-    testedAuthority,
-    allowance: preflight.facts.allowance,
-    receiptFields,
-    evidenceURI,
-    bucketStart: (preflight.facts as PreflightFacts).bucket?.bucketStart ?? 0n,
-    now: startedAt,
-    writeDisclosure: (input) => {
-      const relativePath = writeArtifact(runId, DISCLOSURE_FILENAME, disclosureDocument(input));
-      artifacts.push(relativePath);
-      return { uri: evidenceUriFor(config, runId, DISCLOSURE_FILENAME), relativePath };
-    },
-  });
-
-  executions.push(...sequence.executions);
-  receipt = sequence.receipt;
-  mandate = sequence.mandate;
-
-  if (sequence.haltReason !== undefined) {
-    journal.skipRemaining(`stopped: ${sequence.haltReason}`);
-    lines.push("", `STOPPED: ${sequence.haltReason}`);
-    return finish("FAILED", 1);
-  }
-
-  // ---- the independent check -----------------------------------------------
-  journal.begin("independent-verifier");
-  verifier = await runIndependentVerifier({
-    config,
-    registry,
-    receiptId: receipt?.receiptId,
-    mandateId: mandate?.mandateId,
-    disclosureUri: mandate?.disclosureURI,
-  });
-  const verifierEvidence = [
-    { label: "trialVerdict", value: verifier.trialVerdict },
-    { label: "mandateVerdict", value: verifier.mandateVerdict },
-  ];
-  if (verifier.trialExitCode === 0 && verifier.mandateExitCode === 0) {
-    journal.pass("independent-verifier", "VERIFIED from chain and evidence alone", verifierEvidence);
-  } else {
-    journal.fail(
-      "independent-verifier",
-      `trial ${verifier.trialVerdict}, mandate ${verifier.mandateVerdict}`,
-      verifierEvidence,
-    );
-  }
-
-  journal.begin("proof-manifest");
-  const status: Phase7RunStatus = journal
-    .all()
-    .filter((step: Phase7StepResult) => step.id !== "proof-manifest")
-    .every((step) => step.status === "PASS")
-    ? "PASS"
-    : "FAILED";
-  journal.pass("proof-manifest", `written to ${artifactDirectoryFor(runId).relative}/${MANIFEST_FILENAME}`);
-
-  lines.push("", summarizeSteps(journal.all()));
-  return finish(status, status === "PASS" ? 0 : 1);
 }
 
 /**

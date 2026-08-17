@@ -13,8 +13,40 @@
  * published, so a trial whose evidence does not support its own verdict never
  * reaches a receipt.
  */
-import type { TrialEvidence } from "@mandate/domain";
 import type { Address } from "viem";
+
+/**
+ * Exactly what the replay reads, and nothing else.
+ *
+ * Declared structurally rather than as `TrialEvidence` so the dependency is the
+ * evidence a verdict rests on rather than the whole document. A `TrialEvidence`
+ * satisfies it, and a test can state a case in six lines instead of forty.
+ */
+export interface ReplayableMarket {
+  readonly vToken: string;
+  readonly borrowBalance: string | null;
+}
+
+export interface ReplayableEvidence {
+  readonly evaluator: {
+    readonly checks: readonly {
+      readonly checkId: string;
+      readonly status: string;
+      readonly inconclusiveReason?: string | undefined;
+    }[];
+  };
+  readonly reference: {
+    readonly inputs: { readonly actionableMarket: string };
+    readonly output: {
+      readonly expectedAction: { readonly amount: string } | null;
+      readonly amountToleranceBps: number;
+    };
+  };
+  readonly observations: {
+    readonly preState: { readonly markets: readonly ReplayableMarket[] };
+    readonly postState: { readonly markets: readonly ReplayableMarket[] };
+  };
+}
 
 export interface TrialReplayResult {
   /** The outcome the evidence supports, computed without reading `evaluator.result`. */
@@ -26,7 +58,7 @@ export interface TrialReplayResult {
 }
 
 function borrowIn(
-  observation: TrialEvidence["observations"]["preState"],
+  observation: { readonly markets: readonly ReplayableMarket[] },
   market: Address,
 ): bigint | null {
   const entry = observation.markets.find(
@@ -55,7 +87,7 @@ function withinTolerance(observed: bigint, expected: bigint, toleranceBps: numbe
  *     moved by that amount within the disclosed tolerance. An artifact can claim
  *     a repayment; only the two observations show one.
  */
-export function replayTrialVerdict(evidence: TrialEvidence): TrialReplayResult {
+export function replayTrialVerdict(evidence: ReplayableEvidence): TrialReplayResult {
   const reasons: string[] = [];
 
   const failedCheckIds = evidence.evaluator.checks

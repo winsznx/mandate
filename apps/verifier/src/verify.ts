@@ -40,6 +40,7 @@ import { replayRichEvidence } from "./replay-rich.js";
 import { healthFactorModelRunner } from "./reference-binding.js";
 import type { ReplayResult } from "./replay.js";
 import { decideVerdict, fail, orderSteps, pass, skip } from "./steps.js";
+import { stepRejectedIntents } from "./steps-rejected.js";
 import type { Step, Verdict } from "./steps.js";
 import { EvidenceUnavailableError, fetchEvidenceBytes } from "./uri.js";
 import type { FetchOptions } from "./uri.js";
@@ -780,6 +781,7 @@ export async function verifyMandate(mandateId: Hex, options: VerifyOptions): Pro
       sessionStep,
       stepAllowedExecution(allowed, disclosure !== undefined),
       stepBlockedExecution(blocked, disclosure !== undefined),
+      stepRejectedIntents(disclosure?.rejectedIntents ?? [], disclosure !== undefined),
     ],
     notes,
     executions: [...allowed, ...blocked],

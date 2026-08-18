@@ -45,6 +45,7 @@ import { authorityHash } from "@mandate/authority-ir";
 import { compileAuthority, permissionsFor, profileKey } from "@mandate/authority-compiler";
 import { deriveMandateId, deriveReceiptId } from "@mandate/domain";
 import type { AuthorityIR, ProtocolSafetyProfile } from "@mandate/domain";
+import { executeExpectingOutcome } from "./expect-rejection.js";
 import { judgeRejection, type AccountViewAtAttempt } from "./attribution.js";
 import type { Phase7Config } from "./config.js";
 import type { ExecutionRecord, MandateSummary, ReceiptSummary } from "./manifest.js";
@@ -428,6 +429,14 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
 
   // ---- grant the session ---------------------------------------------------
   journal.begin("grant-session");
+
+  // The relay rejects a quote for an address it has never seen with "quotes for
+  // unknown accounts are not accepted". `createWallet` registers the signer's
+  // address as a smart account counterfactually — no transaction, no new
+  // address, because the account is an EIP-7702 delegation of this same EOA.
+  // Skipping it makes a funded, position-holding wallet look like a stranger.
+  await altana.createWallet({ signer: adminSigner });
+
   const permissions = permissionsFor(grantedAuthority);
   const session: GrantSessionResult = await altana.grantSession({
     wallet: { address: wallet },
@@ -628,11 +637,13 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     amountRaw: BREACH_REPAY_RAW,
   };
 
-  const breach = await altana.execute({
-    session,
-    chainId: config.chainId,
-    calls: [{ to: config.venus.vToken, data: breachData }],
-  });
+  const breach = await executeExpectingOutcome("REJECTION", () =>
+    altana.execute({
+      session,
+      chainId: config.chainId,
+      calls: [{ to: config.venus.vToken, data: breachData }],
+    }),
+  );
 
   const breachRecord: ExecutionRecord = {
     step: "cap-breach-attempt",
@@ -640,22 +651,25 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     target: config.venus.vToken,
     selector: REPAY_BORROW_SELECTOR,
     amountRaw: BREACH_REPAY_RAW.toString(10),
-    status: breach.status === "CONFIRMED" ? "SUCCESS" : "REVERTED",
+    status: breach.outcome === "SUCCESS" ? "SUCCESS" : "REVERTED",
     ...(breach.transactionHash === undefined ? {} : { txHash: breach.transactionHash }),
   };
   executions.push(breachRecord);
 
-  if (breach.status === "CONFIRMED") {
+  if (breach.outcome === "SUCCESS") {
     journal.fail(
       "cap-breach-attempt",
       "the breach succeeded; the cumulative bucket cap was not enforced",
-      [{ label: "callsId", value: breach.callsId }],
+      [{ label: "callsId", value: breach.callsId ?? "none" }],
     );
     result.haltReason = "the spend cap did not reject the breach";
     return result;
   }
   journal.pass("cap-breach-attempt", `the breach was rejected (${breach.status})`, [
-    { label: "callsId", value: breach.callsId },
+    { label: "callsId", value: breach.callsId ?? "none" },
+    // Recovered straight from the throw, so this holds even when the relay
+    // never surfaces raw revert bytes for a receipt lookup.
+    { label: "rejectionName", value: breach.rejectionName ?? "unrecovered" },
     { label: "allowanceAtAttemptRaw", value: view.allowanceRaw.toString(10) },
     { label: "spentInBucketRaw", value: view.spentInBucketRaw.toString(10) },
     { label: "capRaw", value: view.spendLimitRaw.toString(10) },
@@ -671,6 +685,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     expected: "SPEND_CAP",
     view,
     ...(breachRevert.data === undefined ? {} : { revertData: breachRevert.data }),
+    ...(breach.rejectionName === undefined ? {} : { thrownRejectionName: breach.rejectionName }),
   });
 
   breachRecord.revertSelector = selectorOfRevert(breachRevert.data) ?? "";
@@ -740,18 +755,20 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
       amountRaw: 1n,
     };
 
-    const outcome = await altana.execute({
-      session,
-      chainId: config.chainId,
-      calls: [{ to: attempt.target, data: attempt.data }],
-    });
+    const outcome = await executeExpectingOutcome("REJECTION", () =>
+      altana.execute({
+        session,
+        chainId: config.chainId,
+        calls: [{ to: attempt.target, data: attempt.data }],
+      }),
+    );
 
     const record: ExecutionRecord = {
       step: attempt.step,
       label: attempt.label,
       target: attempt.target,
       selector: attempt.selector,
-      status: outcome.status === "CONFIRMED" ? "SUCCESS" : "REVERTED",
+      status: outcome.outcome === "SUCCESS" ? "SUCCESS" : "REVERTED",
       ...(outcome.transactionHash === undefined ? {} : { txHash: outcome.transactionHash }),
     };
 
@@ -763,6 +780,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
       expected: "OUT_OF_SCOPE_CALL",
       view: attemptView,
       ...(recovered.data === undefined ? {} : { revertData: recovered.data }),
+      ...(outcome.rejectionName === undefined ? {} : { thrownRejectionName: outcome.rejectionName }),
     });
 
     record.revertSelector = selectorOfRevert(recovered.data) ?? "";

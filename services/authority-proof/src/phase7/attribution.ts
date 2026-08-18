@@ -162,15 +162,44 @@ export function judgeRejection(params: {
   expected: RejectionMechanism;
   view: AccountViewAtAttempt;
   revertData?: Hex;
+  /**
+   * Custom error name recovered from the SDK's throw.
+   *
+   * A second, independent route to the same fact. The relay does not always
+   * surface raw revert bytes for a receipt lookup, but viem decodes the custom
+   * error onto the exception, so this often survives when `revertData` does
+   * not. It is only ever used to CORROBORATE the account's own state, never on
+   * its own: a name in an error string is a weaker artifact than the storage
+   * the account was actually holding.
+   */
+  thrownRejectionName?: string;
 }): RejectionVerdict {
   const fromAccountView = attributeFromAccountView(params.view);
 
   if (params.revertData === undefined || params.revertData === "0x") {
+    const thrown = params.thrownRejectionName;
+    const thrownMechanism =
+      thrown === "ExceededSpendLimit" || thrown === "NoSpendPermissions"
+        ? "SPEND_CAP"
+        : thrown === "UnauthorizedCall" || thrown === "CannotSelfExecute"
+          ? "OUT_OF_SCOPE_CALL"
+          : undefined;
+
+    // Both routes must independently land on the expected mechanism. The
+    // account's storage is the primary evidence; the thrown name confirms the
+    // contract raised the error we predicted rather than a different one.
+    const corroborated =
+      thrownMechanism !== undefined &&
+      thrownMechanism === params.expected &&
+      fromAccountView.mechanism === params.expected;
+
     return {
-      proven: false,
+      proven: corroborated,
       expected: params.expected,
       fromAccountView,
-      observed: `no revert data was recoverable; the account's own state at the attempt says ${fromAccountView.mechanism} (${fromAccountView.reasoning})`,
+      observed: corroborated
+        ? `no revert bytes were recoverable, but the account raised ${thrown} and its own state at the attempt independently says ${fromAccountView.mechanism} (${fromAccountView.reasoning})`
+        : `no revert data was recoverable; the account's own state at the attempt says ${fromAccountView.mechanism} (${fromAccountView.reasoning})`,
     };
   }
 

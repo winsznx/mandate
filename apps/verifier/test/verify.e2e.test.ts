@@ -445,7 +445,7 @@ describe("verify:mandate against an activation", () => {
     expect(reasonOf(report, "session registration")).toContain("no account code");
     expect(statusOf(report, "allowed execution")).toBe("SKIP");
     expect(statusOf(report, "blocked execution")).toBe("SKIP");
-    expect(report.steps).toHaveLength(11);
+    expect(report.steps).toHaveLength(12);
   });
 
   it("confirms both executions from chain, and separates a policy block from a fault", async () => {
@@ -474,8 +474,12 @@ describe("verify:mandate against an activation", () => {
     expect(report.executions.find((entry) => entry.label === "repay 6 more USDT")?.revert?.name).toBe(
       "ExceededSpendLimit",
     );
+    // `rejected intents` skips because this disclosure names reverted
+    // transactions rather than intents the account refused before broadcast.
+    // The two are different guarantees and are checked by different steps.
     expect(report.steps.filter((step) => step.status !== "PASS").map((step) => step.id)).toEqual([
       "session registration",
+      "rejected intents",
     ]);
     expect(report.verdict).toBe("PARTIALLY VERIFIED");
   });

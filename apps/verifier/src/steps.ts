@@ -49,6 +49,9 @@ export const STEP_IDS = [
   "session registration",
   "allowed execution",
   "blocked execution",
+  // Refusals that never became a transaction. A different guarantee from a
+  // reverted call, so it gets its own step rather than sharing one.
+  "rejected intents",
 ] as const;
 
 export type StepId = (typeof STEP_IDS)[number];

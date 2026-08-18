@@ -67,13 +67,70 @@ export const EvidenceBundleSchema = z
 export type EvidenceBundle = z.infer<typeof EvidenceBundleSchema>;
 
 /** A transaction the disclosure claims demonstrates something. Everything about it is re-read from chain. */
-export const DisclosedExecutionSchema = z
+/**
+ * An action that reached the chain.
+ *
+ * It has a transaction, so a third party verifies it by fetching that
+ * transaction and reading its status and post-state. Nothing here needs to be
+ * taken on trust.
+ */
+export const ExecutedEvidenceSchema = z
   .object({
     txHash: Bytes32Schema,
     /** Human label for the timeline, e.g. `repay 20 USDT`. Display only. */
     label: z.string().min(1),
   })
   .strict();
+
+/**
+ * An action the account refused before it became a transaction.
+ *
+ * This is a DIFFERENT security guarantee from a reverted transaction, and
+ * forcing the two into one model would misrepresent both. A revert means the
+ * call reached execution and the contract rejected it. This means the account's
+ * validator evaluated the intent, found it outside the granted authority, and
+ * declined to produce a transaction at all — the boundary held earlier.
+ *
+ * The consequence for verification is concrete: there is no hash to fetch, so
+ * the evidence is what the account itself held at the moment of the attempt,
+ * plus the error its validator raised. `allowanceAtAttemptRaw` matters more
+ * than it looks — it is what rules out an exhausted ERC-20 allowance as the
+ * real cause, which is the failure most likely to impersonate a spend-cap
+ * rejection.
+ */
+export const RejectedIntentEvidenceSchema = z
+  .object({
+    label: z.string().min(1),
+    /** What was attempted. */
+    target: AddressSchema,
+    selector: z.string().regex(/^0x[0-9a-f]{8}$/),
+    amountRaw: z.string().regex(/^(0|[1-9][0-9]*)$/).optional(),
+    /** The custom error the account's validator raised. */
+    validatorError: z.enum([
+      "ExceededSpendLimit",
+      "NoSpendPermissions",
+      "UnauthorizedCall",
+      "KeyDoesNotExist",
+      "CannotSelfExecute",
+    ]),
+    /** The account's own state when the attempt was made. */
+    accountState: z
+      .object({
+        callPermitted: z.boolean(),
+        keyRegistered: z.boolean(),
+        spendCapRaw: z.string().optional(),
+        spentInBucketRaw: z.string().optional(),
+        /** Present so a reader can see the allowance was not the binding constraint. */
+        allowanceAtAttemptRaw: z.string().optional(),
+      })
+      .strict(),
+    /** Which mechanism the account's own state says refused it. */
+    mechanism: z.enum(["SPEND_CAP", "OUT_OF_SCOPE_CALL", "SESSION_INVALID"]),
+  })
+  .strict();
+
+/** @deprecated Use `ExecutedEvidenceSchema`. Retained so existing disclosures still parse. */
+export const DisclosedExecutionSchema = ExecutedEvidenceSchema;
 
 export const MandateDisclosureSchema = z
   .object({
@@ -88,10 +145,17 @@ export const MandateDisclosureSchema = z
         grantTxHash: Bytes32Schema.optional(),
       })
       .optional(),
-    /** Transactions that were inside the granted authority and succeeded. */
-    allowedExecutions: z.array(DisclosedExecutionSchema).default([]),
-    /** Transactions that crossed the boundary and were rejected by the enforcement layer. */
-    blockedExecutions: z.array(DisclosedExecutionSchema).default([]),
+    /** Actions inside the granted authority that reached the chain and succeeded. */
+    allowedExecutions: z.array(ExecutedEvidenceSchema).default([]),
+    /**
+     * Actions that crossed the boundary and produced a reverted TRANSACTION.
+     *
+     * Usually empty. The account normally refuses an out-of-scope intent before
+     * broadcast, in which case it belongs in `rejectedIntents` instead.
+     */
+    blockedExecutions: z.array(ExecutedEvidenceSchema).default([]),
+    /** Actions the account's validator refused before any transaction existed. */
+    rejectedIntents: z.array(RejectedIntentEvidenceSchema).default([]),
   })
   .strict();
 

@@ -1,0 +1,28 @@
+{
+  "chainId": 97,
+  "network": "BSC Testnet",
+  "contract": "src/MandateReceiptRegistry.sol:MandateReceiptRegistry",
+  "address": "0x4c2b4d81a0b5ffb9b13f8c6b22fbbdc9d69da299",
+  "txHash": "0x3b3ff1dd0ca81fea3d40f6d13a65c5c4314f4243d80b643396c14874936cb05e",
+  "deployer": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+  "blockNumber": 125782940,
+  "broadcastScript": "DeployTestnet.s.sol",
+  "broadcastAt": "2026-08-18T10:25:26.351Z",
+  "compilation": {
+    "solc": "0.8.28+commit.7893614a",
+    "evmVersion": "cancun",
+    "optimizer": true,
+    "optimizerRuns": 20000,
+    "bytecodeHash": "none",
+    "deployedBytecodeSize": 7862
+  },
+  "commit": {
+    "sha": "b3b6770bfb93d5d24c6eb6076d66fad9a1499491",
+    "dirty": true
+  },
+  "verification": {
+    "verifier": "sourcify",
+    "status": "VERIFIED",
+    "checkedAt": "2026-08-18T10:28:52.950Z"
+  }
+}

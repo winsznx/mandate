@@ -424,11 +424,14 @@ describe("verify:mandate against an activation", () => {
       now: NOW_WITHIN_FRESHNESS,
     });
 
-    // #then the missing disclosure is named as a chain-level gap, not as a failure
+    // #then the verifier attempts the URI the activation records rather than
+    // demanding a flag, and names precisely why that attempt did not yield a
+    // document. An unreadable disclosure is a gap to state, never a failure of
+    // the mandate itself.
     expect(report.verdict).toBe("PARTIALLY VERIFIED");
     expect(statusOf(report, "granted authority")).toBe("SKIP");
-    expect(reasonOf(report, "granted authority")).toContain("stores no URI");
-    expect(report.notes.join(" ")).toContain("Activation record stores grantedAuthorityHash but no URI");
+    expect(reasonOf(report, "granted authority")).toContain("could not be read");
+    expect(report.notes.join(" ")).toContain("resolved from the disclosureURI");
   });
 
   it("skips session and execution steps when the wallet holds no account code", async () => {

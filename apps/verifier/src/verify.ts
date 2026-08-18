@@ -182,14 +182,25 @@ async function loadEvidence(receipt: OnChainReceipt, options: VerifyOptions): Pr
   };
 }
 
+/**
+ * Resolve the mandate disclosure.
+ *
+ * The activation record carries a `disclosureURI`, so a judge with nothing but
+ * a mandate id can obtain the granted AuthorityIR rather than having to be
+ * handed one. `--disclosure` remains an override for reading a local copy or a
+ * mirror, and either way the document is checked against the on-chain hash
+ * before it is used, so resolving from chain grants it no extra trust.
+ */
 async function loadDisclosure(
   options: VerifyOptions,
+  onChainUri?: string,
 ): Promise<{ disclosure?: MandateDisclosure; problem?: string }> {
-  if (options.disclosureUri === undefined) return {};
+  const uri = options.disclosureUri ?? (onChainUri === "" ? undefined : onChainUri);
+  if (uri === undefined) return {};
 
   let bytes: Uint8Array;
   try {
-    bytes = await fetchEvidenceBytes(options.disclosureUri, options.fetch ?? {});
+    bytes = await fetchEvidenceBytes(uri, options.fetch ?? {});
   } catch (error) {
     return { problem: `mandate disclosure could not be read: ${String(error)}` };
   }
@@ -720,10 +731,10 @@ export async function verifyMandate(mandateId: Hex, options: VerifyOptions): Pro
 
   const gathered = await gatherTrial(activation.trialReceiptId, receipt, options);
   const sequence = recoverSequence(mandateId, activation, options.target.chainId);
-  const { disclosure, problem } = await loadDisclosure(options);
+  const { disclosure, problem } = await loadDisclosure(options, activation.disclosureURI);
 
   const notes: string[] = [
-    "The registry's Activation record stores grantedAuthorityHash but no URI for the document behind it, so the granted AuthorityIR cannot be fetched from chain. Any document supplied with --disclosure is checked against the on-chain hash before it is used.",
+    "The granted AuthorityIR is resolved from the disclosureURI the activation records on chain, and checked against the activation's hash before use. --disclosure overrides the location; it never overrides the hash.",
   ];
   if (problem !== undefined) notes.push(problem);
   if (gathered.evidence.bundle === undefined && gathered.evidence.artifact !== undefined) {
@@ -808,7 +819,7 @@ function stepGrantedAuthority(
     return skip(
       "granted authority",
       problem ??
-        `the chain commits to granted authority ${activation.grantedAuthorityHash} but stores no URI for the document; pass --disclosure <uri> to check one against it`,
+        `the activation records no disclosure URI for granted authority ${activation.grantedAuthorityHash}; pass --disclosure <uri> to check a document against it`,
     );
   }
 

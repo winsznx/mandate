@@ -16,10 +16,21 @@
  */
 
 export const BLOCK_REASONS = [
-  /** No `DEPLOYER_PRIVATE_KEY`, so nothing can be signed. */
-  "MISSING_DEPLOYER_KEY",
-  /** The key exists but cannot pay for the sequence. */
-  "INSUFFICIENT_DEPLOYER_BALANCE",
+  /** No owner key in `DEPLOYER_PRIVATE_KEY`, so nothing can be signed. */
+  "MISSING_OWNER_KEY",
+  /** The owner key exists but cannot pay for the sequence. */
+  "INSUFFICIENT_OWNER_BALANCE",
+  /** No agent key in `AGENT_SESSION_PRIVATE_KEY`, so there is no second party. */
+  "MISSING_AGENT_KEY",
+  /**
+   * Two roles share one address.
+   *
+   * Fatal rather than write-halting. A run where the owner is also the agent
+   * still produces valid enforcement evidence, but it produces it under a
+   * manifest asserting an arm's-length relationship that does not exist, and a
+   * proof that overstates its own conditions is worse than no proof.
+   */
+  "ROLES_COLLAPSED",
   /** A pinned Altana or Venus contract no longer matches its recorded code size. */
   "PINNED_CONTRACT_CHANGED",
   /** The relay is the only submission path; without it no session can act. */

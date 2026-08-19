@@ -6,6 +6,15 @@
  * returned no blockers and the operator set `PROOF_CONFIRM=1`, because granting
  * a session spends real tBNB and cannot be undone.
  *
+ * Two keys act, and which one acts where is the point of the whole sequence.
+ * The OWNER signs the receipt publication, the standing approval, the grant, the
+ * revocation and the registry records: everything an account holder does. The
+ * AGENT signs the executions and only the executions, through the session the
+ * owner granted it. The owner never signs an intent the agent should have
+ * signed, and the agent is never handed the wallet's admin authority, so the
+ * refusals below are refusals of a stranger's attempts rather than of one
+ * party's own instruction.
+ *
  * The order is the mandate lifecycle and is not rearrangeable. The receipt is
  * published before any authority is granted, so a mandate can never exist
  * without a public commitment to the evidence behind it. The standing allowance
@@ -18,7 +27,6 @@
  * leaves its status where it was, and the manifest reports that, rather than the
  * run inventing a terminal result for work it did not finish.
  */
-import { randomBytes } from "node:crypto";
 import { createClient as createAltanaClient, BNB_TESTNET, signerFromPrivateKey } from "@altananetwork/sdk";
 import type { GrantSessionResult } from "@altananetwork/sdk";
 import {
@@ -55,6 +63,7 @@ import {
   type RejectionMechanism,
 } from "./attribution.js";
 import type { Phase7Config } from "./config.js";
+import type { RoleAddresses } from "./roles.js";
 import type {
   ExecutionRecord,
   MandateSummary,
@@ -245,6 +254,15 @@ export interface SequenceContext {
   client: PublicClient;
   registry: Address;
   wallet: Address;
+  /** Who is who. Addresses only; the keys arrive separately and stay separate. */
+  roles: RoleAddresses;
+  /**
+   * This run's session key, derived from the agent's identity key by
+   * `resolveRoles`. It reaches the sequence already made, because a session key
+   * minted here would be a key the owner's process chose and the separation
+   * would be nominal.
+   */
+  sessionPrivateKey: Hex;
   profile: ProtocolSafetyProfile;
   testedAuthority: AuthorityIR;
   allowance: AllowancePlan;
@@ -358,21 +376,35 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   const executions: ExecutionRecord[] = [];
   const result: SequenceResult = { executions, discrepancies: [] };
 
-  if (config.deployerPrivateKey === undefined) {
-    throw new Error("runWriteSequence reached without a deployer key; preflight should have blocked");
+  if (config.ownerPrivateKey === undefined) {
+    throw new Error("runWriteSequence reached without an owner key; preflight should have blocked");
   }
 
-  const account = privateKeyToAccount(config.deployerPrivateKey);
+  const ownerAccount = privateKeyToAccount(config.ownerPrivateKey);
   const walletClient: WalletClient = createWalletClient({
-    account,
+    account: ownerAccount,
     chain: bscTestnet,
     transport: http(config.rpcUrl),
   });
   const altana = createAltanaClient({ chains: [BNB_TESTNET] });
-  const adminSigner = signerFromPrivateKey(config.deployerPrivateKey);
+  const ownerSigner = signerFromPrivateKey(config.ownerPrivateKey);
 
-  const sendAdmin = async (to: Address, data: Hex): Promise<Hex> => {
-    const hash = await walletClient.sendTransaction({ account, chain: bscTestnet, to, data });
+  /**
+   * The agent's key for this run.
+   *
+   * Built from material the owner's key cannot produce. Everything signed with
+   * it below is signed as the agent, and the owner's signer is never passed to
+   * `execute`.
+   */
+  const sessionSigner = signerFromPrivateKey(context.sessionPrivateKey);
+
+  const sendAsOwner = async (to: Address, data: Hex): Promise<Hex> => {
+    const hash = await walletClient.sendTransaction({
+      account: ownerAccount,
+      chain: bscTestnet,
+      to,
+      data,
+    });
     await client.waitForTransactionReceipt({ hash });
     return hash;
   };
@@ -381,12 +413,12 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   journal.begin("publish-receipt");
   const receiptId = deriveReceiptId({
     chainId: config.chainId,
-    publisher: account.address.toLowerCase() as Address,
+    publisher: ownerAccount.address.toLowerCase() as Address,
     ...context.receiptFields,
     evidenceURI: context.evidenceURI,
   });
 
-  const publishTxHash = await sendAdmin(
+  const publishTxHash = await sendAsOwner(
     context.registry,
     encodeFunctionData({
       abi: REGISTRY_WRITE_ABI,
@@ -417,7 +449,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     receiptId,
     publishTxHash,
     evidenceURI: context.evidenceURI,
-    publisher: account.address.toLowerCase(),
+    publisher: ownerAccount.address.toLowerCase(),
   };
   journal.pass("publish-receipt", `receipt ${receiptId} published`, [
     { label: "receiptId", value: receiptId },
@@ -441,11 +473,6 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     standingAllowance: context.allowance.standingAllowance,
   });
   result.grantedAuthority = grantedAuthority;
-
-  // A fresh keypair every run. Altana revocation is monotonic, so a revoked
-  // keyId can never be reactivated and reusing one would produce a session that
-  // silently cannot act.
-  const sessionSigner = signerFromPrivateKey(`0x${randomBytes(32).toString("hex")}`);
 
   const compiled = compileAuthority({
     tested: context.testedAuthority,
@@ -481,7 +508,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
 
   // ---- standing allowance --------------------------------------------------
   journal.begin("standing-approval");
-  const approvalTxHash = await sendAdmin(
+  const approvalTxHash = await sendAsOwner(
     config.venus.underlying,
     encodeFunctionData({
       abi: ERC20_WRITE_ABI,
@@ -527,12 +554,12 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   // address as a smart account counterfactually — no transaction, no new
   // address, because the account is an EIP-7702 delegation of this same EOA.
   // Skipping it makes a funded, position-holding wallet look like a stranger.
-  await altana.createWallet({ signer: adminSigner });
+  await altana.createWallet({ signer: ownerSigner });
 
   const permissions = permissionsFor(grantedAuthority);
   const session: GrantSessionResult = await altana.grantSession({
     wallet: { address: wallet },
-    signer: adminSigner,
+    signer: ownerSigner,
     chainId: config.chainId,
     permissions,
     expiry,
@@ -540,15 +567,37 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   });
 
   const identity = sessionKeyIdentity(session.publicKey);
-  journal.pass("grant-session", `session key ${identity.signerAddress} granted until ${expiry}`, [
+  const grantEvidence = [
     ...(session.transactionHash === undefined
       ? []
       : [{ label: "grantTxHash", value: session.transactionHash }]),
+    { label: "grantedBy", value: `owner ${context.roles.owner}` },
+    { label: "grantedTo", value: `agent ${context.roles.agent}` },
     { label: "sessionPublicKey", value: session.publicKey },
+    { label: "sessionKeyAddress", value: identity.signerAddress.toLowerCase() },
     { label: "sessionKeyHash", value: identity.keyHash },
     { label: "sessionKeyId", value: identity.keyId },
     { label: "expiry", value: String(expiry) },
-  ]);
+  ];
+
+  // The account now enforces against a key. Whether that key is the one the
+  // agent designated is the difference between an arm's-length grant and a
+  // wallet talking to itself, so it is checked rather than assumed.
+  if (identity.signerAddress.toLowerCase() !== context.roles.sessionKey) {
+    journal.fail(
+      "grant-session",
+      `the session was granted to ${identity.signerAddress.toLowerCase()}, not to the key the agent designated`,
+      grantEvidence,
+    );
+    result.haltReason = "the granted session key is not the one the agent designated";
+    return result;
+  }
+
+  journal.pass(
+    "grant-session",
+    `the owner granted session key ${identity.signerAddress} to agent ${context.roles.agent} until ${expiry}`,
+    grantEvidence,
+  );
 
   // ---- read what the account actually enforces -----------------------------
   journal.begin("read-enforced-authority");
@@ -665,10 +714,17 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     result.haltReason = "the permitted call failed";
     return result;
   }
-  journal.pass("execute-repay", `repaid ${AT_CAP_REPAY_RAW} raw USDT from the session key`, [
-    { label: "callsId", value: repay.callsId },
-    ...(repay.transactionHash === undefined ? [] : [{ label: "txHash", value: repay.transactionHash }]),
-  ]);
+  journal.pass(
+    "execute-repay",
+    `the agent repaid ${AT_CAP_REPAY_RAW} raw USDT under the session the owner granted it`,
+    [
+      { label: "callsId", value: repay.callsId },
+      ...(repay.transactionHash === undefined ? [] : [{ label: "txHash", value: repay.transactionHash }]),
+      // Named because this is the claim: the owner signed nothing here.
+      { label: "signedBy", value: `agent session key ${context.roles.sessionKey}` },
+      { label: "agent", value: context.roles.agent },
+    ],
+  );
 
   // ---- did the position move by exactly what was spent? --------------------
   journal.begin("venus-post-state");
@@ -780,8 +836,9 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     result.haltReason = "the spend cap did not reject the breach";
     return result;
   }
-  journal.pass("cap-breach-attempt", `the breach was rejected (${breach.status})`, [
+  journal.pass("cap-breach-attempt", `the agent's breach was rejected (${breach.status})`, [
     { label: "callsId", value: breach.callsId ?? "none" },
+    { label: "signedBy", value: `agent session key ${context.roles.sessionKey}` },
     // Recovered straight from the throw, so this holds even when the relay
     // never surfaces raw revert bytes for a receipt lookup.
     { label: "rejectionName", value: breach.rejectionName ?? "unrecovered" },
@@ -927,11 +984,14 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   }
   journal.pass(
     "wrong-target-attempt",
-    `${outOfScopeRecords.length} out-of-scope call(s) submitted and rejected`,
-    outOfScopeRecords.map((record) => ({
-      label: record.label,
-      value: `${record.target} ${record.selector} ${record.txHash ?? "no tx hash"}`,
-    })),
+    `${outOfScopeRecords.length} out-of-scope call(s) submitted by the agent and rejected`,
+    [
+      { label: "signedBy", value: `agent session key ${context.roles.sessionKey}` },
+      ...outOfScopeRecords.map((record) => ({
+        label: record.label,
+        value: `${record.target} ${record.selector} ${record.txHash ?? "no tx hash"}`,
+      })),
+    ],
   );
 
   journal.begin("wrong-target-rejected");
@@ -956,7 +1016,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   journal.begin("revoke-session");
   const revoke = await altana.revokeSession({
     wallet: { address: wallet },
-    signer: adminSigner,
+    signer: ownerSigner,
     session,
     chainId: config.chainId,
   });
@@ -969,6 +1029,10 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
 
   const revokeEvidence = [
     { label: "revokeCallsId", value: revoke.callsId },
+    // The property a capital owner actually cares about: the owner alone ends
+    // the session, with no cooperation from the party losing it.
+    { label: "revokedBy", value: `owner ${context.roles.owner}` },
+    { label: "revokedKeyHeldBy", value: `agent ${context.roles.agent}` },
     ...(revoke.transactionHash === undefined ? [] : [{ label: "revokeTxHash", value: revoke.transactionHash }]),
     { label: "accountHoldsKey", value: String(afterRevoke.registered) },
     // Reported separately and never conflated: an external registry's view is a
@@ -982,7 +1046,11 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     result.haltReason = "revocation did not remove the key";
     return result;
   }
-  journal.pass("revoke-session", "the account no longer holds the session key", revokeEvidence);
+  journal.pass(
+    "revoke-session",
+    "the owner revoked unilaterally and the account no longer holds the agent's key",
+    revokeEvidence,
+  );
   sessionRevoked = true;
 
   // ---- and prove it is dead ------------------------------------------------
@@ -1089,7 +1157,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
 
   // ---- clean up the one durable effect -------------------------------------
   journal.begin("clear-standing-approval");
-  const clearTxHash = await sendAdmin(
+  const clearTxHash = await sendAsOwner(
     config.venus.underlying,
     encodeFunctionData({
       abi: ERC20_WRITE_ABI,
@@ -1173,7 +1241,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     return result;
   }
 
-  const activationTxHash = await sendAdmin(
+  const activationTxHash = await sendAsOwner(
     context.registry,
     encodeFunctionData({
       abi: REGISTRY_WRITE_ABI,
@@ -1248,7 +1316,7 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     return result;
   }
 
-  const revocationTxHash = await sendAdmin(
+  const revocationTxHash = await sendAsOwner(
     context.registry,
     encodeFunctionData({
       abi: REGISTRY_WRITE_ABI,

@@ -5,6 +5,8 @@ import { resolveConfig } from "../src/phase7/config.js";
 import { ARTIFACT_ROOT_RELATIVE, artifactDirectoryFor, buildManifest } from "../src/phase7/manifest.js";
 import type { ExecutionRecord } from "../src/phase7/manifest.js";
 import { standingAllowancePlan } from "../src/phase7/plan.js";
+import { resolveRoles } from "../src/phase7/roles.js";
+import type { RoleAddresses } from "../src/phase7/roles.js";
 import { Phase7Journal } from "../src/phase7/steps.js";
 
 const RUN_ID = "20260817T170948Z";
@@ -29,7 +31,10 @@ const REFUSED_INTENT: ExecutionRecord = {
   },
 };
 
-function manifestOf(executions: readonly ExecutionRecord[] = []): Record<string, unknown> {
+function manifestOf(
+  executions: readonly ExecutionRecord[] = [],
+  roles?: RoleAddresses,
+): Record<string, unknown> {
   const config = resolveConfig("bsc-testnet", {});
   const journal = new Phase7Journal();
   journal.begin("chain-identity");
@@ -37,7 +42,7 @@ function manifestOf(executions: readonly ExecutionRecord[] = []): Record<string,
     { label: "blockNumber", value: "125644865" },
   ]);
   journal.begin("altana-pins");
-  journal.skipRemaining("stopped: MISSING_DEPLOYER_KEY");
+  journal.skipRemaining("stopped: MISSING_OWNER_KEY");
 
   const document = buildManifest({
     runId: RUN_ID,
@@ -45,7 +50,7 @@ function manifestOf(executions: readonly ExecutionRecord[] = []): Record<string,
     status: "BLOCKED",
     startedAt: 1_786_500_000,
     finishedAt: 1_786_500_060,
-    blockers: [writeBlocker("MISSING_DEPLOYER_KEY", [["variable", "DEPLOYER_PRIVATE_KEY"]])],
+    blockers: [writeBlocker("MISSING_OWNER_KEY", [["variable", "DEPLOYER_PRIVATE_KEY"]])],
     steps: journal.all(),
     facts: {
       observedChainId: 97,
@@ -53,6 +58,7 @@ function manifestOf(executions: readonly ExecutionRecord[] = []): Record<string,
       relayStatus: "rpc ok",
       pinnedContracts: [],
       allowance: standingAllowancePlan(),
+      ...(roles === undefined ? {} : { roles }),
     },
     resumePoint: journal.resumePoint(),
     executions,
@@ -134,13 +140,44 @@ describe("the proof manifest", () => {
     );
   });
 
+  it("omits the parties entirely rather than showing a run half a party short", () => {
+    // #given a run that stopped before both keys resolved
+    const manifest = manifestOf();
+
+    // #then there is no roles block. A record naming an owner and no agent
+    // reads as "there was no agent", which is a different claim from "the run
+    // never got that far".
+    expect(manifest["roles"]).toBeUndefined();
+  });
+
+  it("names all three parties and asserts what separates them", async () => {
+    // #given a run whose owner and agent resolved
+    const resolved = await resolveRoles({
+      ownerPrivateKey: `0x${"11".repeat(32)}`,
+      agentPrivateKey: `0x${"22".repeat(32)}`,
+      chainId: 97,
+      runId: RUN_ID,
+    });
+    const manifest = manifestOf([], resolved.addresses);
+    const roles = manifest["roles"] as Record<string, Record<string, unknown>>;
+
+    // #then each address appears under the role it played, the publisher's
+    // double duty is declared, and no private key rode along
+    expect(roles["owner"]?.["address"]).toBe(resolved.addresses.owner);
+    expect(roles["agent"]?.["address"]).toBe(resolved.addresses.agent);
+    expect(roles["agent"]?.["sessionKey"]).toBe(resolved.addresses.sessionKey);
+    expect(roles["publisher"]?.["sameAs"]).toBe("owner");
+    expect(roles["separation"]?.["ownerIsAgent"]).toBe(false);
+    expect(JSON.stringify(manifest)).not.toContain(resolved.sessionPrivateKey.slice(2));
+  });
+
   it("distinguishes a blocker that stops writes from one that stops the run", () => {
     // #given a missing key
     const blockers = manifestOf()["blockers"] as Array<Record<string, unknown>>;
 
     // #then the manifest records which kind it was, because the two call for
     // different responses
-    expect(blockers[0]?.["reason"]).toBe("MISSING_DEPLOYER_KEY");
+    expect(blockers[0]?.["reason"]).toBe("MISSING_OWNER_KEY");
     expect(blockers[0]?.["haltsRun"]).toBe(false);
   });
 });

@@ -27,6 +27,7 @@ import type { Blocker } from "./blockers.js";
 import type { Phase7Config } from "./config.js";
 import type { AccountRejection } from "./expect-rejection.js";
 import type { PreflightFacts } from "./preflight.js";
+import { roleRecord } from "./roles.js";
 import type { Phase7StepResult } from "./steps.js";
 
 export const PHASE_7_MANIFEST_SCHEMA_VERSION = "mandate.phase-7-proof/1" as const;
@@ -276,9 +277,18 @@ export function buildManifest(input: ManifestInput): CanonicalValue {
       registered: input.config.agentId !== "0",
     },
 
-    ...optional("deployer", facts.deployerAddress, (address) => ({
+    // The three parties, named. Present as soon as both keys resolved, and
+    // absent rather than half-filled when they did not, because a role block
+    // missing a party reads as "there was no agent" and that is the one thing a
+    // reader must never have to guess at.
+    ...optional("roles", facts.roles, (addresses) => roleRecord(addresses)),
+
+    ...optional("owner", facts.ownerAddress, (address) => ({
       address,
-      balanceWei: (facts.deployerBalanceWei ?? 0n).toString(10),
+      role: "owner",
+      balanceWei: (facts.ownerBalanceWei ?? 0n).toString(10),
+      note:
+        "Funds every write, including the relay fee for the agent's executions: an Altana session is sponsored out of the wallet it acts on, so no tBNB is ever sent to the agent's key.",
     })),
 
     ...optional("trial", input.trial, (trial) => ({ ...trial } as unknown as CanonicalValue)),

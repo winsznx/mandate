@@ -60,11 +60,21 @@ export const PHASE_7_STEPS = [
       "Call startOfSpendPeriod(now, Day) on the deployed account implementation, compare with floor(now/86400)*86400, and refuse when the remainder of the bucket is under the sequence budget.",
   },
   {
-    id: "deployer-balance",
+    id: "owner-balance",
     phase: "PREFLIGHT",
     writes: false,
-    claim: "The deployer key exists and holds enough tBNB for every write in the sequence",
-    method: "Derive the address from DEPLOYER_PRIVATE_KEY and read its balance.",
+    claim: "The capital owner's key exists and holds enough tBNB for every write in the sequence",
+    method:
+      "Derive the owner address from DEPLOYER_PRIVATE_KEY and read its balance. The variable keeps its historical name; the role it plays here is the capital owner, which grants and revokes the session.",
+  },
+  {
+    id: "role-separation",
+    phase: "PREFLIGHT",
+    writes: false,
+    claim:
+      "The capital owner, the agent that receives the session and the publisher are named parties, and no two of them share an address undeclared",
+    method:
+      "Derive the owner from DEPLOYER_PRIVATE_KEY and the agent from AGENT_SESSION_PRIVATE_KEY, derive this run's session key from the agent's key alone, have the agent sign a designation naming it, recover that signature, and refuse the whole run on any undeclared collision.",
   },
   {
     id: "publication-target",
@@ -159,8 +169,10 @@ export const PHASE_7_STEPS = [
     id: "grant-session",
     phase: "GRANT",
     writes: true,
-    claim: "A session key bounded to one target, one selector and one daily cap exists on the account",
-    method: "grantSession through the Altana relay with the compiled permissions and the mandate expiry.",
+    claim:
+      "The owner grants the agent a session key bounded to one target, one selector and one daily cap, and the account holds it",
+    method:
+      "grantSession through the Altana relay, signed by the owner's admin key, to the session key the agent designated. The agent's key is never presented to the grant.",
   },
   {
     id: "read-enforced-authority",
@@ -183,8 +195,9 @@ export const PHASE_7_STEPS = [
     id: "execute-repay",
     phase: "EXECUTE",
     writes: true,
-    claim: "A call inside the granted scope succeeds from the session key",
-    method: "execute(session, [{ to: vUSDT, data: repayBorrow(atCapAmount) }]) through the relay.",
+    claim: "A call inside the granted scope succeeds, signed by the agent and not by the owner",
+    method:
+      "execute(session, [{ to: vUSDT, data: repayBorrow(atCapAmount) }]) through the relay. The intent is signed by the agent's session key; the owner signs nothing here.",
   },
   {
     id: "venus-post-state",
@@ -230,8 +243,10 @@ export const PHASE_7_STEPS = [
     id: "revoke-session",
     phase: "REVOKE",
     writes: true,
-    claim: "The session is revoked and the account no longer holds the key",
-    method: "revokeSession, then re-read getKeys and report the public KeyStore's view separately.",
+    claim:
+      "The owner revokes the session unilaterally and the account no longer holds the agent's key",
+    method:
+      "revokeSession signed by the owner's admin key alone, with no cooperation from the agent, then re-read getKeys and report the public KeyStore's view separately.",
   },
   {
     id: "post-revoke-execution-fails",

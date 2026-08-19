@@ -5,12 +5,19 @@
  * `undefined` that surfaces halfway through a sequence which has already granted
  * a session. Nothing below reaches for `process.env` again.
  *
- * Two defaults are worth naming. The mandate wallet defaults to the deployer's
- * own address because an Altana wallet IS the admin signer's EIP-7702 EOA, so
- * asking the operator to restate it would only create a way to get it wrong. The
- * agent id defaults to `0`, which means unregistered: the read-only lane runs
- * happily against it and the write lane refuses, because publishing a receipt
- * against an identity nobody minted would be a fabricated claim.
+ * Two defaults are worth naming. The mandate wallet defaults to the owner's own
+ * address because an Altana wallet IS the admin signer's EIP-7702 EOA, so asking
+ * the operator to restate it would only create a way to get it wrong. The agent
+ * id defaults to `0`, which means unregistered: the read-only lane runs happily
+ * against it and the write lane refuses, because publishing a receipt against an
+ * identity nobody minted would be a fabricated claim.
+ *
+ * Two keys are read, never one. `DEPLOYER_PRIVATE_KEY` is the OWNER: it holds
+ * the Venus position and the wallet's admin authority, and the variable keeps
+ * its historical name only because that is what the funded key is stored under.
+ * `AGENT_SESSION_PRIVATE_KEY` is the AGENT, and nothing in this repo may ever
+ * derive it from the owner's. Both are validated here so a malformed key is a
+ * configuration error rather than a throw halfway through a granted session.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -47,9 +54,22 @@ export interface Phase7Config {
   rpcUrl: string;
   altana: AltanaDeployment;
   venus: VenusDeployment;
-  /** Present only when a key was supplied. The key itself never leaves this object. */
-  deployerPrivateKey?: Hex;
-  /** The wallet the session is granted on. Defaults to the deployer's own address. */
+  /**
+   * The capital owner's admin key, from `DEPLOYER_PRIVATE_KEY`.
+   *
+   * Present only when a key was supplied. The key itself never leaves this
+   * object: everything downstream sees an address or a signer built from it.
+   */
+  ownerPrivateKey?: Hex;
+  /**
+   * The agent operator's identity key, from `AGENT_SESSION_PRIVATE_KEY`.
+   *
+   * The party that receives the session and signs the executions. Held apart
+   * from the owner's key so the proof shows an arm's-length relationship rather
+   * than one party obeying its own instruction.
+   */
+  agentPrivateKey?: Hex;
+  /** The wallet the session is granted on. Defaults to the owner's own address. */
   walletAddress?: Address;
   /** Where receipts are published. Absent means the write lane cannot run. */
   registryAddress?: Address;
@@ -104,12 +124,21 @@ function optionalAddress(value: string | undefined, label: string): Address | un
 
 export type EnvSource = Readonly<Record<string, string | undefined>>;
 
+/** An optional 32-byte key. Absent and malformed are different answers. */
+function privateKeyFrom(value: string | undefined, label: string): Hex | undefined {
+  if (value === undefined || value === "") return undefined;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(value)) {
+    // The value is deliberately not echoed. A malformed key is still a key.
+    throw new Phase7ConfigError(`${label} must be 32 hex bytes with an 0x prefix`);
+  }
+  return value as Hex;
+}
+
 export function resolveConfig(
   network: NetworkName,
   env: EnvSource = process.env,
 ): Phase7Config {
   const chain = NETWORKS[network];
-  const deployerPrivateKey = env["DEPLOYER_PRIVATE_KEY"];
 
   const explicitRegistry = optionalAddress(env["MANDATE_REGISTRY_ADDRESS"], "MANDATE_REGISTRY_ADDRESS");
   const registry =
@@ -139,12 +168,14 @@ export function resolveConfig(
     confirmed: env["PROOF_CONFIRM"] === "1",
   };
 
-  if (deployerPrivateKey !== undefined && deployerPrivateKey !== "") {
-    if (!/^0x[0-9a-fA-F]{64}$/.test(deployerPrivateKey)) {
-      throw new Phase7ConfigError("DEPLOYER_PRIVATE_KEY must be 32 hex bytes with an 0x prefix");
-    }
-    config.deployerPrivateKey = deployerPrivateKey as Hex;
-  }
+  const ownerPrivateKey = privateKeyFrom(env["DEPLOYER_PRIVATE_KEY"], "DEPLOYER_PRIVATE_KEY");
+  if (ownerPrivateKey !== undefined) config.ownerPrivateKey = ownerPrivateKey;
+
+  const agentPrivateKey = privateKeyFrom(
+    env["AGENT_SESSION_PRIVATE_KEY"],
+    "AGENT_SESSION_PRIVATE_KEY",
+  );
+  if (agentPrivateKey !== undefined) config.agentPrivateKey = agentPrivateKey;
 
   const wallet = optionalAddress(env["MANDATE_WALLET_ADDRESS"], "MANDATE_WALLET_ADDRESS");
   if (wallet !== undefined) config.walletAddress = wallet;

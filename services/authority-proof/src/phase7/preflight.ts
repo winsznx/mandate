@@ -30,11 +30,21 @@ import {
   standingAllowancePlan,
   type AllowancePlan,
 } from "./plan.js";
+import {
+  recoverDesignationSigner,
+  resolveRoles,
+  undeclaredCollisions,
+  type RoleAddresses,
+} from "./roles.js";
 import { describeBucket, readSpendBucket, type SpendBucket } from "./spend-bucket.js";
 import type { Phase7Journal } from "./steps.js";
 
 /**
- * Minimum deployer balance for the whole sequence.
+ * Minimum owner balance for the whole sequence.
+ *
+ * The owner pays for every write, including the relay's fees for the agent's
+ * executions: an Altana session is sponsored out of the wallet the session acts
+ * on, so the agent's key needs no tBNB of its own and none is ever sent to it.
  *
  * Phase 2 sized 0.005 tBNB for a grant, two repayments and a revocation. Phase 7
  * adds a receipt publication, an activation record, two admin-path approvals and
@@ -42,7 +52,7 @@ import type { Phase7Journal } from "./steps.js";
  * Phase 2 figure leaves headroom rather than failing at the last write, which is
  * the worst place to run out: the session is live and the cleanup is unfunded.
  */
-export const MINIMUM_DEPLOYER_BALANCE_WEI = 20_000_000_000_000_000n;
+export const MINIMUM_OWNER_BALANCE_WEI = 20_000_000_000_000_000n;
 
 const ERC20_ABI = [
   {
@@ -89,8 +99,10 @@ export interface PreflightFacts {
   vTokenImplementation?: Address;
   selectorExposed?: boolean;
   bucket?: SpendBucket;
-  deployerAddress?: Address;
-  deployerBalanceWei?: bigint;
+  ownerAddress?: Address;
+  ownerBalanceWei?: bigint;
+  /** Present once both keys resolved. Addresses only; no key material. */
+  roles?: RoleAddresses;
   registryCodeSize?: number;
   walletBorrowRaw?: bigint;
   walletUnderlyingRaw?: bigint;
@@ -133,6 +145,7 @@ export async function runPreflight(
   config: Phase7Config,
   client: PublicClient,
   now: bigint,
+  runId: string,
 ): Promise<PreflightOutcome> {
   const blockers: Blocker[] = [];
   const lines: string[] = [];
@@ -331,42 +344,128 @@ export async function runPreflight(
     ]);
   }
 
-  journal.begin("deployer-balance");
-  if (config.deployerPrivateKey === undefined) {
-    lines.push(`${label("deployer key")}NOT SET`);
+  journal.begin("owner-balance");
+  if (config.ownerPrivateKey === undefined) {
+    lines.push(`${label("owner key")}NOT SET`);
     blockers.push(
-      writeBlocker("MISSING_DEPLOYER_KEY", [
+      writeBlocker("MISSING_OWNER_KEY", [
         ["variable", "DEPLOYER_PRIVATE_KEY"],
+        ["role", "owner: holds the position and the wallet's admin authority"],
         ["effect", "every write in the sequence is unreachable"],
       ]),
     );
-    journal.block("deployer-balance", "DEPLOYER_PRIVATE_KEY is not set");
+    journal.block("owner-balance", "DEPLOYER_PRIVATE_KEY is not set");
   } else {
     const { privateKeyToAccount } = await import("viem/accounts");
-    const account = privateKeyToAccount(config.deployerPrivateKey);
+    const account = privateKeyToAccount(config.ownerPrivateKey);
     const balance = await client.getBalance({ address: account.address });
-    facts.deployerAddress = account.address.toLowerCase() as Address;
-    facts.deployerBalanceWei = balance;
-    lines.push(`${label("deployer")}${account.address}`);
-    lines.push(`${label("deployer balance")}${formatEther(balance)} tBNB`);
+    facts.ownerAddress = account.address.toLowerCase() as Address;
+    facts.ownerBalanceWei = balance;
+    lines.push(`${label("owner")}${account.address}`);
+    lines.push(`${label("owner balance")}${formatEther(balance)} tBNB`);
 
-    if (balance < MINIMUM_DEPLOYER_BALANCE_WEI) {
+    if (balance < MINIMUM_OWNER_BALANCE_WEI) {
       blockers.push(
-        writeBlocker("INSUFFICIENT_DEPLOYER_BALANCE", [
+        writeBlocker("INSUFFICIENT_OWNER_BALANCE", [
           ["address", account.address],
           ["balance", `${balance} wei (${formatEther(balance)} tBNB)`],
           [
             "required",
-            `${MINIMUM_DEPLOYER_BALANCE_WEI} wei (${formatEther(MINIMUM_DEPLOYER_BALANCE_WEI)} tBNB)`,
+            `${MINIMUM_OWNER_BALANCE_WEI} wei (${formatEther(MINIMUM_OWNER_BALANCE_WEI)} tBNB)`,
           ],
         ]),
       );
-      journal.block("deployer-balance", `${formatEther(balance)} tBNB is below the sequence minimum`);
+      journal.block("owner-balance", `${formatEther(balance)} tBNB is below the sequence minimum`);
     } else {
-      journal.pass("deployer-balance", `${formatEther(balance)} tBNB at ${account.address}`, [
-        { label: "deployer", value: account.address },
+      journal.pass("owner-balance", `${formatEther(balance)} tBNB at ${account.address}`, [
+        { label: "owner", value: account.address },
         { label: "balanceWei", value: balance.toString(10) },
       ]);
+    }
+  }
+
+  // ---- the parties ---------------------------------------------------------
+  //
+  // Placed after the owner's key so the two addresses can be compared, and
+  // before anything that writes, because a run whose roles have collapsed must
+  // not publish a receipt asserting they have not.
+  journal.begin("role-separation");
+  if (config.agentPrivateKey === undefined) {
+    lines.push(`${label("agent key")}NOT SET`);
+    blockers.push(
+      writeBlocker("MISSING_AGENT_KEY", [
+        ["variable", "AGENT_SESSION_PRIVATE_KEY"],
+        ["role", "agent: receives the session and signs the executions"],
+        ["effect", "there is no second party, so no session may be granted"],
+        ["remedy", "cast wallet new, then store the key in .env and never anywhere else"],
+      ]),
+    );
+    journal.block("role-separation", "AGENT_SESSION_PRIVATE_KEY is not set");
+  } else if (config.ownerPrivateKey === undefined) {
+    journal.block("role-separation", "the owner key is missing, so there are no two parties to compare");
+  } else {
+    const roles = await resolveRoles({
+      ownerPrivateKey: config.ownerPrivateKey,
+      agentPrivateKey: config.agentPrivateKey,
+      chainId: config.chainId,
+      runId,
+    });
+    const addresses = roles.addresses;
+    facts.roles = addresses;
+    lines.push(`${label("agent")}${addresses.agent}`);
+    lines.push(`${label("agent session key")}${addresses.sessionKey}`);
+    lines.push(`${label("publisher")}${addresses.publisher} (same as ${addresses.publisherSameAs})`);
+
+    // Recovered rather than assumed. If the designation the manifest publishes
+    // does not recover to the agent, the pairing a reader would check is broken
+    // and the run must not present it as evidence of anything.
+    const designatedBy = await recoverDesignationSigner(
+      addresses.designation,
+      addresses.designationSignature,
+    );
+    const collisions = undeclaredCollisions(addresses);
+    const evidence = [
+      { label: "owner", value: addresses.owner },
+      { label: "agent", value: addresses.agent },
+      { label: "publisher", value: `${addresses.publisher} (same as ${addresses.publisherSameAs})` },
+      { label: "agentSessionKey", value: addresses.sessionKey },
+      { label: "sessionKeyDesignatedBy", value: designatedBy },
+      { label: "designationSignature", value: addresses.designationSignature },
+    ];
+
+    if (collisions.length > 0) {
+      const rendered = collisions
+        .map((collision) => `${collision.left} and ${collision.right} are both ${collision.address}`)
+        .join("; ");
+      blockers.push(
+        fatalBlocker("ROLES_COLLAPSED", [
+          ...collisions.map(
+            (collision) =>
+              [`${collision.left}=${collision.right}`, collision.address] as const,
+          ),
+          ["effect", "the run would assert an arm's-length relationship that does not exist"],
+        ]),
+      );
+      journal.fail("role-separation", rendered, evidence);
+    } else if (designatedBy !== addresses.agent) {
+      blockers.push(
+        fatalBlocker("ROLES_COLLAPSED", [
+          ["designationRecoversTo", designatedBy],
+          ["agent", addresses.agent],
+          ["effect", "the session key cannot be shown to have been chosen by the agent"],
+        ]),
+      );
+      journal.fail(
+        "role-separation",
+        `the session-key designation recovers to ${designatedBy}, not to the agent`,
+        evidence,
+      );
+    } else {
+      journal.pass(
+        "role-separation",
+        `owner ${addresses.owner} and agent ${addresses.agent} are distinct, and the agent designated session key ${addresses.sessionKey}`,
+        evidence,
+      );
     }
   }
 
@@ -425,13 +524,13 @@ export async function runPreflight(
   }
 
   journal.begin("mandate-wallet");
-  const wallet = config.walletAddress ?? facts.deployerAddress;
+  const wallet = config.walletAddress ?? facts.ownerAddress;
   if (wallet === undefined) {
     lines.push(`${label("mandate wallet")}UNKNOWN (no key and no MANDATE_WALLET_ADDRESS)`);
     blockers.push(
       writeBlocker("MISSING_MANDATE_WALLET", [
         ["variable", "MANDATE_WALLET_ADDRESS"],
-        ["default", "the deployer's own address, which is the Altana wallet's EIP-7702 EOA"],
+        ["default", "the owner's own address, which is the Altana wallet's EIP-7702 EOA"],
       ]),
     );
     journal.block("mandate-wallet", "no wallet address is known");

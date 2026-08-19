@@ -48,6 +48,7 @@ import {
   loadVenusProfile,
 } from "./plan.js";
 import { runPreflight, type PreflightFacts } from "./preflight.js";
+import { deriveSessionPrivateKey } from "./roles.js";
 import { replayTrialVerdict } from "./replay.js";
 import { buildScenario, readMarketParameters, solvePosition } from "./scenario.js";
 import { runWriteSequence, type DisclosureInput, type ReceiptFields } from "./sequence.js";
@@ -187,7 +188,7 @@ export async function runPhase7(network: NetworkName, env = process.env): Promis
   let mandate: Awaited<ReturnType<typeof runWriteSequence>>["mandate"];
   let verifier: { trialVerdict: string; mandateVerdict: string; trialExitCode: number; mandateExitCode: number } | undefined;
 
-  const preflight = await runPreflight(journal, config, client, BigInt(startedAt));
+  const preflight = await runPreflight(journal, config, client, BigInt(startedAt), runId);
   const blockers: Blocker[] = [...preflight.blockers];
   lines.push(...preflight.lines);
 
@@ -433,8 +434,23 @@ export async function runPhase7(network: NetworkName, env = process.env): Promis
 
     // ---- the write lane ------------------------------------------------------
     const registry = config.registryAddress as Address;
-    const wallet = (config.walletAddress ?? preflight.facts.deployerAddress) as Address;
+    const wallet = (config.walletAddress ?? preflight.facts.ownerAddress) as Address;
     const evidenceURI = evidenceUriFor(config, runId, "evidence-bundle.json");
+
+    // Preflight resolves the parties and fails the run on any collision, so
+    // reaching here without them is a bug rather than a configuration the
+    // sequence could sensibly proceed under.
+    const roles = preflight.facts.roles;
+    if (roles === undefined || config.agentPrivateKey === undefined) {
+      throw new Error("the write lane was reached with no resolved roles; preflight should have blocked");
+    }
+    // Re-derived rather than carried out of preflight. `facts` is published
+    // verbatim in the manifest, so it holds addresses and never key material,
+    // and the derivation is deterministic on the agent's key and this run id.
+    const sessionPrivateKey = deriveSessionPrivateKey(config.agentPrivateKey, {
+      chainId: config.chainId,
+      runId,
+    });
 
     const receiptFields: ReceiptFields = {
       identityRegistry: config.identityRegistry,
@@ -458,6 +474,8 @@ export async function runPhase7(network: NetworkName, env = process.env): Promis
       client,
       registry,
       wallet,
+      roles,
+      sessionPrivateKey,
       profile,
       testedAuthority,
       allowance: preflight.facts.allowance,

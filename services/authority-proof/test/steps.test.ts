@@ -73,15 +73,15 @@ describe("the journal", () => {
   });
 
   it("distinguishes a step the environment blocked from one an earlier stop made unreachable", () => {
-    // #given a run blocked at the deployer balance
+    // #given a run blocked at the owner balance
     const journal = new Phase7Journal();
-    journal.begin("deployer-balance");
-    journal.block("deployer-balance", "DEPLOYER_PRIVATE_KEY is not set");
-    journal.skipRemaining("stopped: MISSING_DEPLOYER_KEY");
+    journal.begin("owner-balance");
+    journal.block("owner-balance", "DEPLOYER_PRIVATE_KEY is not set");
+    journal.skipRemaining("stopped: MISSING_OWNER_KEY");
 
     // #then only one step is BLOCKED. Reporting the rest the same way would say
     // the operator has thirty things to fix when they have one.
-    expect(journal.get("deployer-balance").status).toBe("BLOCKED");
+    expect(journal.get("owner-balance").status).toBe("BLOCKED");
     expect(journal.get("grant-session").status).toBe("SKIPPED");
     expect(journal.all().filter((step) => step.status === "BLOCKED")).toHaveLength(1);
   });

@@ -84,6 +84,40 @@ export function account(fixture: AccountFixture): VenusAccountState {
   };
 }
 
+/**
+ * A position whose health factor is `collateral / borrow`.
+ *
+ * Collateral sits in vUSDC and the debt in vUSDT, which is the shape the agent
+ * is authorised for: it may repay USDT and nothing else.
+ *
+ * Exported rather than kept local to this package's tests because the sibling
+ * agent deliberates over the same boards. Two agents compared on boards built
+ * by two builders are being compared on the builders as much as on themselves,
+ * and the claim the pair rests on is that one board produces two answers.
+ */
+export function position(collateralUsd: number, borrowUsdt: bigint): VenusAccountState {
+  return account({
+    markets: [
+      market({
+        vToken: VCOLLATERAL,
+        collateralUsd,
+        liquidationThresholdMantissa: MANTISSA,
+        borrowBalance: 0n,
+        priceMantissa: USDC_PRICE_6DP,
+        underlyingDecimals: 6,
+      }),
+      market({
+        vToken: VENUS_BSC_TESTNET.vToken,
+        collateralUsd: 0,
+        liquidationThresholdMantissa: (80n * MANTISSA) / 100n,
+        borrowBalance: borrowUsdt,
+        priceMantissa: USDT_PRICE_6DP,
+        underlyingDecimals: 6,
+      }),
+    ],
+  });
+}
+
 export function fixedReader(state: VenusAccountState): VenusReader {
   return { readAccountState: () => Promise.resolve(state) };
 }

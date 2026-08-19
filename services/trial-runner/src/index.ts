@@ -19,3 +19,4 @@ export * from "./runner.js";
 export * from "./scenario.js";
 export * from "./strategy-evaluator.js";
 export * from "./strategy-evidence.js";
+export * from "./submit.js";

@@ -104,6 +104,9 @@ importers:
 
   agents/reference/health-factor-b:
     dependencies:
+      '@mandate/agent-health-factor-a':
+        specifier: workspace:*
+        version: link:../health-factor-a
       '@mandate/agent-runtime':
         specifier: workspace:*
         version: link:../../../packages/agent-runtime
@@ -113,6 +116,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0

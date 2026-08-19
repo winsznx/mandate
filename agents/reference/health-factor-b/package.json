@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/strategy.ts"
+    ".": "./src/strategy.ts",
+    "./policy": "./src/policy.ts"
   },
   "scripts": {
     "start": "tsx src/main.ts",
@@ -15,9 +16,11 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@mandate/agent-health-factor-a": "workspace:*",
     "@mandate/agent-runtime": "workspace:*",
     "@mandate/domain": "workspace:*",
-    "tsx": "4.23.12"
+    "tsx": "4.23.12",
+    "viem": "2.55.17"
   },
   "devDependencies": {
     "@types/node": "26.2.0",

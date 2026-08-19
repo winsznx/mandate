@@ -19,6 +19,8 @@
  * it can be hired at all.
  */
 
+import { provenanceRank, type EvidenceProvenance } from "./provenance.js";
+
 export const QUALIFICATION_STAGES = [
   /** An ERC-8004 identity exists. Says nothing about whether anything is behind it. */
   "REGISTERED",
@@ -188,4 +190,67 @@ export function assessQualification(
  */
 export function qualificationSortKey(assessment: QualificationAssessment): number {
   return STAGE_RANK[assessment.stage];
+}
+
+/* -------------------------------------------------------------------------- */
+/*  The tie between qualification and provenance                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The strongest provenance a given qualification stage can support.
+ *
+ * `provenance.ts` grades how a claim was established; this module grades how far
+ * an agent has proven it can be hired. Kept apart they are two descriptive
+ * scales, and nothing stops an interface labelling a scaffold that merely
+ * answers a handshake as `Trial-verified`.
+ *
+ * That is not a hypothetical. MANDATE ships four categories at deliberately
+ * different depths, and the honest presentation of that is the provenance
+ * ladder. A ladder anyone can climb by assertion is decoration, so the ceiling
+ * is enforced here and the display reads it rather than choosing for itself.
+ *
+ * The mapping is conservative: reaching a stage does not grant the provenance,
+ * it merely stops forbidding it. An agent at `TRIAL_VERIFIED` may still be shown
+ * as `Claimed` if that is all its evidence supports.
+ */
+const PROVENANCE_CEILING: Record<QualificationStage, EvidenceProvenance> = {
+  // Nothing is behind a bare registration, so a developer's word is all there is.
+  REGISTERED: "Claimed",
+  ENDPOINT_VERIFIED: "Claimed",
+  // Something answers, but answering is not evidence of financial behaviour.
+  CALLABLE: "Public Activity",
+  CATEGORY_COMPATIBLE: "Identity-bound",
+  TRIAL_VERIFIED: "Trial-verified",
+  MANDATE_NATIVE: "Mandate-verified",
+};
+
+/** The strongest provenance this stage permits. */
+export function provenanceCeilingFor(stage: QualificationStage): EvidenceProvenance {
+  return PROVENANCE_CEILING[stage];
+}
+
+/** True when `provenance` is within what `stage` can support. */
+export function provenanceIsSupported(
+  provenance: EvidenceProvenance,
+  stage: QualificationStage,
+): boolean {
+  return provenanceRank(provenance) <= provenanceRank(PROVENANCE_CEILING[stage]);
+}
+
+/**
+ * Clamp a provenance label to what the agent's qualification actually supports.
+ *
+ * Display code calls this rather than trusting a stored label, so an agent that
+ * regressed — its endpoint went dark, its version changed — cannot keep
+ * advertising evidence it can no longer back.
+ */
+export function displayProvenance(
+  claimed: EvidenceProvenance,
+  stage: QualificationStage,
+): { provenance: EvidenceProvenance; clamped: boolean } {
+  const ceiling = PROVENANCE_CEILING[stage];
+  if (provenanceRank(claimed) <= provenanceRank(ceiling)) {
+    return { provenance: claimed, clamped: false };
+  }
+  return { provenance: ceiling, clamped: true };
 }

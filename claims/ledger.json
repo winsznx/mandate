@@ -21,18 +21,19 @@
     "receiptRegistry": "0x0791af52629206b5434a6865e9e1536a493854ca",
     "identityRegistry": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
     "agentId": 1842,
-    "receiptId": "0xb62599a743626d7750a0e6be979022183559964928a71545d8701e112335e929",
-    "mandateId": "0x2392e1fcb2464cc390690f57dac7f46148b248fc15a9a4dfab0569fb4e598d1a",
+    "receiptId": "0x982f8c2e409876df73e897089f09875778aac17ec51d8b651a4908c6c2a1ba16",
+    "mandateId": "0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda",
     "supersededRegistry": {
       "address": "0x4c2b4d81a0b5ffb9b13f8c6b22fbbdc9d69da299",
-      "reason": "superseded by the lifecycle-event redeploy; its receipts are deliberately abandoned rather than migrated, because a receipt is a commitment and moving one would defeat the point"
-    }
+      "reason": "superseded by the lifecycle-event redeploy. Its receipts are abandoned rather than migrated, because a receipt is a commitment and moving one would defeat the point of making it."
+    },
+    "otherReceiptsInRegistry": "Three receipts exist. Two come from superseded or crashed runs and are published with reachable evidence rather than left as unverifiable commitments. One of those has no mandate because its run died between publishing the receipt and activating."
   },
   "claims": [
     {
       "claimId": "trial-reproducible",
       "wording": "The trial result is reproducible by an independent reference model that does not share the agent's accounting implementation.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 9,
       "evidence": [
         {
@@ -45,14 +46,13 @@
         }
       ],
       "limitations": [
-        "Reproducibility is asserted for the recorded observation, not for a re-fork at the original block: the fixture's block is beyond the public RPC's fork window.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "Reproducibility is asserted for the recorded observation, not for a re-fork at the original block: the fixture's block is beyond the public RPC's fork window."
       ]
     },
     {
       "claimId": "receipt-immutable",
       "wording": "The trial receipt is an append-only public commitment whose id recomputes from its own fields.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 9,
       "evidence": [
         {
@@ -68,14 +68,12 @@
           "value": "test_publishReceipt_revertsOnRepublication"
         }
       ],
-      "limitations": [
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
-      ]
+      "limitations": []
     },
     {
       "claimId": "evidence-integrity",
       "wording": "The evidence document served publicly is byte-identical to what the receipt committed to.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 9,
       "evidence": [
         {
@@ -87,14 +85,12 @@
           "value": "evidence hash PASS"
         }
       ],
-      "limitations": [
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
-      ]
+      "limitations": []
     },
     {
       "claimId": "authority-subset",
       "wording": "The authority granted to the agent is no broader than the authority its trial tested, recomputed by an independent comparator from both disclosed documents.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 9,
       "evidence": [
         {
@@ -107,14 +103,13 @@
         }
       ],
       "limitations": [
-        "The comparator is MANDATE's own. Its rules are published and its verdict is recomputed by the verifier rather than read from the artifact.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "The comparator is MANDATE's own. Its rules are published and its verdict is recomputed by the verifier rather than read from the artifact."
       ]
     },
     {
       "claimId": "permitted-execution-succeeds",
       "wording": "A financial action inside the granted authority executes successfully against the real protocol.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -127,14 +122,13 @@
         }
       ],
       "limitations": [
-        "Demonstrated for Venus vUSDT repayBorrow(uint256) on chain 97.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "Demonstrated for Venus vUSDT repayBorrow(uint256) on chain 97."
       ]
     },
     {
       "claimId": "spend-boundary-enforced",
       "wording": "An action that would take cumulative spend past the granted cap is refused by the user's own account contract, which raises ExceededSpendLimit.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -147,14 +141,13 @@
         }
       ],
       "limitations": [
-        "The refusal occurs before broadcast, so there is no reverted transaction. See claim rejection-produces-no-transaction.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "The refusal occurs before broadcast, so there is no reverted transaction. See claim rejection-produces-no-transaction."
       ]
     },
     {
       "claimId": "target-boundary-enforced",
       "wording": "The granted selector invoked on a contract outside the permission set is refused by the account contract with UnauthorizedCall.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -167,14 +160,13 @@
         }
       ],
       "limitations": [
-        "No reverted transaction. See claim rejection-produces-no-transaction.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "No reverted transaction. See claim rejection-produces-no-transaction."
       ]
     },
     {
       "claimId": "selector-boundary-enforced",
       "wording": "A selector outside the permission set invoked on the granted contract is refused by the account contract with UnauthorizedCall.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -187,14 +179,13 @@
         }
       ],
       "limitations": [
-        "No reverted transaction. See claim rejection-produces-no-transaction.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "No reverted transaction. See claim rejection-produces-no-transaction."
       ]
     },
     {
       "claimId": "revocation-removes-authority",
       "wording": "Revoking the session removes the key from the account and from the public KeyStore, and a previously permitted action is then refused.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -210,14 +201,12 @@
           "value": "post-revoke-execution-fails PASS"
         }
       ],
-      "limitations": [
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
-      ]
+      "limitations": []
     },
     {
       "claimId": "durable-approval-cleaned",
       "wording": "The standing admin-path allowance the mandate required is disclosed as a durable effect and cleared after revocation.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -226,14 +215,13 @@
         }
       ],
       "limitations": [
-        "Session-path approvals are force-zeroed by the account contract at the end of every batch, so the only durable approval is the admin-path one.",
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
+        "Session-path approvals are force-zeroed by the account contract at the end of every batch, so the only durable approval is the admin-path one."
       ]
     },
     {
       "claimId": "requested-is-not-enforced",
       "wording": "The permissions an application requests are not necessarily the permissions the chain enforces, and MANDATE displays the enforced set read from the account rather than the requested object.",
-      "status": "PENDING_REPROOF",
+      "status": "VERIFIED",
       "proofLevel": 7,
       "evidence": [
         {
@@ -245,9 +233,7 @@
           "value": "packages/altana/test/effective-authority.test.ts \u2014 Orchestrator regression fixture"
         }
       ],
-      "limitations": [
-        "Was VERIFIED against registry 0x4c2b4d81, now superseded. Re-proof against 0x0791af52 pending; the prior evidence is not carried over."
-      ]
+      "limitations": []
     },
     {
       "claimId": "rejection-produces-no-transaction",
@@ -269,12 +255,20 @@
     {
       "claimId": "historical-grant-after-revocation",
       "wording": "That the session was granted with these permissions, and over which window, can be reconstructed from chain after it has been revoked.",
-      "status": "PENDING_REPROOF",
-      "proofLevel": 6,
-      "evidence": [],
+      "status": "VERIFIED",
+      "proofLevel": 9,
+      "evidence": [
+        {
+          "type": "verifier-step",
+          "value": "session registration PASS: granted over the window the activation records, revoked through the registry, both reconstructed from chain"
+        },
+        {
+          "type": "contract-test",
+          "value": "test_recordRevocation_leavesTheGrantReconstructible"
+        }
+      ],
       "limitations": [
-        "The registry now records validFrom, validUntil and revokedAt on the activation, so this no longer depends on archive state.",
-        "Status stays PENDING_REPROOF until the proof is re-run against the new registry and the verifier reports the step PASS. The capability existing in the contract is not evidence that it worked."
+        "Reconstructed from the registry's own lifecycle record rather than from account state, which no longer holds the key after revocation."
       ]
     },
     {
@@ -307,6 +301,48 @@
       "limitations": [
         "MANDATE bounds what a session may do. It does not make an agent correct, honest or competent.",
         "ERC-1271 signing paths bypass both call and spend enforcement and are excluded from mandate sessions rather than defended against."
+      ]
+    },
+    {
+      "claimId": "no-independent-agent-has-held-a-mandate",
+      "wording": "A third party's agent has operated autonomously under a MANDATE-granted session.",
+      "status": "NOT_CLAIMED",
+      "proofLevel": 0,
+      "evidence": [],
+      "limitations": [
+        "In every run so far the session key is held by MANDATE and the wallet's admin key is MANDATE's own deployer. The proof demonstrates that the account contract enforces the boundary, which it does regardless of who holds the keys, and it does NOT demonstrate an arm's-length agent operating on a stranger's wallet.",
+        "The enforcement evidence is unaffected: the account refused the out-of-scope calls on its own, and holding both keys cannot make a refusal happen.",
+        "What is NOT yet shown is the trust story end to end, where the capital owner and the agent operator are different parties."
+      ]
+    },
+    {
+      "claimId": "blocked-execution-transaction-evidence",
+      "wording": "MANDATE can show an on-chain transaction for a blocked action.",
+      "status": "NOT_CLAIMED",
+      "proofLevel": 0,
+      "evidence": [],
+      "limitations": [
+        "The verifier's `blocked execution` step is a permanent SKIP by design. A boundary-crossing call is refused during validation and never reaches a block, so there is no transaction to fetch.",
+        "The evidence for a refusal is the `rejected intents` step, which is VERIFIED."
+      ]
+    },
+    {
+      "claimId": "rejected-intents-corroborated",
+      "wording": "Each refused action is corroborated by the account's own state at the moment of the attempt, so the spend cap can be distinguished from an exhausted token allowance.",
+      "status": "VERIFIED",
+      "proofLevel": 9,
+      "evidence": [
+        {
+          "type": "verifier-step",
+          "value": "rejected intents PASS: 3 intents refused by the account before broadcast, each corroborated by the account's own state"
+        },
+        {
+          "type": "observation",
+          "value": "the spend-cap intent carries allowanceAtAttemptRaw 155000000 against amountRaw 6000000, ruling out an exhausted approval"
+        }
+      ],
+      "limitations": [
+        "Three of four refusals are published. The post-revoke refusal is omitted because the relay rejects a stale key before the account's validator runs, so the account raised no error to record."
       ]
     }
   ]

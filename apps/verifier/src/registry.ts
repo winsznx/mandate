@@ -72,6 +72,9 @@ export const REGISTRY_ABI = [
           { name: "grantedAuthorityHash", type: "bytes32" },
           { name: "attestedBy", type: "address" },
           { name: "activatedAt", type: "uint64" },
+          { name: "validFrom", type: "uint64" },
+          { name: "validUntil", type: "uint64" },
+          { name: "revokedAt", type: "uint64" },
           { name: "disclosureURI", type: "string" },
         ],
       },
@@ -114,6 +117,19 @@ export interface OnChainActivation {
   grantedAuthorityHash: Hex;
   attestedBy: Address;
   activatedAt: bigint;
+  /**
+   * The window the session was granted over, committed at activation.
+   *
+   * This is what makes a finished mandate checkable. Once a session is revoked
+   * the account holds no key, and an empty account is the same observation for
+   * "revoked since activation" and "never granted at all". With the window on
+   * chain the grant is reconstructible from the record itself, without archive
+   * state and without trusting anyone's narration of it.
+   */
+  validFrom: bigint;
+  validUntil: bigint;
+  /** Zero while the registry holds no revocation for this mandate. */
+  revokedAt: bigint;
   /**
    * Where the granted AuthorityIR can be fetched.
    *
@@ -218,6 +234,9 @@ export async function readActivation(
     grantedAuthorityHash: activation.grantedAuthorityHash,
     attestedBy: activation.attestedBy.toLowerCase() as Address,
     activatedAt: activation.activatedAt,
+    validFrom: activation.validFrom,
+    validUntil: activation.validUntil,
+    revokedAt: activation.revokedAt,
     disclosureURI: activation.disclosureURI,
   };
 }

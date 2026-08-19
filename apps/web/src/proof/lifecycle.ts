@@ -51,7 +51,7 @@ const STAGE_STEPS: Record<string, readonly string[]> = {
   granted: ["grant-session", "read-enforced-authority", "compare-requested-enforced"],
   executed: ["execute-repay", "venus-post-state"],
   rejections: ["cap-breach-attempt", "cap-breach-is-spend-limit", "wrong-target-attempt", "wrong-target-rejected"],
-  revoked: ["revoke-session"],
+  revoked: ["revoke-session", "record-revocation"],
   postRevoke: ["post-revoke-execution-fails", "clear-standing-approval"],
   verified: ["record-activation", "independent-verifier"],
 };
@@ -69,6 +69,7 @@ const TX_EVIDENCE_LABEL: Record<string, string> = {
   revokeTxHash: "session key revoked",
   clearTxHash: "standing allowance cleared to zero",
   activationTxHash: "activation recorded against the receipt",
+  revocationTxHash: "revocation recorded against the activation",
 };
 
 const EXECUTION_STAGE: Record<string, string> = {
@@ -79,6 +80,7 @@ const EXECUTION_STAGE: Record<string, string> = {
   "revoke-session": "revoked",
   "clear-standing-approval": "postRevoke",
   "record-activation": "verified",
+  "record-revocation": "revoked",
 };
 
 export function buildLifecycle(report: ProofReport): LifecycleStage[] {
@@ -134,7 +136,7 @@ export function buildLifecycle(report: ProofReport): LifecycleStage[] {
       id: "revoked",
       title: "Session revoked",
       summary:
-        "The key was removed from the account and from the public KeyStore. Both now answer that it is not held and not valid.",
+        "The key was removed from the account and from the public KeyStore. Both now answer that it is not held and not valid, and the registry carries the same fact, so a reader who finds an empty account can tell a revoked mandate from one that was never granted.",
       provenance: "CHAIN",
     },
     {

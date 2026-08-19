@@ -22,6 +22,20 @@ describe("the step catalogue", () => {
     expect(ids.indexOf("standing-approval")).toBeLessThan(ids.indexOf("grant-session"));
     expect(ids.indexOf("revoke-session")).toBeLessThan(ids.indexOf("clear-standing-approval"));
   });
+
+  it("records the revocation only after there is an activation to revoke", () => {
+    // #given the declared lifecycle
+    const ids = PHASE_7_STEPS.map((step) => step.id);
+
+    // #when the registry-side revocation is placed
+    const revocation = ids.indexOf("record-revocation");
+
+    // #then the account was revoked first and the activation exists, so the
+    // registry is never asked to revoke a mandate it does not hold
+    expect(ids.indexOf("revoke-session")).toBeLessThan(revocation);
+    expect(ids.indexOf("record-activation")).toBeLessThan(revocation);
+    expect(PHASE_7_STEPS[revocation]?.writes).toBe(true);
+  });
 });
 
 describe("the journal", () => {

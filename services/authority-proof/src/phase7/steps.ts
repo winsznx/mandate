@@ -263,6 +263,15 @@ export const PHASE_7_STEPS = [
     method: "recordActivation on the registry, then re-derive the mandate id from the stored fields.",
   },
   {
+    id: "record-revocation",
+    phase: "CLOSE",
+    writes: true,
+    claim:
+      "The revocation is on the same public record as the activation, so a reader who finds an empty account can tell a revoked mandate from one that was never granted",
+    method:
+      "recordRevocation on the registry after the account-side revocation succeeded, then read the stamped revokedAt back out of the emitted event.",
+  },
+  {
     id: "independent-verifier",
     phase: "CLOSE",
     writes: false,

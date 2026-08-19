@@ -7,12 +7,14 @@
  * evidence URI is dereferenced for the documents those commitments name, and
  * everything else is recomputed locally.
  *
- * One gap is structural and is reported rather than papered over. The
- * registry's `Activation` record stores a `grantedAuthorityHash` but no URI for
- * the document behind it, so there is nowhere on chain to find the granted
- * AuthorityIR. The verifier will check any document it is handed against the
- * on-chain hash — which keeps the check trustless — but it cannot go and fetch
- * one, and it says so instead of pretending the step ran.
+ * The activation is read as a lifecycle rather than as a snapshot. It carries
+ * the URI the granted AuthorityIR is fetched from, the window the session was
+ * valid over, and the moment it was revoked, so a mandate that has already
+ * finished is still checkable: the grant is reconstructed from what the
+ * registry committed to, and the account is consulted to corroborate that
+ * reconstruction rather than to supply it. Nothing about that relaxes the hash
+ * rule — a document is believed only once it hashes to the commitment the
+ * activation carries, and one that does not is repudiated.
  */
 import { authorityHash, isSubset } from "@mandate/authority-ir";
 import { readEnforcedAuthority } from "@mandate/altana";
@@ -108,6 +110,11 @@ export interface MandateSummary {
   grantedAuthorityHash: Hex;
   attestedBy: Address;
   activatedAt: number;
+  /** The window the session was granted over, as the activation committed to it. */
+  validFrom: number;
+  validUntil: number;
+  /** Zero when the registry holds no revocation for this mandate. */
+  revokedAt: number;
   /** Renewal sequence recovered by recomputing the id, when it could be recovered. */
   sequence?: number;
 }
@@ -746,7 +753,7 @@ export async function verifyMandate(mandateId: Hex, options: VerifyOptions): Pro
   const grantedStep = stepGrantedAuthority(mandateId, activation, sequence, disclosure, problem);
   const grantAuthenticated = grantedStep.status === "PASS";
   const subsetStep = stepSubsetRelation(gathered.evidence.bundle, disclosure, grantAuthenticated);
-  const sessionStep = await stepSessionRegistration(options.client, activation, disclosure);
+  const sessionStep = await stepSessionRegistration(options.client, activation, disclosure, options.now);
 
   const context: ExecutionContext = {
     wallet: activation.wallet,
@@ -777,6 +784,9 @@ export async function verifyMandate(mandateId: Hex, options: VerifyOptions): Pro
     grantedAuthorityHash: activation.grantedAuthorityHash,
     attestedBy: activation.attestedBy,
     activatedAt: Number(activation.activatedAt),
+    validFrom: Number(activation.validFrom),
+    validUntil: Number(activation.validUntil),
+    revokedAt: Number(activation.revokedAt),
     ...(sequence === undefined ? {} : { sequence }),
   };
 
@@ -883,10 +893,27 @@ function stepSubsetRelation(
   });
 }
 
+/**
+ * Was this session actually granted, and what became of it?
+ *
+ * The activation states the window the grant covered and, once revoked, the
+ * moment it ended. That is what makes a finished mandate checkable at all: a
+ * revoked session leaves an account holding no key, and an empty account is the
+ * same observation for "revoked since activation" and "never granted". Reading
+ * the window off the record turns the second case into a reconstruction instead
+ * of an unanswerable question, and leaves the account as corroboration.
+ *
+ * The record is never allowed to overrule the account. A registry that says
+ * revoked while the account still holds a live key, or that says live while the
+ * account holds nothing inside the window it published, is a contradiction and
+ * is reported as one. Those are exactly the states a proof surface must not
+ * smooth over.
+ */
 async function stepSessionRegistration(
   client: PublicClient,
   activation: OnChainActivation,
   disclosure: MandateDisclosure | undefined,
+  now: number,
 ): Promise<Step> {
   const disclosed = disclosure?.session;
   if (disclosed !== undefined) {
@@ -904,33 +931,71 @@ async function stepSessionRegistration(
     }
   }
 
-  const code = await client.getCode({ address: activation.wallet }).catch(() => undefined);
-  if (code === undefined || code === "0x") {
-    return skip(
+  const validFrom = Number(activation.validFrom);
+  const validUntil = Number(activation.validUntil);
+  const revokedAt = Number(activation.revokedAt);
+  const grant = {
+    wallet: activation.wallet,
+    "key hash": activation.sessionKeyHash,
+    "granted from": utcSeconds(validFrom),
+    "valid until": utcSeconds(validUntil),
+  };
+
+  const account = await readAccountAuthority(client, activation);
+
+  if (revokedAt !== 0) {
+    if (account.enforced?.registered === true) {
+      return fail(
+        "session registration",
+        `the registry records this mandate revoked at ${utcSeconds(revokedAt)}, but the account still holds a key with this hash`,
+        {
+          ...grant,
+          "revoked at": utcSeconds(revokedAt),
+          "read at block": account.enforced.observedAtBlock.toString(10),
+        },
+      );
+    }
+
+    return pass(
       "session registration",
-      `${activation.wallet} carries no account code on this chain, so its permission storage cannot be read`,
+      "the session was granted over the window the activation records and revoked through the registry, both reconstructed from chain",
+      {
+        ...grant,
+        "revoked at": utcSeconds(revokedAt),
+        "attested by": activation.attestedBy,
+        account:
+          account.enforced === undefined
+            ? account.reason
+            : `holds no key with this hash at block ${account.enforced.observedAtBlock}, which is what a revoked mandate looks like`,
+      },
     );
   }
 
-  let enforced: Awaited<ReturnType<typeof readEnforcedAuthority>>;
-  try {
-    enforced = await readEnforcedAuthority(client, {
-      wallet: activation.wallet,
-      keyHash: activation.sessionKeyHash,
-    });
-  } catch (error) {
-    return skip(
-      "session registration",
-      `the account at ${activation.wallet} did not answer the permission reads: ${String(error)}`,
-    );
+  if (account.enforced === undefined) {
+    return skip("session registration", account.reason);
   }
+  const enforced = account.enforced;
 
   if (!enforced.registered) {
-    // Absence now and absence at activation are different facts, and telling
-    // them apart needs an archive node this verifier does not assume.
-    return skip(
+    if (now > validUntil) {
+      // The window closing on its own is the record's own prediction coming
+      // true, not a gap in it. Reporting an expired grant as a discrepancy
+      // would make every finished mandate look broken.
+      return pass(
+        "session registration",
+        "the session's window closed and no revocation was recorded, and the account holds no key, which is what the record predicts",
+        {
+          ...grant,
+          "read at block": enforced.observedAtBlock.toString(10),
+          "revoked at": "never recorded",
+        },
+      );
+    }
+
+    return fail(
       "session registration",
-      `the account holds no key with hash ${activation.sessionKeyHash} at block ${enforced.observedAtBlock}. It may have been revoked since activation, which cannot be distinguished from never having been granted without archive state.`,
+      `the registry records no revocation and the window runs to ${utcSeconds(validUntil)}, but the account holds no key with hash ${activation.sessionKeyHash} at block ${enforced.observedAtBlock}`,
+      { ...grant, "read at block": enforced.observedAtBlock.toString(10) },
     );
   }
 
@@ -938,7 +1003,7 @@ async function stepSessionRegistration(
     return fail(
       "session registration",
       "the session key is registered as a super-admin, so it is not bounded by any permission set",
-      { wallet: activation.wallet, "key hash": activation.sessionKeyHash },
+      grant,
     );
   }
 
@@ -949,18 +1014,70 @@ async function stepSessionRegistration(
     return fail(
       "session registration",
       `the account enforces ${wildcards.length} rule(s) with a wildcard target, so the session can reach every contract`,
-      { wallet: activation.wallet },
+      grant,
+    );
+  }
+
+  if (enforced.expiry !== validUntil) {
+    // The activation is a public claim about how long the authority lasts. If
+    // the account disagrees, the claim is wrong in whichever direction, and a
+    // reader planning around the published window would be planning around a
+    // number nothing enforces.
+    return fail(
+      "session registration",
+      "the account expires this key at a different time than the activation committed to",
+      {
+        ...grant,
+        "account expiry": utcSeconds(enforced.expiry),
+        "read at block": enforced.observedAtBlock.toString(10),
+      },
     );
   }
 
   return pass("session registration", "the account itself holds this key, with a bounded permission set", {
-    wallet: activation.wallet,
-    "key hash": activation.sessionKeyHash,
-    expiry: enforced.expiry === 0 ? "none" : new Date(enforced.expiry * 1000).toISOString(),
+    ...grant,
     "call rules": `${enforced.callRules.length} on this key, ${enforced.walletWideRules.length} wallet-wide`,
     "spend limits": String(enforced.spendLimits.length),
     "read at block": enforced.observedAtBlock.toString(10),
   });
+}
+
+/** Unix seconds as UTC, or the word for the absence of a time. */
+function utcSeconds(unixSeconds: number): string {
+  return unixSeconds === 0 ? "none" : new Date(unixSeconds * 1000).toISOString();
+}
+
+/**
+ * The account's own view of the session key, or why there is none.
+ *
+ * Separated from the step so "the account contradicts the record" and "the
+ * account could not be asked" stay distinguishable. Collapsing them would let
+ * an unreachable RPC read as agreement.
+ */
+async function readAccountAuthority(
+  client: PublicClient,
+  activation: OnChainActivation,
+): Promise<{ enforced?: Awaited<ReturnType<typeof readEnforcedAuthority>>; reason: string }> {
+  const code = await client.getCode({ address: activation.wallet }).catch(() => undefined);
+  if (code === undefined || code === "0x") {
+    return {
+      reason: `${activation.wallet} carries no account code on this chain, so its permission storage cannot be read`,
+    };
+  }
+
+  try {
+    return {
+      enforced: await readEnforcedAuthority(client, {
+        wallet: activation.wallet,
+        keyHash: activation.sessionKeyHash,
+      }),
+      reason: "read",
+    };
+  } catch (error) {
+    return {
+      reason: `the account at ${activation.wallet} did not answer the permission reads: ${String(error)}`,
+    };
+  }
 }
 
 function stepAllowedExecution(findings: readonly ExecutionFinding[], disclosed: boolean): Step {

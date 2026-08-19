@@ -40,13 +40,6 @@ GrantedEnforceableAuthority ⊆ TestedEnforceableAuthority
 
 A Venus health-factor agent was tested, granted a bounded mandate, and used it.
 
-> **Re-proof in progress.** The registry below was just redeployed to record the
-> session validity window on chain, which closes a gap where a revoked mandate
-> could not be distinguished from one that was never granted. The lifecycle
-> below was proven against the previous registry; every claim is marked
-> `PENDING_REPROOF` in the ledger until it is re-established against this one.
-> Prior evidence is not carried over.
-
 | | |
 |---|---|
 | Network | BSC Testnet (97) |
@@ -58,6 +51,7 @@ A Venus health-factor agent was tested, granted a bounded mandate, and used it.
 | Cap breach | +6 USDT refused with `ExceededSpendLimit` |
 | Wrong target / selector | refused with `UnauthorizedCall` |
 | Revocation | session removed from account and KeyStore; the same action then refused |
+| Lifecycle | grant window and revocation recorded on chain, so the grant stays reconstructible after the key is gone |
 
 Verify it yourself, with no account and no wallet:
 
@@ -132,9 +126,8 @@ and turned up one upstream issue worth reporting:
 
 The dominant mechanism is proven end to end on testnet. The marketplace surface
 around it is early: one of four agent categories is fully implemented, and the
-consumer-facing flows are still being built. See
-[`internal/research/audit-00-GAP-REGISTER.md`](internal/research) for the honest
-backlog.
+consumer-facing flows are still being built. The backlog is tracked privately; the short version is that one of four agent
+categories is implemented and the consumer-facing flows are still being built.
 
 ## License
 

@@ -18,7 +18,15 @@ export const NETWORK_NAME = "BSC Testnet";
 /** Verified reachable, and the same endpoint the CLI verifier defaults to. */
 export const DEFAULT_RPC_URL = "https://bsc-testnet-rpc.publicnode.com";
 
-export const RECEIPT_REGISTRY: Address = "0x4c2b4d81a0b5ffb9b13f8c6b22fbbdc9d69da299";
+/**
+ * The live registry, matching `contracts/deployments/97.json`.
+ *
+ * The earlier deployment at `0x4c2b4d81…` is dead and its receipts are
+ * abandoned. Pointing the page at it would keep rendering that run's evidence
+ * as current, which is a quieter and worse failure than a page that cannot find
+ * a mandate.
+ */
+export const RECEIPT_REGISTRY: Address = "0x0791af52629206b5434a6865e9e1536a493854ca";
 export const IDENTITY_REGISTRY: Address = "0x8004a818bfb912233c491871b3d84c89a494bd9e";
 
 /** The agent whose lifecycle this deployment publishes. */

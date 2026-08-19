@@ -69,6 +69,9 @@ export const REGISTRY_ABI = [
           { name: "grantedAuthorityHash", type: "bytes32" },
           { name: "attestedBy", type: "address" },
           { name: "activatedAt", type: "uint64" },
+          { name: "validFrom", type: "uint64" },
+          { name: "validUntil", type: "uint64" },
+          { name: "revokedAt", type: "uint64" },
           { name: "disclosureURI", type: "string" },
         ],
       },
@@ -102,6 +105,18 @@ export interface OnChainActivation {
   grantedAuthorityHash: Hex;
   attestedBy: Address;
   activatedAt: bigint;
+  /**
+   * The window the session was granted over, committed at activation.
+   *
+   * Once a session is revoked the account holds no key, and an empty account is
+   * the same observation for "revoked" and "never granted". The window is what
+   * lets the page state the lifecycle of a finished mandate from the record
+   * rather than from present state it cannot interpret.
+   */
+  validFrom: bigint;
+  validUntil: bigint;
+  /** Zero while the registry holds no revocation for this mandate. */
+  revokedAt: bigint;
   disclosureURI: string;
 }
 
@@ -166,6 +181,9 @@ export async function readActivation(
     grantedAuthorityHash: activation.grantedAuthorityHash,
     attestedBy: activation.attestedBy.toLowerCase() as Address,
     activatedAt: activation.activatedAt,
+    validFrom: activation.validFrom,
+    validUntil: activation.validUntil,
+    revokedAt: activation.revokedAt,
     disclosureURI: activation.disclosureURI,
   };
 }

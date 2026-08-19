@@ -323,6 +323,21 @@ async function ProofBody({ mandateId }: { mandateId: Hex }) {
                   </dd>
                 </div>
                 <div>
+                  <dt>Granted at</dt>
+                  <dd>{formatUtc(report.mandate.validFrom)}</dd>
+                </div>
+                <div>
+                  <dt>Valid until</dt>
+                  <dd>{formatUtc(report.mandate.validUntil)}</dd>
+                </div>
+                <div>
+                  <dt>Revoked at</dt>
+                  {/* Printed even when there is no revocation. A missing row
+                      would read as a question nobody asked rather than as an
+                      answer, and this is the field a reader checks first. */}
+                  <dd>{report.mandate.revokedAt === 0 ? "not revoked" : formatUtc(report.mandate.revokedAt)}</dd>
+                </div>
+                <div>
                   <dt>Tested authority hash</dt>
                   <dd>
                     <HashValue label="tested authority hash" value={report.receipt.testedAuthorityHash} />

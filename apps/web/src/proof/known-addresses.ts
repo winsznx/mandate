@@ -24,7 +24,7 @@ const CHAIN_97_CONTRACTS: Record<string, string> = {
   "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9": "Altana Orchestrator",
   "0x6b8361c29d05d498b1a12b54a37310f94171e94a": "Altana KeyStore",
   "0x33ad2f49ab9f122f5f0fdf579f575724eff353de": "Altana account implementation",
-  "0x4c2b4d81a0b5ffb9b13f8c6b22fbbdc9d69da299": "MANDATE ReceiptRegistry",
+  "0x0791af52629206b5434a6865e9e1536a493854ca": "MANDATE ReceiptRegistry",
   "0x8004a818bfb912233c491871b3d84c89a494bd9e": "ERC-8004 IdentityRegistry",
 };
 

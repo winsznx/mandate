@@ -165,6 +165,29 @@ export function revertingCode(data: Hex): Hex {
   return `0x${code}`;
 }
 
+/**
+ * Runtime code that answers every call with exactly `data`.
+ *
+ * The sibling of `revertingCode`, and it exists for the same reason: the
+ * account contract whose permission storage the verifier reads belongs to
+ * another system and cannot be deployed here. Returning a pre-encoded answer
+ * puts the "the account holds this key" and "the account holds nothing"
+ * branches on a real chain instead of leaving them untested.
+ */
+export function returningCode(data: Hex): Hex {
+  const body = data.slice(2);
+  const byteLength = body.length / 2;
+  let code = "";
+
+  for (let offset = 0; offset < byteLength; offset += 32) {
+    const chunk = body.slice(offset * 2, offset * 2 + 64).padEnd(64, "0");
+    code += `7f${chunk}61${offset.toString(16).padStart(4, "0")}52`;
+  }
+  code += `61${byteLength.toString(16).padStart(4, "0")}6000f3`;
+
+  return `0x${code}`;
+}
+
 export async function setCode(rpcUrl: string, address: Address, code: Hex | string): Promise<void> {
   const response = await fetch(rpcUrl, {
     method: "POST",
@@ -216,8 +239,17 @@ export const REGISTRY_WRITE_ABI = [
       { name: "grantedAuthorityHash", type: "bytes32" },
       { name: "sequence", type: "uint32" },
       { name: "disclosureURI", type: "string" },
+      { name: "validFrom", type: "uint64" },
+      { name: "validUntil", type: "uint64" },
     ],
     outputs: [{ type: "bytes32" }],
+  },
+  {
+    name: "recordRevocation",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "mandateId", type: "bytes32" }],
+    outputs: [],
   },
   {
     name: "computeReceiptId",

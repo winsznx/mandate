@@ -112,6 +112,16 @@ export function renderReport(report: VerificationReport, options: RenderOptions 
     lines.push(field("wallet", mandate.wallet));
     lines.push(field("session key", mandate.sessionKeyHash));
     lines.push(field("attested by", mandate.attestedBy));
+    lines.push(field("granted from", new Date(mandate.validFrom * 1000).toISOString()));
+    lines.push(field("valid until", new Date(mandate.validUntil * 1000).toISOString()));
+    // Printed even when absent. "not revoked" is a fact about the mandate; a
+    // missing line would read as one nobody looked for.
+    lines.push(
+      field(
+        "revoked at",
+        mandate.revokedAt === 0 ? "not revoked" : new Date(mandate.revokedAt * 1000).toISOString(),
+      ),
+    );
   }
 
   lines.push("");

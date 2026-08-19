@@ -15,14 +15,21 @@ import { canonicalBytes } from "@mandate/domain/canonical";
 import type { CanonicalValue } from "@mandate/domain/canonical";
 import { deriveMandateId } from "@mandate/domain";
 import { ACCOUNT_ERROR_ABI } from "@mandate/altana";
-import { encodeErrorResult, keccak256, pad, parseEther, toHex } from "viem";
+import { encodeAbiParameters, encodeErrorResult, keccak256, pad, parseEther, toHex } from "viem";
 import type { Address, Hex } from "viem";
 import { createClient } from "../src/config.js";
 import type { ResolvedTarget } from "../src/config.js";
 import { renderReport } from "../src/report.js";
 import { verifyMandate, verifyTrial } from "../src/verify.js";
 import type { VerificationReport } from "../src/verify.js";
-import { REGISTRY_WRITE_ABI, revertingCode, setCode, setStubContract, startAnvilWithRegistry } from "./anvil.js";
+import {
+  REGISTRY_WRITE_ABI,
+  returningCode,
+  revertingCode,
+  setCode,
+  setStubContract,
+  startAnvilWithRegistry,
+} from "./anvil.js";
 import type { AnvilHandle } from "./anvil.js";
 import {
   buildArtifact,
@@ -44,6 +51,59 @@ const SESSION_KEY_HASH = keccak256(toHex("mandate.test.session-key")) as Hex;
 const GRANTED_TARGET = GRANTED_AUTHORITY.calls[0]?.target as Address;
 /** Stands in for the account contract refusing an out-of-scope call. */
 const SPEND_CAP_REVERTER = "0x00000000000000000000000000000000000000B1" as Address;
+
+/**
+ * The window every activation in this suite commits to, unless it overrides it.
+ *
+ * `GRANT_VALID_UNTIL` is also the expiry the stubbed account reports for its
+ * key, because an activation whose window disagrees with the account is a
+ * finding and the default fixture should not be sitting on one.
+ */
+const GRANT_VALID_FROM = 1_790_000_000n;
+const GRANT_VALID_UNTIL = 1_800_000_000n;
+/** Earlier than `NOW_WITHIN_FRESHNESS`, so the window has closed on its own. */
+const GRANT_CLOSED_UNTIL = 1_790_050_000n;
+
+/** Accounts that answer the permission reads, one per lifecycle state under test. */
+const LIVE_ACCOUNT = "0x00000000000000000000000000000000000000c1" as Address;
+const REVOKED_ACCOUNT = "0x00000000000000000000000000000000000000c2" as Address;
+const VANISHED_ACCOUNT = "0x00000000000000000000000000000000000000c3" as Address;
+const LAPSED_ACCOUNT = "0x00000000000000000000000000000000000000c4" as Address;
+const CONTRADICTORY_ACCOUNT = "0x00000000000000000000000000000000000000c5" as Address;
+
+const ACCOUNT_KEYS_ABI = [
+  {
+    type: "tuple[]",
+    components: [
+      { name: "expiry", type: "uint40" },
+      { name: "keyType", type: "uint8" },
+      { name: "isSuperAdmin", type: "bool" },
+      { name: "publicKey", type: "bytes" },
+    ],
+  },
+  { type: "bytes32[]" },
+] as const;
+
+/**
+ * One answer that serves every permission read the verifier makes.
+ *
+ * `readEnforcedAuthority` calls four different views on the same address, so a
+ * stub has to return bytes all four can decode. The encoding of `getKeys` does:
+ * read as `bytes32[]` it yields the record's own tail offsets as call rules,
+ * and read as `spendInfos` it yields one limit. Neither is meaningful, which is
+ * the point — what the branches under test turn on is whether the key is there.
+ */
+function accountAnswer(keyHashes: readonly Hex[]): Hex {
+  return encodeAbiParameters(ACCOUNT_KEYS_ABI, [
+    keyHashes.map(() => ({
+      expiry: Number(GRANT_VALID_UNTIL),
+      keyType: 0,
+      isSuperAdmin: false,
+      publicKey: "0x" as Hex,
+    })),
+    [...keyHashes],
+  ]);
+}
 
 let anvil: AnvilHandle;
 let workdir: string;
@@ -83,16 +143,34 @@ async function publish(fields: ReceiptFields, evidenceURI: string): Promise<Hex>
   return receiptId;
 }
 
+interface ActivationOptions {
+  disclosureURI?: string;
+  /** Defaults to the suite's wallet. Overridden to give a scenario its own account. */
+  wallet?: Address;
+  validFrom?: bigint;
+  validUntil?: bigint;
+}
+
 async function activate(
   receiptId: Hex,
   grantedAuthorityHash: Hex,
-  disclosureURI = "file://granted-authority.json",
+  options: ActivationOptions = {},
 ): Promise<Hex> {
+  const account = options.wallet ?? wallet;
   const hash = await anvil.walletClient.writeContract({
     address: anvil.registry,
     abi: REGISTRY_WRITE_ABI,
     functionName: "recordActivation",
-    args: [receiptId, wallet, SESSION_KEY_HASH, grantedAuthorityHash, 0, disclosureURI],
+    args: [
+      receiptId,
+      account,
+      SESSION_KEY_HASH,
+      grantedAuthorityHash,
+      0,
+      options.disclosureURI ?? "file://granted-authority.json",
+      options.validFrom ?? GRANT_VALID_FROM,
+      options.validUntil ?? GRANT_VALID_UNTIL,
+    ],
     account: anvil.walletClient.account ?? null,
     chain: anvil.walletClient.chain ?? null,
   });
@@ -100,11 +178,23 @@ async function activate(
 
   return deriveMandateId({
     chainId: anvil.chainId,
-    wallet,
+    wallet: account,
     trialReceiptId: receiptId,
     grantedAuthorityHash,
     sequence: 0,
   });
+}
+
+async function recordRevocation(mandateId: Hex): Promise<void> {
+  const hash = await anvil.walletClient.writeContract({
+    address: anvil.registry,
+    abi: REGISTRY_WRITE_ABI,
+    functionName: "recordRevocation",
+    args: [mandateId],
+    account: anvil.walletClient.account ?? null,
+    chain: anvil.walletClient.chain ?? null,
+  });
+  await anvil.publicClient.waitForTransactionReceipt({ hash });
 }
 
 async function sendFromWallet(to: Address, value: bigint): Promise<Hex> {
@@ -196,6 +286,34 @@ beforeAll(async () => {
 
   mandates["withinScope"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH);
   mandates["overbroad"] = await activate(published["pass"], OVERBROAD_AUTHORITY_HASH);
+
+  // One activation per lifecycle state, each on its own account so the mandate
+  // ids do not collide and each account can answer differently.
+  const holdsKey = returningCode(accountAnswer([SESSION_KEY_HASH]));
+  const holdsNothing = returningCode(accountAnswer([]));
+  await setCode(anvil.rpcUrl, LIVE_ACCOUNT, holdsKey);
+  await setCode(anvil.rpcUrl, CONTRADICTORY_ACCOUNT, holdsKey);
+  await setCode(anvil.rpcUrl, REVOKED_ACCOUNT, holdsNothing);
+  await setCode(anvil.rpcUrl, VANISHED_ACCOUNT, holdsNothing);
+  await setCode(anvil.rpcUrl, LAPSED_ACCOUNT, holdsNothing);
+
+  mandates["live"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH, { wallet: LIVE_ACCOUNT });
+  mandates["revoked"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH, {
+    wallet: REVOKED_ACCOUNT,
+  });
+  mandates["vanished"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH, {
+    wallet: VANISHED_ACCOUNT,
+  });
+  mandates["lapsed"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH, {
+    wallet: LAPSED_ACCOUNT,
+    validUntil: GRANT_CLOSED_UNTIL,
+  });
+  mandates["contradictory"] = await activate(published["pass"], GRANTED_AUTHORITY_HASH, {
+    wallet: CONTRADICTORY_ACCOUNT,
+  });
+
+  await recordRevocation(mandates["revoked"] as Hex);
+  await recordRevocation(mandates["contradictory"] as Hex);
 
   // One action inside the grant, one refused by the enforcement layer. Anvil
   // hosts no Altana account, so the refusal comes from bytecode that emits the
@@ -509,6 +627,90 @@ describe("verify:mandate against an activation", () => {
     expect(report.verdict).toBe("FAILED");
     expect(statusOf(report, "blocked execution")).toBe("FAIL");
     expect(reasonOf(report, "blocked execution")).toContain("SUCCEEDED");
+  });
+
+  it("reconstructs a revoked grant from the activation instead of calling it unverifiable", async () => {
+    // #given a mandate whose session was revoked, so its account holds no key
+    // #when verified with nothing but the chain
+    const report = await verifyMandate(mandates["revoked"] as Hex, {
+      target,
+      client: anvil.publicClient,
+      now: NOW_WITHIN_FRESHNESS,
+    });
+
+    // #then the window and the revocation are read off the record, which is the
+    // whole reason they were committed to it: an empty account no longer has to
+    // stand for "nothing was ever granted here"
+    expect(statusOf(report, "session registration")).toBe("PASS");
+    expect(reasonOf(report, "session registration")).toContain("revoked");
+    const detail = report.steps.find((step) => step.id === "session registration")?.detail ?? {};
+    expect(detail["granted from"]).toBe(new Date(Number(GRANT_VALID_FROM) * 1000).toISOString());
+    expect(detail["valid until"]).toBe(new Date(Number(GRANT_VALID_UNTIL) * 1000).toISOString());
+    expect(detail["revoked at"]).not.toBe("none");
+    expect(report.mandate?.revokedAt).toBeGreaterThan(0);
+  });
+
+  it("checks a live session against the account and the window it was granted over", async () => {
+    // #given a mandate the registry records no revocation for
+    // #when verified against an account that still holds the key
+    const report = await verifyMandate(mandates["live"] as Hex, {
+      target,
+      client: anvil.publicClient,
+      now: NOW_WITHIN_FRESHNESS,
+    });
+
+    // #then the account corroborates the record rather than replacing it
+    expect(statusOf(report, "session registration")).toBe("PASS");
+    expect(reasonOf(report, "session registration")).toContain("the account itself holds this key");
+    expect(report.mandate?.revokedAt).toBe(0);
+  });
+
+  it("reports a key that vanished inside its own window rather than papering over it", async () => {
+    // #given an activation with no revocation on record and a window still open
+    // #when the account turns out to hold no such key
+    const report = await verifyMandate(mandates["vanished"] as Hex, {
+      target,
+      client: anvil.publicClient,
+      now: NOW_WITHIN_FRESHNESS,
+    });
+
+    // #then the contradiction is the finding. The record claims live authority
+    // the enforcement layer is not holding, and softening that to "could not be
+    // checked" would hide the one state a reader must not miss
+    expect(statusOf(report, "session registration")).toBe("FAIL");
+    expect(reasonOf(report, "session registration")).toContain("no revocation");
+    expect(report.verdict).toBe("FAILED");
+  });
+
+  it("accepts a window that simply closed, because that is what the record predicts", async () => {
+    // #given a mandate whose window ended before the verification time
+    // #when the account holds no key
+    const report = await verifyMandate(mandates["lapsed"] as Hex, {
+      target,
+      client: anvil.publicClient,
+      now: NOW_WITHIN_FRESHNESS,
+    });
+
+    // #then nothing is wrong: an expired grant leaving an empty account is the
+    // record coming true, and failing it would make every finished mandate
+    // look broken
+    expect(statusOf(report, "session registration")).toBe("PASS");
+    expect(reasonOf(report, "session registration")).toContain("window closed");
+  });
+
+  it("fails when the registry says revoked while the account still holds the key", async () => {
+    // #given a revocation recorded against an account that never gave the key up
+    // #when verified
+    const report = await verifyMandate(mandates["contradictory"] as Hex, {
+      target,
+      client: anvil.publicClient,
+      now: NOW_WITHIN_FRESHNESS,
+    });
+
+    // #then the record is not allowed to declare authority dead that is still
+    // enforceable
+    expect(statusOf(report, "session registration")).toBe("FAIL");
+    expect(reasonOf(report, "session registration")).toContain("still holds a key");
   });
 
   it("fails a mandate id the registry has no activation for", async () => {

@@ -15,6 +15,8 @@ contract MandateReceiptRegistryTest is Test {
     address private constant WALLET = address(0x4444);
     string private constant URI = "r2://mandate-evidence/trial-0001.json";
     string private constant DISCLOSURE_URI = "r2://mandate/granted-authority-0001.json";
+    uint64 private constant VALID_FROM = 1_790_000_000;
+    uint64 private constant VALID_UNTIL = 1_790_086_400;
 
     function setUp() public {
         registry = new MandateReceiptRegistry();
@@ -132,7 +134,7 @@ contract MandateReceiptRegistryTest is Test {
         vm.prank(PUBLISHER);
         registry.publishReceipt(other, URI);
         vm.prank(WALLET);
-        registry.recordActivation(id, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+        registry.recordActivation(id, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
 
         assertEq(keccak256(abi.encode(registry.getReceipt(id))), before, "stored receipt changed");
     }
@@ -202,7 +204,7 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.prank(WALLET);
         bytes32 mandateId =
-            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
 
         IMandateReceiptRegistry.Activation memory activation = registry.getActivation(mandateId);
         assertEq(activation.trialReceiptId, receiptId);
@@ -219,14 +221,14 @@ contract MandateReceiptRegistryTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(IMandateReceiptRegistry.ReceiptDidNotPass.selector, receiptId)
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
     }
 
     function test_recordActivation_revertsForAnUnknownReceipt() public {
         bytes32 missing = keccak256("nope");
 
         vm.expectRevert(abi.encodeWithSelector(IMandateReceiptRegistry.UnknownReceipt.selector, missing));
-        registry.recordActivation(missing, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+        registry.recordActivation(missing, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
     }
 
     function test_recordActivation_revertsOnDuplicateActivation() public {
@@ -234,12 +236,12 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.startPrank(WALLET);
         bytes32 mandateId =
-            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+            registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
 
         vm.expectRevert(
             abi.encodeWithSelector(IMandateReceiptRegistry.MandateAlreadyActivated.selector, mandateId)
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
         vm.stopPrank();
     }
 
@@ -249,9 +251,9 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.startPrank(WALLET);
         bytes32 first =
-            registry.recordActivation(receiptId, WALLET, keccak256("session-1"), keccak256("granted"), 0, DISCLOSURE_URI);
+            registry.recordActivation(receiptId, WALLET, keccak256("session-1"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
         bytes32 second =
-            registry.recordActivation(receiptId, WALLET, keccak256("session-2"), keccak256("granted"), 1, DISCLOSURE_URI);
+            registry.recordActivation(receiptId, WALLET, keccak256("session-2"), keccak256("granted"), 1, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
         vm.stopPrank();
 
         assertTrue(first != second);
@@ -269,7 +271,7 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.prank(WALLET);
         bytes32 mandateId = registry.recordActivation(
-            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL
         );
 
         assertEq(registry.getActivation(mandateId).disclosureURI, DISCLOSURE_URI);
@@ -282,7 +284,7 @@ contract MandateReceiptRegistryTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(IMandateReceiptRegistry.InvalidReceiptField.selector, "disclosureURI")
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, "");
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, "", VALID_FROM, VALID_UNTIL);
     }
 
     function test_recordActivation_rejectsAnOversizedDisclosureURI() public {
@@ -291,7 +293,7 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.prank(WALLET);
         vm.expectRevert(abi.encodeWithSelector(IMandateReceiptRegistry.EvidenceURITooLong.selector, 513));
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, long);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, long, VALID_FROM, VALID_UNTIL);
     }
 
     /// @notice The disclosure URI is not part of the mandate identity.
@@ -307,7 +309,14 @@ contract MandateReceiptRegistryTest is Test {
 
         vm.prank(WALLET);
         bytes32 mandateId = registry.recordActivation(
-            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, "ipfs://a-different-mirror"
+            receiptId,
+            WALLET,
+            keccak256("session"),
+            keccak256("granted"),
+            0,
+            "ipfs://a-different-mirror",
+            VALID_FROM,
+            VALID_UNTIL
         );
 
         assertEq(mandateId, expected);
@@ -322,7 +331,7 @@ contract MandateReceiptRegistryTest is Test {
                 IMandateReceiptRegistry.InvalidReceiptField.selector, "grantedAuthorityHash"
             )
         );
-        registry.recordActivation(receiptId, WALLET, keccak256("session"), bytes32(0), 0, DISCLOSURE_URI);
+        registry.recordActivation(receiptId, WALLET, keccak256("session"), bytes32(0), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL);
     }
 
     // --- fuzz ----------------------------------------------------------------
@@ -362,4 +371,110 @@ contract MandateReceiptRegistryTest is Test {
         assertFalse(sent, "registry accepted a plain transfer");
         assertEq(address(registry).balance, 0, "registry holds a balance");
     }
+    // --- lifecycle -----------------------------------------------------------
+
+    /// @notice The window is what makes a grant reconstructible after revocation.
+    /// @dev Once revoked, the account holds no key, so without this record
+    ///      "revoked since activation" and "never granted" look identical to
+    ///      anyone without archive state.
+    function test_recordActivation_commitsTheValidityWindow() public {
+        bytes32 receiptId = _publish(true);
+
+        vm.prank(WALLET);
+        bytes32 mandateId = registry.recordActivation(
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL
+        );
+
+        IMandateReceiptRegistry.Activation memory a = registry.getActivation(mandateId);
+        assertEq(a.validFrom, VALID_FROM);
+        assertEq(a.validUntil, VALID_UNTIL);
+        assertEq(a.revokedAt, 0, "a fresh activation is not revoked");
+    }
+
+    function test_recordActivation_rejectsAWindowThatEndsBeforeItStarts() public {
+        bytes32 receiptId = _publish(true);
+
+        vm.prank(WALLET);
+        vm.expectRevert(
+            abi.encodeWithSelector(IMandateReceiptRegistry.InvalidReceiptField.selector, "validUntil")
+        );
+        registry.recordActivation(
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_UNTIL, VALID_FROM
+        );
+    }
+
+    function test_recordRevocation_stampsTheRevocation() public {
+        bytes32 mandateId = _activate();
+
+        vm.warp(VALID_FROM + 100);
+        vm.prank(WALLET);
+        registry.recordRevocation(mandateId);
+
+        assertEq(registry.getActivation(mandateId).revokedAt, uint64(block.timestamp));
+    }
+
+    function test_recordRevocation_emitsForIndexers() public {
+        bytes32 mandateId = _activate();
+
+        vm.expectEmit(true, true, true, true);
+        emit IMandateReceiptRegistry.MandateRevoked(mandateId, WALLET, uint64(block.timestamp));
+
+        vm.prank(WALLET);
+        registry.recordRevocation(mandateId);
+    }
+
+    /// @notice A stranger cannot make a live mandate look dead.
+    function test_recordRevocation_revertsForAnyoneButTheAttestor() public {
+        bytes32 mandateId = _activate();
+
+        vm.prank(OTHER_PUBLISHER);
+        vm.expectRevert(
+            abi.encodeWithSelector(IMandateReceiptRegistry.NotTheAttestor.selector, mandateId, WALLET)
+        );
+        registry.recordRevocation(mandateId);
+    }
+
+    function test_recordRevocation_revertsOnDoubleRevocation() public {
+        bytes32 mandateId = _activate();
+
+        vm.startPrank(WALLET);
+        registry.recordRevocation(mandateId);
+        vm.expectRevert(
+            abi.encodeWithSelector(IMandateReceiptRegistry.MandateAlreadyRevoked.selector, mandateId)
+        );
+        registry.recordRevocation(mandateId);
+        vm.stopPrank();
+    }
+
+    function test_recordRevocation_revertsForAnUnactivatedMandate() public {
+        bytes32 missing = keccak256("never-activated");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IMandateReceiptRegistry.MandateNotActivated.selector, missing)
+        );
+        registry.recordRevocation(missing);
+    }
+
+    /// @notice Revocation stamps a time and never erases the grant it followed.
+    function test_recordRevocation_leavesTheGrantReconstructible() public {
+        bytes32 mandateId = _activate();
+
+        vm.prank(WALLET);
+        registry.recordRevocation(mandateId);
+
+        IMandateReceiptRegistry.Activation memory a = registry.getActivation(mandateId);
+        assertEq(a.grantedAuthorityHash, keccak256("granted"));
+        assertEq(a.disclosureURI, DISCLOSURE_URI);
+        assertEq(a.validFrom, VALID_FROM);
+        assertTrue(a.revokedAt != 0);
+    }
+
+    function _activate() private returns (bytes32) {
+        bytes32 receiptId = _publish(true);
+        vm.prank(WALLET);
+        return registry.recordActivation(
+            receiptId, WALLET, keccak256("session"), keccak256("granted"), 0, DISCLOSURE_URI, VALID_FROM, VALID_UNTIL
+        );
+    }
+
 }

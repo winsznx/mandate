@@ -89,7 +89,9 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
         uint32 sequence,
-        string calldata disclosureURI
+        string calldata disclosureURI,
+        uint64 validFrom,
+        uint64 validUntil
     ) external returns (bytes32 mandateId) {
         StoredReceipt storage stored = _receipts[trialReceiptId];
         if (stored.publishedAt == 0) revert UnknownReceipt(trialReceiptId);
@@ -106,6 +108,10 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
         if (uriLength == 0) revert InvalidReceiptField("disclosureURI");
         if (uriLength > MAX_EVIDENCE_URI_LENGTH) revert EvidenceURITooLong(uriLength);
 
+        // A window that ends before it starts describes no session.
+        if (validFrom == 0) revert InvalidReceiptField("validFrom");
+        if (validUntil <= validFrom) revert InvalidReceiptField("validUntil");
+
         mandateId = ScopeHashLib.mandateId(
             block.chainid, wallet, trialReceiptId, grantedAuthorityHash, sequence
         );
@@ -119,6 +125,9 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
             grantedAuthorityHash: grantedAuthorityHash,
             attestedBy: msg.sender,
             activatedAt: uint64(block.timestamp),
+            validFrom: validFrom,
+            validUntil: validUntil,
+            revokedAt: 0,
             disclosureURI: disclosureURI
         });
 
@@ -129,8 +138,28 @@ contract MandateReceiptRegistry is IMandateReceiptRegistry {
             sessionKeyHash,
             grantedAuthorityHash,
             msg.sender,
-            disclosureURI
+            disclosureURI,
+            validFrom,
+            validUntil
         );
+    }
+
+    /// @inheritdoc IMandateReceiptRegistry
+    /// @dev Restricted to the activation's attestor. Anyone may READ the
+    ///      lifecycle, but letting anyone WRITE a revocation would let a
+    ///      stranger make a live mandate look dead, which is a cheap way to
+    ///      discredit an agent. The revocation is recorded once and never
+    ///      cleared, so the record stays append-only like everything else here.
+    function recordRevocation(bytes32 mandateId) external {
+        Activation storage activation = _activations[mandateId];
+        if (activation.activatedAt == 0) revert MandateNotActivated(mandateId);
+        if (activation.revokedAt != 0) revert MandateAlreadyRevoked(mandateId);
+        if (activation.attestedBy != msg.sender) {
+            revert NotTheAttestor(mandateId, activation.attestedBy);
+        }
+
+        activation.revokedAt = uint64(block.timestamp);
+        emit MandateRevoked(mandateId, activation.wallet, uint64(block.timestamp));
     }
 
     /// @inheritdoc IMandateReceiptRegistry

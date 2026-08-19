@@ -40,6 +40,18 @@ interface IMandateReceiptRegistry {
         bytes32 grantedAuthorityHash;
         address attestedBy;
         uint64 activatedAt;
+        /// @dev The session's own validity window, recorded at activation.
+        ///      Once a session is revoked the account holds no key, and without
+        ///      archive state "revoked since activation" is indistinguishable
+        ///      from "never granted at all". Committing the window here makes
+        ///      the grant reconstructible from chain forever, which is the
+        ///      difference between a verifier that can check history and one
+        ///      that can only check the present.
+        uint64 validFrom;
+        uint64 validUntil;
+        /// @dev Set by `recordRevocation`. Zero while the mandate has not been
+        ///      revoked through this registry.
+        uint64 revokedAt;
         /// @dev Where the granted AuthorityIR can be fetched.
         ///      Without it, `grantedAuthorityHash` lets a reader CHECK a document
         ///      they were handed but never OBTAIN one, so an independent verifier
@@ -62,6 +74,16 @@ interface IMandateReceiptRegistry {
         string evidenceURI
     );
 
+    /// @notice Emitted when a mandate's session is revoked.
+    /// @dev Separate from `MandateActivated` so an indexer can reconstruct the
+    ///      full lifecycle from events alone, without holding account state at
+    ///      two different blocks.
+    event MandateRevoked(bytes32 indexed mandateId, address indexed wallet, uint64 revokedAt);
+
+    error MandateNotActivated(bytes32 mandateId);
+    error MandateAlreadyRevoked(bytes32 mandateId);
+    error NotTheAttestor(bytes32 mandateId, address attestedBy);
+
     event MandateActivated(
         bytes32 indexed mandateId,
         bytes32 indexed trialReceiptId,
@@ -69,7 +91,9 @@ interface IMandateReceiptRegistry {
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
         address attestedBy,
-        string disclosureURI
+        string disclosureURI,
+        uint64 validFrom,
+        uint64 validUntil
     );
 
     error ReceiptAlreadyPublished(bytes32 receiptId);
@@ -91,8 +115,15 @@ interface IMandateReceiptRegistry {
         bytes32 sessionKeyHash,
         bytes32 grantedAuthorityHash,
         uint32 sequence,
-        string calldata disclosureURI
+        string calldata disclosureURI,
+        uint64 validFrom,
+        uint64 validUntil
     ) external returns (bytes32 mandateId);
+
+    /// @notice Record that a mandate's session has been revoked.
+    /// @dev Only the account that attested the activation may record its
+    ///      revocation, so a third party cannot make a live mandate look dead.
+    function recordRevocation(bytes32 mandateId) external;
 
     function getReceipt(bytes32 receiptId) external view returns (StoredReceipt memory);
 

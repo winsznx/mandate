@@ -11,3 +11,4 @@ export * from "./addresses.js";
 export * from "./errors.js";
 export * from "./observation.js";
 export * from "./reads.js";
+export * from "./supply.js";

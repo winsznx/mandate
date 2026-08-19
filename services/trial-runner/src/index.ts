@@ -17,3 +17,5 @@ export * from "./invoke.js";
 export * from "./observation.js";
 export * from "./runner.js";
 export * from "./scenario.js";
+export * from "./strategy-evaluator.js";
+export * from "./strategy-evidence.js";

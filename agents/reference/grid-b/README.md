@@ -1,45 +1,56 @@
-# Adaptive Grid (`grid-b`)
+# Wide Grid (`grid-b`)
 
-**Status: scaffold. The strategy is not implemented.**
+**Status: implemented.**
 
-This package serves a real agent card, a real healthcheck and a real skill
-route. Asking it to deliberate returns JSON-RPC `-32001` and it proposes
-nothing. It is wired into the marketplace and the trial harness ahead of its
-strategy on purpose, so the plumbing is proven before the reasoning lands.
+Runs a **100 bps grid ladder four rungs deep** on the same Curve-style
+stableswap pool its sibling trades, ignoring the small dislocations
+[`grid-a`](../grid-a/README.md) acts on and holding a much smaller inventory
+swing.
+
+It proposes. It does not sign, submit, or hold a key.
 
 - Category: `GRID`
-- Skill: `adjust-grid`
-- Target protocol: PancakeSwap V2
+- Skill: `run-grid`
+- Target: stableswap-NG pool `0x157b06e4d9501071a401234f117edee913217833`
+- Action: `exchange(int128,int128,uint256,uint256)` / `0x3df02124`
 
-## What it will do
+## What differs from `grid-a`, and what does not
 
-Runs a grid ladder whose rung spacing tracks realised volatility, widening in
-fast markets and tightening in quiet ones.
+The deliberation is imported from `@mandate/agent-grid-a` rather than copied.
+Two agents in a category are meant to differ in their published risk parameters
+and in nothing else, so a reader comparing their receipts is comparing the
+parameters.
 
-Where the Tight Grid holds 50 bps rungs through anything, this agent moves
-between 80 and 400 bps. In a calm market the two behave alike; in a violent
-one they do not.
+| | `grid-a` | `grid-b` |
+|---|---|---|
+| `policyId` | `tight-grid` | `wide-grid` |
+| `spacingBps` | 25 | **100** |
+| `levels` | 8 | **4** |
+| `inventoryStepBps` | 250 | **500** |
+| `maxSlippageBps` | 30 | **50** |
 
-## Why it is still pending
+The looser slippage bound follows from the wider rungs rather than being a
+separate opinion. An agent that only trades a market already a full percent out
+of line is trading a market that is *moving*, and holding out for its sibling's
+execution would leave it reverting rather than trading.
 
-A grid is a standing ladder of orders, so the durable-effect accounting
-matters more here than anywhere else: the open orders outlive any session that
-placed them. That model has to be settled before the strategy is worth
-writing.
+With the pool 62 bps below fair the two disagree about whether to act at all —
+rung 2 on a 25 bps ladder, rung 0 on a 100 bps one. That is the strongest form
+the divergence can take, and `test/strategy.test.ts` pins it: an evaluator that
+could not separate the two would be measuring the category rather than the agent.
 
-The first authority proof runs through `health-factor-a` against Venus
-`repayBorrow(uint256)`, which is the only action verified safe to grant with
-target-and-selector permissions alone. The other seven strategies stay stubs
-until that path is proven end to end.
+## Everything else
 
-## Running it
+The venue, the boundability argument and its executed evidence, the ladder
+model, the rate-adjusted fair rate, the independent invariant reconstruction and
+the fail-closed behaviour are all documented in
+[`grid-a`'s README](../grid-a/README.md) and apply here unchanged.
+
+## Tests
 
 ```bash
-pnpm --filter @mandate/agent-grid-b start
+pnpm --filter @mandate/agent-grid-b test
 ```
-
-See `agents/reference/README.md` for the shared runtime contract, environment
-variables and the deployment convention.
 
 Reference agent built from the BNB Agent Studio scaffold and self-hosted by the
 MANDATE team. BNB does not operate it.

@@ -1,44 +1,54 @@
 /**
- * Diversified Optimizer — scaffold only.
+ * The Diversified Optimizer — the same deliberation under a different policy.
  *
- * The card, the category, the skill and the policy are real. The deliberation
- * is not written, and the agent says so on the wire rather than returning a
- * plausible-looking proposal: `pendingStrategy` rejects with
- * `StrategyNotImplementedError`, which the runtime maps to its own JSON-RPC
- * code so a trial record can tell "not written" apart from "crashed".
+ * The reasoning is imported from `@mandate/agent-yield-a` rather than copied.
+ * That is the honest arrangement for a variant pair: the two agents in a
+ * category are meant to differ in their published risk parameters and in
+ * nothing else, so a reader comparing their receipts is comparing the
+ * parameters. Forking the code would let the two drift apart in ways the cards
+ * do not disclose, and the trial would then be certifying an undisclosed
+ * difference.
  *
- * Yield reallocation is a supply-side move rather than a repay, so it needs
- * `redeemUnderlying` and `mint` rather than `repayBorrow`. `redeemUnderlying`
- * can push a health factor below one into self-liquidation, so it carries a
- * guard requirement `repayBorrow` does not.
+ * The independence that matters runs the other way, between an agent and the
+ * model that judges it, and it is untouched by this: `reference/yield` shares
+ * `@mandate/domain` and `viem` with both agents and nothing else.
  */
-import { pendingStrategy } from "@mandate/agent-runtime";
-import type { AgentExecutor, AgentSkill } from "@mandate/agent-runtime";
-import { YIELD_B_POLICY, describePolicy } from "./policy.js";
+import type { AgentExecutor } from "@mandate/agent-runtime";
+import { OPTIMISE_YIELD_SKILL, createYieldStrategy } from "@mandate/agent-yield-a";
+import { createSupplyReader, venusSupplyDeploymentFor } from "@mandate/agent-yield-a/venus";
+import type { SupplyReader, VenusSupplyDeployment } from "@mandate/agent-yield-a/venus";
+import type { ChainClient } from "@mandate/agent-runtime";
+import { DIVERSIFIED_OPTIMIZER_POLICY } from "./policy.js";
 
-export const REALLOCATE_YIELD_SKILL: AgentSkill = {
-  id: "reallocate-yield",
-  name: "Reallocate a yield position",
-  description:
-    "Reallocate a yield position on Venus Core pool. Returns a proposed action; it never executes one. " +
-    "This strategy is not implemented yet and refuses every request.",
-  tags: ["venus","bnb-chain","defi","yield"],
-};
+export { OPTIMISE_YIELD_SKILL };
+export { createSupplyReader, venusSupplyDeploymentFor };
 
 export const DISPLAY_NAME = "Diversified Optimizer" as const;
 
 export const DESCRIPTION =
-  "Spreads supplied capital across several lending venues under a per-venue cap, accepting a lower headline rate in exchange for not being exposed to any single market. " +
-  "Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team. " +
-  "Strategy pending.";
+  "Moves idle stablecoin into Venus Core-pool markets under a 60% per-market ceiling, accepting a " +
+  "lower headline rate rather than concentrating the whole position in one market. Acts through " +
+  "vToken.mint(uint256), which takes an amount and no recipient. Reference agent built from the " +
+  "BNB Agent Studio scaffold and self-hosted by the MANDATE team.";
 
-export function createStrategy(): AgentExecutor {
-  return pendingStrategy({
+export interface DiversifiedStrategyOptions {
+  readonly deployment: VenusSupplyDeployment;
+  readonly reader: SupplyReader;
+}
+
+export function createStrategy(options: DiversifiedStrategyOptions): AgentExecutor {
+  return createYieldStrategy({
     slug: "yield-b",
     displayName: DISPLAY_NAME,
     description: DESCRIPTION,
-    category: "YIELD",
-    skills: [REALLOCATE_YIELD_SKILL],
-    policy: describePolicy(YIELD_B_POLICY),
+    policy: DIVERSIFIED_OPTIMIZER_POLICY,
+    deployment: options.deployment,
+    reader: options.reader,
   });
+}
+
+/** The strategy wired to a live chain client, for the process entry point. */
+export function createLiveStrategy(client: ChainClient, chainId: number): AgentExecutor {
+  const deployment = venusSupplyDeploymentFor(chainId);
+  return createStrategy({ deployment, reader: createSupplyReader(client, deployment) });
 }

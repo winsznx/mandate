@@ -1,36 +1,43 @@
 /**
- * Diversified Optimizer — the risk policy.
+ * The Diversified Optimizer's risk policy.
  *
- * The 40% per-venue cap is binding: this agent will hold a worse rate rather
- * than concentrate. The Cost-Aware Optimizer has no such cap.
+ * The 6000 bps per-market ceiling is the whole difference between this agent
+ * and the Cost-Aware Optimizer, and it is binding rather than decorative: on a
+ * portfolio already 60% concentrated in the best-paying market, this agent
+ * deploys nothing there and either falls to the next market or holds, while its
+ * sibling puts everything in. Two agents in a category that behave identically
+ * on every state make the category the unit of measurement, and the point of a
+ * trial is that the agent is.
  *
- * The numbers are real and published in the agent card even though the
- * deliberation that applies them is not written yet. A trial binds to the
- * parameters, so they have to exist before the strategy does.
+ * The rate floor is lower here for a reason that follows from the same choice.
+ * An agent that must spread across markets will spend part of its capital in
+ * the second-best one, so holding out for the same headline rate would leave it
+ * permanently idle. Accepting 50 bps net is the price of the constraint.
  */
 import type { CanonicalValue } from "@mandate/domain";
+import { BLOCKS_PER_YEAR, describePolicy as describeYieldPolicy } from "@mandate/agent-yield-a/policy";
+import type { YieldPolicy } from "@mandate/agent-yield-a/policy";
 
-export interface YieldBPolicy {
-  readonly policyId: string;
-  readonly maxVenueSharePercent: number;
-  readonly minVenues: number;
-  readonly minNetGainBps: number;
-}
+export type { YieldPolicy };
 
-export const YIELD_B_POLICY: YieldBPolicy = {
+export const DIVERSIFIED_OPTIMIZER_POLICY: YieldPolicy = {
   policyId: "diversified-optimizer",
-  maxVenueSharePercent: 40,
-  minVenues: 3,
-  minNetGainBps: 50,
+  minNetSupplyRateBps: 50,
+  gasCostBufferBps: 25,
+  blocksPerYear: BLOCKS_PER_YEAR,
+  minDeploymentUsdMantissa: 10n * 10n ** 18n,
+  maxVenueShareBps: 6_000,
+  amountToleranceBps: 50,
 };
 
-/** The policy as it appears in the agent card. Wide integers travel as decimal strings. */
-export function describePolicy(policy: YieldBPolicy): CanonicalValue {
-  return {
-    policyId: policy.policyId,
-    maxVenueSharePercent: policy.maxVenueSharePercent,
-    minVenues: policy.minVenues,
-    minNetGainBps: policy.minNetGainBps,
-    action: "pending",
-  };
+/**
+ * The policy as it appears in the agent card.
+ *
+ * Rendered by the same function the sibling uses, so the two cards are
+ * comparable field for field. A reader deciding between them is looking at one
+ * document with different numbers in it rather than two documents that have to
+ * be reconciled first.
+ */
+export function describePolicy(policy: YieldPolicy): CanonicalValue {
+  return describeYieldPolicy(policy);
 }

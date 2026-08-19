@@ -1,45 +1,72 @@
 # Diversified Optimizer (`yield-b`)
 
-**Status: scaffold. The strategy is not implemented.**
+**Status: implemented.**
 
-This package serves a real agent card, a real healthcheck and a real skill
-route. Asking it to deliberate returns JSON-RPC `-32001` and it proposes
-nothing. It is wired into the marketplace and the trial harness ahead of its
-strategy on purpose, so the plumbing is proven before the reasoning lands.
+Moves idle stablecoin into the Venus Core-pool markets under a **60% per-market
+ceiling**, accepting a lower headline rate rather than concentrating the whole
+position in one market. Its sibling
+[`yield-a`](../yield-a/README.md) has no ceiling at all.
+
+It proposes. It does not sign, submit, or hold a key.
 
 - Category: `YIELD`
-- Skill: `reallocate-yield`
-- Target protocol: Venus Core pool
+- Skill: `optimise-yield`
+- Action: `mint(uint256)` / `0xa0712d68`
 
-## What it will do
+## What differs from `yield-a`, and what does not
 
-Spreads supplied capital across several lending venues under a per-venue cap,
-accepting a lower headline rate in exchange for not being exposed to any
-single market.
+The deliberation is imported from `@mandate/agent-yield-a` rather than copied.
+Two agents in a category are meant to differ in their published risk parameters
+and in nothing else, so a reader comparing their receipts is comparing the
+parameters. Forking the code would let the two drift apart in ways the cards do
+not disclose, and a trial would then certify an undisclosed difference.
 
-The 40% per-venue cap is binding: this agent will hold a worse rate rather
-than concentrate. The Cost-Aware Optimizer has no such cap.
+| | `yield-a` | `yield-b` |
+|---|---|---|
+| `policyId` | `cost-aware-optimizer` | `diversified-optimizer` |
+| `maxVenueShareBps` | none | **6000** |
+| `minNetSupplyRateBps` | 75 | **50** |
 
-## Why it is still pending
+The lower rate floor follows from the ceiling rather than being a separate
+opinion. An agent that must spread its capital will spend part of it in the
+second-best market, so holding out for the same headline rate would leave it
+permanently idle.
 
-Yield reallocation is a supply-side move rather than a repay, so it needs
-`redeemUnderlying` and `mint` rather than `repayBorrow`. `redeemUnderlying`
-can push a health factor below one into self-liquidation, so it carries a
-guard requirement `repayBorrow` does not.
+On a $1500 book with both markets open, the two agents pick the same market and
+size it differently: `yield-a` commits the whole $1000 idle USDC balance and this
+agent stops at $900. That gap is **1000 bps against a 50 bps evaluator
+tolerance**, so an evaluator carrying one policy fails an agent that ran the
+other — which is the property that makes a receipt a statement about an agent
+rather than about its category.
 
-The first authority proof runs through `health-factor-a` against Venus
-`repayBorrow(uint256)`, which is the only action verified safe to grant with
-target-and-selector permissions alone. The other seven strategies stay stubs
-until that path is proven end to end.
+## The ceiling is measured against total capital
 
-## Running it
+Supplied **plus idle**, not supplied alone. That denominator does not move when
+the deployment happens, because supplying converts idle capital into supplied
+capital and changes neither total.
+
+Measured against the supplied part instead, the rule cannot be satisfied: on an
+account with nothing supplied yet, any first deposit is the whole of the supplied
+capital and breaches every ceiling below 10000 bps. A diversification policy that
+forbids ever starting is not conservative, it is broken. The reference model
+makes the same choice independently and `reference/yield/test/model.test.ts`
+pins it.
+
+## Everything else
+
+The protocol facts, the fail-closed behaviour, the decimal trap, the paused-market
+and supply-cap filters and the implementation pin are all documented in
+[`yield-a`'s README](../yield-a/README.md) and apply here unchanged.
+
+## Tests
 
 ```bash
-pnpm --filter @mandate/agent-yield-b start
+pnpm --filter @mandate/agent-yield-b test
 ```
 
-See `agents/reference/README.md` for the shared runtime contract, environment
-variables and the deployment convention.
+`test/strategy.test.ts` runs both agents in the category over one identical state
+and asserts they diverge — on the size when both act, and on the decision itself
+when only one does.
 
 Reference agent built from the BNB Agent Studio scaffold and self-hosted by the
 MANDATE team. BNB does not operate it.

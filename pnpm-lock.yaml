@@ -35,6 +35,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -48,6 +51,9 @@ importers:
 
   agents/reference/grid-b:
     dependencies:
+      '@mandate/agent-grid-a':
+        specifier: workspace:*
+        version: link:../grid-a
       '@mandate/agent-runtime':
         specifier: workspace:*
         version: link:../../../packages/agent-runtime
@@ -57,6 +63,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -126,6 +135,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -139,6 +151,9 @@ importers:
 
   agents/reference/rebalancing-b:
     dependencies:
+      '@mandate/agent-rebalancing-a':
+        specifier: workspace:*
+        version: link:../rebalancing-a
       '@mandate/agent-runtime':
         specifier: workspace:*
         version: link:../../../packages/agent-runtime
@@ -148,6 +163,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -170,6 +188,9 @@ importers:
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -186,12 +207,18 @@ importers:
       '@mandate/agent-runtime':
         specifier: workspace:*
         version: link:../../../packages/agent-runtime
+      '@mandate/agent-yield-a':
+        specifier: workspace:*
+        version: link:../yield-a
       '@mandate/domain':
         specifier: workspace:*
         version: link:../../../packages/domain
       tsx:
         specifier: 4.23.12
         version: 4.23.12
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
     devDependencies:
       '@types/node':
         specifier: 26.2.0
@@ -439,6 +466,25 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
 
+  packages/stableswap-bsc:
+    dependencies:
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
+      tsx:
+        specifier: 4.23.12
+        version: 4.23.12
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
+
   packages/ui: {}
 
   packages/venus-bsc:
@@ -460,7 +506,73 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
 
+  reference/grid:
+    dependencies:
+      '@mandate/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@mandate/stableswap-bsc':
+        specifier: workspace:*
+        version: link:../../packages/stableswap-bsc
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
+
   reference/health-factor:
+    dependencies:
+      '@mandate/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@mandate/venus-bsc':
+        specifier: workspace:*
+        version: link:../../packages/venus-bsc
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
+
+  reference/rebalancing:
+    dependencies:
+      '@mandate/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@mandate/venus-bsc':
+        specifier: workspace:*
+        version: link:../../packages/venus-bsc
+      viem:
+        specifier: 2.55.17
+        version: 2.55.17(typescript@7.0.2)(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
+
+  reference/yield:
     dependencies:
       '@mandate/domain':
         specifier: workspace:*

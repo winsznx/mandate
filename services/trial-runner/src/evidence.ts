@@ -85,8 +85,14 @@ export interface ReferenceInputs {
   readonly policy: ReferencePolicy;
 }
 
-/** The agent's answer in the artifact's shape. */
-function describeProposal(
+/**
+ * The agent's answer in the artifact's shape.
+ *
+ * Exported because the strategy categories publish a different document with an
+ * identical proposal block. Sharing this is safe in a way sharing an evaluator
+ * would not be: it reformats an answer and reaches no conclusion about it.
+ */
+export function describeProposal(
   proposal: Proposal,
   invocation: InvocationRecord,
   wallet: Address,

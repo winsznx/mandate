@@ -7,18 +7,39 @@ Studio scaffold and self-hosted by the MANDATE team. BNB does not operate them.
 |---|---|---|---|---|
 | `health-factor-a` | Conservative Guardian | `HEALTH_FACTOR` | `restore-health-factor` | **implemented** |
 | `health-factor-b` | Efficient Guardian | `HEALTH_FACTOR` | `restore-health-factor` | pending |
-| `rebalancing-a` | Narrow Range Manager | `REBALANCING` | `rebalance-range` | pending |
-| `rebalancing-b` | Wide Range Manager | `REBALANCING` | `rebalance-range` | pending |
-| `grid-a` | Tight Grid | `GRID` | `adjust-grid` | pending |
-| `grid-b` | Adaptive Grid | `GRID` | `adjust-grid` | pending |
-| `yield-a` | Cost-Aware Optimizer | `YIELD` | `reallocate-yield` | pending |
-| `yield-b` | Diversified Optimizer | `YIELD` | `reallocate-yield` | pending |
+| `rebalancing-a` | Narrow Band Allocator | `REBALANCING` | `rebalance-allocation` | **implemented** |
+| `rebalancing-b` | Wide Band Allocator | `REBALANCING` | `rebalance-allocation` | **implemented** |
+| `grid-a` | Tight Grid | `GRID` | `run-grid` | **implemented** |
+| `grid-b` | Wide Grid | `GRID` | `run-grid` | **implemented** |
+| `yield-a` | Cost-Aware Optimizer | `YIELD` | `optimise-yield` | **implemented** |
+| `yield-b` | Diversified Optimizer | `YIELD` | `optimise-yield` | **implemented** |
 
-Seven of the eight are scaffolds. They serve a real card, a real healthcheck and
-a real skill route, and they refuse to deliberate. That is deliberate: the
-plumbing is proven and the agents are discoverable before the strategies land,
-and an unwritten strategy says so on the wire instead of returning something
-plausible.
+One of the eight is still a scaffold. `health-factor-b` serves a real card, a
+real healthcheck and a real skill route, and refuses to deliberate. That is
+deliberate: the plumbing is proven and the agent is discoverable before its
+strategy lands, and an unwritten strategy says so on the wire instead of
+returning something plausible.
+
+The four categories are not equally deep, and the marketplace should not pretend
+otherwise. `health-factor-a` is the flagship: it is the action MANDATE's first
+authority proof runs through, and its evidence document carries a full solvency
+reconstruction. The other three categories are honestly **Trial-verified** —
+each has a strategy, an independent reference model that reaches its own
+conclusion by its own route, an evaluator that holds no opinion, and a
+deterministic scenario built from frozen live-chain readings — and they publish
+`StrategyTrialEvidence` rather than `TrialEvidence`, because their models derive
+none of the solvency quantities that document commits to. That is MANDATE's own
+evidence taxonomy applied to itself rather than papered over.
+
+The actions differ in what they can be granted, and each agent's README states
+which:
+
+| Category | Action | Boundable by `(target, selector, spend cap)` alone |
+|---|---|---|
+| `HEALTH_FACTOR` | `repayBorrow(uint256)` `0x0e752702` | yes — and it can only reduce a liability |
+| `YIELD` | `mint(uint256)` `0xa0712d68` | yes — no address in calldata |
+| `REBALANCING` | `mint(uint256)` `0xa0712d68` | yes for the top-up leg; the withdraw leg needs a guard |
+| `GRID` | `exchange(int128,int128,uint256,uint256)` `0x3df02124` | yes — but `min_dy` is calldata-controlled, so the agent's own slippage bound is the whole mitigation |
 
 ## The architecture rule
 

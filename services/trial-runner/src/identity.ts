@@ -29,14 +29,33 @@ const SOURCE_ROOT = "services/trial-runner/src";
  */
 const EVALUATOR_SOURCES = ["evaluator.ts"] as const;
 
+/**
+ * The files that decide a verdict for the allocation and trading categories.
+ *
+ * Hashed separately from the health-factor evaluator rather than together with
+ * it. A receipt names the code that judged that run, and folding both files
+ * into one identity would mean a change to the yield checks superseded every
+ * published health-factor receipt — invalidating evidence that the change could
+ * not possibly have affected.
+ */
+const STRATEGY_EVALUATOR_SOURCES = ["strategy-evaluator.ts"] as const;
+
 function readSource(name: string): string {
   return readFileSync(fileURLToPath(new URL(name, import.meta.url)), "utf8");
 }
 
-export function evaluatorImplementationHash(): Hex {
+function hashSources(names: readonly string[]): Hex {
   const sources: Record<string, CanonicalValue> = {};
-  for (const name of EVALUATOR_SOURCES) {
+  for (const name of names) {
     sources[`${SOURCE_ROOT}/${name}`] = readSource(name);
   }
   return canonicalHash(sources);
+}
+
+export function evaluatorImplementationHash(): Hex {
+  return hashSources(EVALUATOR_SOURCES);
+}
+
+export function strategyEvaluatorImplementationHash(): Hex {
+  return hashSources(STRATEGY_EVALUATOR_SOURCES);
 }

@@ -304,15 +304,70 @@
       ]
     },
     {
+      "claimId": "owner-agent-key-separation",
+      "wording": "The party that holds the capital and the party that acts under the mandate are different keys. The owner grants the session, the agent signs every execution attempted under it, and the owner can end it without the agent's cooperation.",
+      "status": "VERIFIED",
+      "proofLevel": 7,
+      "evidence": [
+        {
+          "type": "address",
+          "value": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 \u2014 holds the Venus position and the wallet's admin authority"
+        },
+        {
+          "type": "address",
+          "value": "agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc \u2014 receives the session and signs the executions"
+        },
+        {
+          "type": "address",
+          "value": "agent session key 0x76de0d16e90dc68406773b79518df5fa6b491798 \u2014 derived from the agent's key and run 20260819T045553Z"
+        },
+        {
+          "type": "address",
+          "value": "publisher 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 \u2014 the owner, disclosed as such in the manifest"
+        },
+        {
+          "type": "step",
+          "value": "role-separation PASS: no two roles share an address, and the run is refused outright when they do"
+        },
+        {
+          "type": "tx",
+          "value": "0x0a30bf48633d2428d483114a83bc76082e163c08b8328a2d55bd00b6c36ff0f9"
+        },
+        {
+          "type": "tx",
+          "value": "0x5bf563501012fe5fc216f29d59cc5e79c7e23a63e881d8b0639489e73aa00df3"
+        },
+        {
+          "type": "hash",
+          "value": "the activation's sessionKeyHash 0x2598f05edb7f747aba128fb23a5f3375f37f6195bc6ff7fc05d21baeaf842952 recomputes as keccak256(abi.encode(uint256(2), keccak256(abi.encode(0x76de0d16e90dc68406773b79518df5fa6b491798)))), so the agent's key is the one the account enforced against"
+        },
+        {
+          "type": "signature",
+          "value": "the manifest's designationSignature recovers to the agent address, which the owner's key cannot produce, so the key that signed the executions was chosen by the agent"
+        },
+        {
+          "type": "test",
+          "value": "services/authority-proof/test/roles.test.ts"
+        }
+      ],
+      "limitations": [
+        "Both keys are currently operated by MANDATE. What is demonstrated is separation of keys and of authority, not organisational independence. See claim no-independent-agent-has-held-a-mandate.",
+        "The publisher is the owner. This is disclosed in every manifest rather than asserted to be a third party.",
+        "The agent's key holds no tBNB and none was sent to it: an Altana session is sponsored out of the wallet it acts on, so the owner paid every fee. There is therefore no owner-to-agent funding transfer in this run.",
+        "The agent signs the intent; the relay broadcasts it. The transaction sender on chain is the relay, and the account validates the agent's signature against the session key it holds."
+      ]
+    },
+    {
       "claimId": "no-independent-agent-has-held-a-mandate",
       "wording": "A third party's agent has operated autonomously under a MANDATE-granted session.",
       "status": "NOT_CLAIMED",
       "proofLevel": 0,
       "evidence": [],
       "limitations": [
-        "In every run so far the session key is held by MANDATE and the wallet's admin key is MANDATE's own deployer. The proof demonstrates that the account contract enforces the boundary, which it does regardless of who holds the keys, and it does NOT demonstrate an arm's-length agent operating on a stranger's wallet.",
-        "The enforcement evidence is unaffected: the account refused the out-of-scope calls on its own, and holding both keys cannot make a refusal happen.",
-        "What is NOT yet shown is the trust story end to end, where the capital owner and the agent operator are different parties."
+        "As of run 20260819T045553Z the owner and the agent are different keys and the account enforces against the agent's: see claim owner-agent-key-separation. That closes the key-holding half of this gap and none of the trust half.",
+        "Both keys are still generated, held and run by MANDATE, from one .env and one process. A second keypair is not a second party, and this claim is about a party.",
+        "What is still NOT shown is an agent operated by someone else, on capital owned by someone else, reached over a network boundary rather than through a local signer.",
+        "The enforcement evidence is unaffected either way: the account refused the out-of-scope calls on its own, and who holds which key cannot make a refusal happen."
       ]
     },
     {

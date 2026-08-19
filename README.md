@@ -50,6 +50,7 @@ A Venus health-factor agent was tested, granted a bounded mandate, and used it.
 | Permitted action | repaid 20 USDT — succeeded |
 | Cap breach | +6 USDT refused with `ExceededSpendLimit` |
 | Wrong target / selector | refused with `UnauthorizedCall` |
+| Roles | owner [`0xdc507191…`](https://testnet.bscscan.com/address/0xdc5071910e6ca6855d45f96ba28ee0a2e5629299) granted; agent [`0x29f7b991…`](https://testnet.bscscan.com/address/0x29f7b9913dd16278db7a6cfca145953a854ca0dc) signed every execution; the owner revoked without the agent |
 | Revocation | session removed from account and KeyStore; the same action then refused |
 | Lifecycle | grant window and revocation recorded on chain, so the grant stays reconstructible after the key is gone |
 
@@ -68,10 +69,14 @@ trusts a boolean in the artifact.
 ## What is deliberately NOT claimed
 
 Every public claim lives in [`claims/ledger.json`](claims/ledger.json) with its
-evidence and its proof rung. Four entries are marked `NOT_CLAIMED`, and they
+evidence and its proof rung. Five entries are marked `NOT_CLAIMED`, and they
 matter as much as the verified ones:
 
 - **No mainnet claim.** Everything above is testnet.
+- **No third-party agent claim.** The owner and the agent are different keys and
+  the account enforces against the agent's, but both keys are still ours. A
+  second keypair is not a second party. What is not yet shown is an agent
+  operated by someone else, on capital owned by someone else.
 - **No reverted-transaction claim for blocked actions.** Out-of-scope calls are
   refused during validation, *before* broadcast, so there is no failed
   transaction to point at. The evidence is the account's own state at the

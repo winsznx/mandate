@@ -280,11 +280,37 @@ export const ProofManifestViewSchema = z.looseObject({
       semanticsMatchUtcMidnight: z.boolean().optional(),
     })
     .optional(),
+  /**
+   * Who held which key.
+   *
+   * Carried because "the owner granted, the agent executed, the owner revoked"
+   * is the shortest true statement of what this product does, and a reader who
+   * cannot see three distinct addresses has to take the arm's-length
+   * relationship on trust.
+   */
+  roles: z
+    .looseObject({
+      owner: z.looseObject({ address: z.string(), holds: z.string(), grants: z.string() }),
+      agent: z.looseObject({
+        address: z.string(),
+        holds: z.string(),
+        sessionKey: z.string(),
+        designationSignature: z.string().optional(),
+        designationNote: z.string().optional(),
+      }),
+      publisher: z.looseObject({ address: z.string(), sameAs: z.string().optional() }),
+      separation: z.looseObject({
+        assertion: z.string(),
+        ownerIsAgent: z.boolean(),
+        agentIsPublisher: z.boolean(),
+      }),
+    })
+    .optional(),
   steps: z.array(
     z.looseObject({
       id: z.string(),
       phase: z.string(),
-      status: z.enum(["PASS", "FAIL", "SKIP"]),
+      status: z.enum(["PASS", "FAIL", "SKIP", "SKIPPED", "BLOCKED", "NOT_RUN", "RUNNING"]),
       observed: z.string().optional(),
       writes: z.boolean().optional(),
       evidence: z.array(z.looseObject({ label: z.string(), value: z.string() })).optional(),

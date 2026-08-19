@@ -17,6 +17,7 @@ import { CHAIN_ID, FEATURED_AGENT, NETWORK_NAME } from "../../../src/proof/confi
 import { establishedClaims, rungDescription, withheldClaims } from "../../../src/proof/claims";
 import { formatUtc, mandateLabel, shortAddress, shortHash } from "../../../src/proof/format";
 import { buildLifecycle } from "../../../src/proof/lifecycle";
+import { RolesPanel } from "../../../src/components/roles-panel";
 import {
   ChainUnreachableError,
   loadProof,
@@ -251,6 +252,10 @@ async function ProofBody({ mandateId }: { mandateId: Hex }) {
           </h2>
           <LifecycleList stages={lifecycle} />
         </section>
+
+        {report.runRecord?.roles === undefined ? null : (
+          <RolesPanel roles={report.runRecord.roles} />
+        )}
 
         <section aria-labelledby="steps-heading" className="section">
           <div className="section__head">

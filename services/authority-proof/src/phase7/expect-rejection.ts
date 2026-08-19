@@ -55,6 +55,17 @@ export function rejectionNameFrom(error: unknown): AccountRejection | undefined 
   return ACCOUNT_REJECTIONS.find((name) => message.includes(name));
 }
 
+/**
+ * Narrow a name recovered from anywhere onto the fixed list.
+ *
+ * The decoded revert and the SDK's throw both hand back plain strings, and a
+ * published disclosure may only name an error the account can actually raise.
+ * Anything else is dropped rather than published under a plausible label.
+ */
+export function isAccountRejection(name: string | undefined): name is AccountRejection {
+  return name !== undefined && (ACCOUNT_REJECTIONS as readonly string[]).includes(name);
+}
+
 export interface ExecuteFn {
   (): Promise<{ status: string; callsId?: string; transactionHash?: Hex }>;
 }

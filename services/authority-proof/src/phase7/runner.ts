@@ -29,6 +29,7 @@ import {
   type Blocker,
 } from "./blockers.js";
 import { evidenceUriFor, resolveConfig, type NetworkName, type Phase7Config } from "./config.js";
+import type { RejectionMechanism } from "./attribution.js";
 import {
   DISCLOSURE_FILENAME,
   MANIFEST_FILENAME,
@@ -91,13 +92,54 @@ function runIdFor(startedAt: number): string {
 }
 
 /**
+ * Mechanisms a disclosed refusal may name.
+ *
+ * Narrower than the set the attribution can produce. `ALLOWANCE`,
+ * `INSUFFICIENT_BALANCE` and `UNDETERMINED` are real findings, and none of them
+ * is the account refusing an intent, so publishing one under a refusal heading
+ * would overstate what happened.
+ */
+const DISCLOSED_MECHANISMS: readonly RejectionMechanism[] = [
+  "SPEND_CAP",
+  "OUT_OF_SCOPE_CALL",
+  "SESSION_INVALID",
+];
+
+/**
+ * One refused intent, or nothing.
+ *
+ * A refusal is only disclosable when the run actually observed both halves of
+ * the attribution: the custom error the account's validator raised, and a
+ * mechanism its own state at the attempt implies. Neither is inferred from the
+ * other. A refusal missing either is left out entirely, because a reader can do
+ * nothing with an unverifiable refusal and would be misled by an invented one.
+ */
+function rejectedIntentOf(record: ExecutionRecord): CanonicalValue[] {
+  const attribution = record.attribution;
+  if (attribution?.validatorError === undefined) return [];
+  if (!DISCLOSED_MECHANISMS.includes(attribution.mechanism)) return [];
+
+  return [
+    {
+      label: record.label,
+      target: record.target,
+      selector: record.selector,
+      ...(record.amountRaw === undefined ? {} : { amountRaw: record.amountRaw }),
+      validatorError: attribution.validatorError,
+      accountState: { ...attribution.accountState },
+      mechanism: attribution.mechanism,
+    },
+  ];
+}
+
+/**
  * The disclosure a verifier resolves the granted authority from.
  *
  * The successful executions and the rejected ones are listed separately, because
  * the verifier re-reads both from chain and a proof that only showed the
  * successes would be showing half the claim.
  */
-function disclosureDocument(input: DisclosureInput): CanonicalValue {
+export function disclosureDocument(input: DisclosureInput): CanonicalValue {
   const withHash = input.executions.filter(
     (record): record is ExecutionRecord & { txHash: Hex } => record.txHash !== undefined,
   );
@@ -112,9 +154,20 @@ function disclosureDocument(input: DisclosureInput): CanonicalValue {
     allowedExecutions: withHash
       .filter((record) => record.status === "SUCCESS")
       .map((record) => ({ txHash: record.txHash, label: record.label })),
+    // Kept for readers of the previous schema. It is always empty in practice:
+    // a boundary-crossing call is refused during validation and never reaches a
+    // block, so it has no transaction hash to list here.
     blockedExecutions: withHash
       .filter((record) => record.status === "REVERTED")
       .map((record) => ({ txHash: record.txHash, label: record.label })),
+    // The refusals, which are the actual claim. These deliberately carry no
+    // transaction hash, because there is no transaction: the account rejected
+    // the intent before broadcast. Filtering them through `withHash` — as the
+    // previous shape did — silently dropped every one of them, publishing a
+    // disclosure that showed only the successes.
+    rejectedIntents: input.executions
+      .filter((record) => record.status === "REVERTED" && record.txHash === undefined)
+      .flatMap((record) => rejectedIntentOf(record)),
   };
 }
 

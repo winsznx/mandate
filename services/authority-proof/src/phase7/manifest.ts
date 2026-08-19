@@ -22,8 +22,10 @@ import { fileURLToPath } from "node:url";
 import { canonicalize } from "@mandate/domain";
 import type { CanonicalValue } from "@mandate/domain";
 import type { Hex } from "viem";
+import type { RejectionMechanism } from "./attribution.js";
 import type { Blocker } from "./blockers.js";
 import type { Phase7Config } from "./config.js";
+import type { AccountRejection } from "./expect-rejection.js";
 import type { PreflightFacts } from "./preflight.js";
 import type { Phase7StepResult } from "./steps.js";
 
@@ -71,10 +73,53 @@ export interface MandateSummary {
   sessionPublicKey: Hex;
   wallet: string;
   expiry: number;
+  /**
+   * The window the activation committed to on chain.
+   *
+   * Read back from the account rather than copied from the grant request, and
+   * carried here so the manifest and the registry cannot disagree about what
+   * was granted.
+   */
+  validFrom: number;
+  validUntil: number;
   disclosureURI: string;
   grantTxHash?: Hex;
   revokeTxHash?: Hex;
   activationTxHash?: Hex;
+  /** Zero-free: absent means the registry holds no revocation for this mandate. */
+  revokedAt?: number;
+  revocationTxHash?: Hex;
+}
+
+/**
+ * What the account itself said about an intent it refused.
+ *
+ * Carried on the record because a refusal is rejected during validation and
+ * never becomes a transaction, so there is no hash anyone can fetch and the
+ * account's own state at the attempt is the only evidence there is. Read before
+ * the attempt rather than reconstructed from the outcome, which is what makes
+ * it a check on the claim rather than a retelling of it.
+ *
+ * `validatorError` is optional because neither route to it is guaranteed: the
+ * relay does not always surface revert bytes, and a call the relay refuses
+ * outright never reaches the account's validator at all. An absent name is a
+ * real answer, and a refusal carrying none is left out of the published
+ * disclosure rather than given a plausible one.
+ */
+export interface RejectionAttribution {
+  /** The custom error the account's validator raised, when one was recovered. */
+  validatorError?: AccountRejection;
+  /** What the account's own state at the attempt says refused the call. */
+  mechanism: RejectionMechanism;
+  accountState: {
+    callPermitted: boolean;
+    keyRegistered: boolean;
+    /** Base units, decimal. The enforced cap for the token being moved. */
+    spendCapRaw: string;
+    spentInBucketRaw: string;
+    /** The figure that rules an exhausted ERC-20 approval out as the cause. */
+    allowanceAtAttemptRaw: string;
+  };
 }
 
 /** One submitted call and what the chain did with it. */
@@ -90,6 +135,8 @@ export interface ExecutionRecord {
   revertSelector?: string;
   revertName?: string;
   revertClass?: string;
+  /** Set only on a call the account refused before broadcast. */
+  attribution?: RejectionAttribution;
 }
 
 export interface VerifierSummary {

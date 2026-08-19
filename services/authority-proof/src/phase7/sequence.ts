@@ -32,6 +32,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
 import {
   canAccountExecute,
+  decodeRevert,
   diffRequestedVsEnforced,
   hasCriticalDiscrepancy,
   isKeyValidInKeyStore,
@@ -39,16 +40,27 @@ import {
   sessionKeyIdentity,
   startOfSpendPeriod,
   type AuthorityDiscrepancy,
+  type DecodedRevert,
   type EnforcedAuthority,
 } from "@mandate/altana";
 import { authorityHash } from "@mandate/authority-ir";
 import { compileAuthority, permissionsFor, profileKey } from "@mandate/authority-compiler";
 import { deriveMandateId, deriveReceiptId } from "@mandate/domain";
 import type { AuthorityIR, ProtocolSafetyProfile } from "@mandate/domain";
-import { executeExpectingOutcome } from "./expect-rejection.js";
-import { judgeRejection, type AccountViewAtAttempt } from "./attribution.js";
+import { executeExpectingOutcome, isAccountRejection, rejectionNameFrom } from "./expect-rejection.js";
+import {
+  attributeFromAccountView,
+  judgeRejection,
+  type AccountViewAtAttempt,
+  type RejectionMechanism,
+} from "./attribution.js";
 import type { Phase7Config } from "./config.js";
-import type { ExecutionRecord, MandateSummary, ReceiptSummary } from "./manifest.js";
+import type {
+  ExecutionRecord,
+  MandateSummary,
+  ReceiptSummary,
+  RejectionAttribution,
+} from "./manifest.js";
 import {
   AT_CAP_REPAY_RAW,
   BREACH_REPAY_RAW,
@@ -59,7 +71,7 @@ import {
   buildGrantedAuthority,
   type AllowancePlan,
 } from "./plan.js";
-import { recoverRevertData, selectorOfRevert } from "./revert-data.js";
+import { extractRevertData, recoverRevertData, selectorOfRevert } from "./revert-data.js";
 import { bucketHeld, DAY_PERIOD_ENUM } from "./spend-bucket.js";
 import type { Phase7Journal } from "./steps.js";
 
@@ -103,8 +115,17 @@ const REGISTRY_WRITE_ABI = [
       { name: "grantedAuthorityHash", type: "bytes32" },
       { name: "sequence", type: "uint32" },
       { name: "disclosureURI", type: "string" },
+      { name: "validFrom", type: "uint64" },
+      { name: "validUntil", type: "uint64" },
     ],
     outputs: [{ type: "bytes32" }],
+  },
+  {
+    name: "recordRevocation",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "mandateId", type: "bytes32" }],
+    outputs: [],
   },
   {
     type: "event",
@@ -133,6 +154,17 @@ const REGISTRY_WRITE_ABI = [
       { name: "grantedAuthorityHash", type: "bytes32", indexed: false },
       { name: "attestedBy", type: "address", indexed: false },
       { name: "disclosureURI", type: "string", indexed: false },
+      { name: "validFrom", type: "uint64", indexed: false },
+      { name: "validUntil", type: "uint64", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "MandateRevoked",
+    inputs: [
+      { name: "mandateId", type: "bytes32", indexed: true },
+      { name: "wallet", type: "address", indexed: true },
+      { name: "revokedAt", type: "uint64", indexed: false },
     ],
   },
 ] as const;
@@ -252,6 +284,66 @@ export interface SequenceResult {
 
 function repayCalldata(amount: bigint): Hex {
   return encodeFunctionData({ abi: VTOKEN_ABI, functionName: "repayBorrow", args: [amount] });
+}
+
+/**
+ * Ask the account whether it would permit a call, tolerating a revert.
+ *
+ * `canExecute` returns false for a call outside the permission set, but once the
+ * key itself is gone it reverts `KeyDoesNotExist` instead. That revert is the
+ * answer, not an error: an account that will not even evaluate the call is
+ * certainly not going to authorize it. Letting it escape would take down a
+ * funded run at its last read, which is what happened before this existed.
+ *
+ * The decoded error is carried back so the manifest can record what the account
+ * raised rather than only that the probe failed.
+ */
+async function probeCanExecute(
+  client: PublicClient,
+  params: { wallet: Address; keyHash: Hex; target: Address; data: Hex },
+): Promise<{ permitted: boolean; revert?: DecodedRevert }> {
+  try {
+    return { permitted: await canAccountExecute(client, params) };
+  } catch (error) {
+    const data = extractRevertData(error);
+    return { permitted: false, ...(data === undefined ? {} : { revert: decodeRevert(data) }) };
+  }
+}
+
+/**
+ * Freeze what the account said about a refusal onto the execution record.
+ *
+ * The mechanism is the one the account's own storage implies, computed from
+ * state read immediately before the attempt. The validator error is taken from
+ * whichever of the two independent routes produced one — decoded revert bytes
+ * first, because those are the direct artifact, then the custom error viem
+ * recovered from the SDK's throw. Neither is substituted for the other and
+ * neither is defaulted, so a refusal that yielded no name carries none and the
+ * disclosure leaves it out.
+ */
+function attributionOf(params: {
+  view: AccountViewAtAttempt;
+  mechanism: RejectionMechanism;
+  decodedName?: string | undefined;
+  thrownName?: string | undefined;
+}): RejectionAttribution {
+  const validatorError = isAccountRejection(params.decodedName)
+    ? params.decodedName
+    : isAccountRejection(params.thrownName)
+      ? params.thrownName
+      : undefined;
+
+  return {
+    ...(validatorError === undefined ? {} : { validatorError }),
+    mechanism: params.mechanism,
+    accountState: {
+      callPermitted: params.view.callPermitted,
+      keyRegistered: params.view.keyRegistered,
+      spendCapRaw: params.view.spendLimitRaw.toString(10),
+      spentInBucketRaw: params.view.spentInBucketRaw.toString(10),
+      allowanceAtAttemptRaw: params.view.allowanceRaw.toString(10),
+    },
+  };
 }
 
 /**
@@ -469,11 +561,34 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     result.haltReason = "the granted key is not on the account";
     return result;
   }
+  // The window the activation commits to is read back from chain rather than
+  // taken from the object that was sent to the relay. `validUntil` is the
+  // expiry the account itself holds for this key, and `validFrom` is the
+  // timestamp of the block the grant landed in. A window assembled from the
+  // request would describe the grant MANDATE asked for, not the one that
+  // exists, which is the distinction this whole step is here to draw.
+  //
+  // The relay does not always return a transaction hash, and one it returns
+  // could in principle not be retrievable yet. Either way the account is
+  // already holding the key, so the block it was first observed at is a real
+  // upper bound on when the session started and is used as the fallback.
+  const grantBlockNumber =
+    session.transactionHash === undefined
+      ? enforced.observedAtBlock
+      : await client
+          .getTransactionReceipt({ hash: session.transactionHash })
+          .then((receipt) => receipt.blockNumber)
+          .catch(() => enforced.observedAtBlock);
+  const validFrom = (await client.getBlock({ blockNumber: grantBlockNumber })).timestamp;
+  const validUntil = BigInt(enforced.expiry);
+
   journal.pass(
     "read-enforced-authority",
     `${enforced.callRules.length} enforced call rule(s), ${enforced.spendLimits.length} spend limit(s), ${enforced.walletWideRules.length} wallet-wide rule(s)`,
     [
       { label: "observedAtBlock", value: enforced.observedAtBlock.toString(10) },
+      { label: "validFrom", value: validFrom.toString(10) },
+      { label: "validUntil", value: validUntil.toString(10) },
       ...enforced.callRules.map((rule) => ({ label: "enforcedCall", value: `${rule.target} ${rule.selector}` })),
       ...enforced.spendLimits.map((limit) => ({
         label: "enforcedSpend",
@@ -691,6 +806,12 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   breachRecord.revertSelector = selectorOfRevert(breachRevert.data) ?? "";
   breachRecord.revertName = breachVerdict.decoded?.name ?? "";
   breachRecord.revertClass = breachVerdict.decoded?.class ?? "";
+  breachRecord.attribution = attributionOf({
+    view,
+    mechanism: breachVerdict.fromAccountView.mechanism,
+    decodedName: breachVerdict.decoded?.name,
+    thrownName: breach.rejectionName,
+  });
 
   const breachEvidence = [
     { label: "expectedMechanism", value: "SPEND_CAP" },
@@ -786,6 +907,12 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     record.revertSelector = selectorOfRevert(recovered.data) ?? "";
     record.revertName = verdict.decoded?.name ?? "";
     record.revertClass = verdict.decoded?.class ?? "";
+    record.attribution = attributionOf({
+      view: attemptView,
+      mechanism: verdict.fromAccountView.mechanism,
+      decodedName: verdict.decoded?.name,
+      thrownName: outcome.rejectionName,
+    });
 
     outOfScopeRecords.push(record);
     outOfScopeVerdicts.push(verdict);
@@ -821,6 +948,11 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   }
 
   // ---- revoke --------------------------------------------------------------
+  // Gates the registry-side revocation at the end of the sequence. Recording a
+  // revocation the account never performed would put a claim on a public,
+  // append-only ledger that the enforcement layer does not back.
+  let sessionRevoked = false;
+
   journal.begin("revoke-session");
   const revoke = await altana.revokeSession({
     wallet: { address: wallet },
@@ -851,14 +983,48 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     return result;
   }
   journal.pass("revoke-session", "the account no longer holds the session key", revokeEvidence);
+  sessionRevoked = true;
 
   // ---- and prove it is dead ------------------------------------------------
   journal.begin("post-revoke-execution-fails");
+  const postRevokeData = repayCalldata(1n);
+  const postRevokeLimit = afterRevoke.spendLimits.find(
+    (limit) => limit.token === config.venus.underlying && limit.period === "day",
+  );
+  // Read before the attempt, like every other refusal in this sequence. The
+  // enforced-authority view above was taken between the revocation and this
+  // call, so it is the account's state at the attempt rather than after it.
+  const postRevokePermission = await probeCanExecute(client, {
+    wallet,
+    keyHash: identity.keyHash,
+    target: config.venus.vToken,
+    data: postRevokeData,
+  });
+  const postRevokeView: AccountViewAtAttempt = {
+    callPermitted: postRevokePermission.permitted,
+    keyRegistered: afterRevoke.registered,
+    spendLimitRaw: postRevokeLimit?.limit ?? 0n,
+    spentInBucketRaw: postRevokeLimit?.currentSpent ?? 0n,
+    allowanceRaw: await client.readContract({
+      address: config.venus.underlying,
+      abi: ERC20_WRITE_ABI,
+      functionName: "allowance",
+      args: [wallet, config.venus.vToken],
+    }),
+    balanceRaw: await client.readContract({
+      address: config.venus.underlying,
+      abi: ERC20_WRITE_ABI,
+      functionName: "balanceOf",
+      args: [wallet],
+    }),
+    amountRaw: 1n,
+  };
+
   const afterRevokeAttempt = await altana
     .execute({
       session,
       chainId: config.chainId,
-      calls: [{ to: config.venus.vToken, data: repayCalldata(1n) }],
+      calls: [{ to: config.venus.vToken, data: postRevokeData }],
     })
     .catch((error: unknown) => ({
       callsId: "0x" as Hex,
@@ -878,6 +1044,25 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
       ? {}
       : { txHash: afterRevokeAttempt.transactionHash }),
   };
+  // What the account raised when asked about this exact call. Recorded on the
+  // manifest as its own artifact and deliberately NOT fed to `attributionOf`:
+  // it comes from a read of `canExecute`, not from the submitted intent, and the
+  // disclosure names only errors the refusal itself produced.
+  if (postRevokePermission.revert !== undefined) {
+    postRevokeRecord.revertSelector = postRevokePermission.revert.selector ?? "";
+    postRevokeRecord.revertName = postRevokePermission.revert.name ?? "";
+    postRevokeRecord.revertClass = postRevokePermission.revert.class;
+  }
+  // The relay refuses a call whose key hash it no longer knows, so the account's
+  // validator never runs on the intent and there is no custom error from it to
+  // record. The refusal is still attributed from the account's own state; the
+  // disclosure then omits it rather than naming an error nothing raised.
+  postRevokeRecord.attribution = attributionOf({
+    view: postRevokeView,
+    mechanism: attributeFromAccountView(postRevokeView).mechanism,
+    thrownName:
+      "thrown" in afterRevokeAttempt ? rejectionNameFrom(afterRevokeAttempt.thrown) : undefined,
+  });
   executions.push(postRevokeRecord);
 
   if (afterRevokeAttempt.status === "CONFIRMED") {
@@ -888,7 +1073,18 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
   journal.pass(
     "post-revoke-execution-fails",
     `the revoked session could not execute: ${"thrown" in afterRevokeAttempt ? afterRevokeAttempt.thrown : afterRevokeAttempt.status}`,
-    [{ label: "accountHoldsKey", value: "false" }],
+    [
+      { label: "accountHoldsKey", value: "false" },
+      { label: "accountCanExecute", value: String(postRevokePermission.permitted) },
+      ...(postRevokePermission.revert === undefined
+        ? []
+        : [
+            {
+              label: "canExecuteRevert",
+              value: postRevokePermission.revert.name ?? postRevokePermission.revert.class,
+            },
+          ]),
+    ],
   );
 
   // ---- clean up the one durable effect -------------------------------------
@@ -961,12 +1157,37 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     sequence: 0,
   });
 
+  // The registry rejects a window that ends before it starts, and finding that
+  // out from a reverted transaction would spend gas to learn something the run
+  // already knows.
+  if (validUntil <= validFrom) {
+    journal.fail(
+      "record-activation",
+      `the account's window for this key does not describe a session: validFrom ${validFrom}, validUntil ${validUntil}`,
+      [
+        { label: "validFrom", value: validFrom.toString(10) },
+        { label: "validUntil", value: validUntil.toString(10) },
+      ],
+    );
+    result.haltReason = "the granted session has no usable validity window";
+    return result;
+  }
+
   const activationTxHash = await sendAdmin(
     context.registry,
     encodeFunctionData({
       abi: REGISTRY_WRITE_ABI,
       functionName: "recordActivation",
-      args: [receiptId, wallet, identity.keyHash, grantedAuthorityHash, 0, disclosure.uri],
+      args: [
+        receiptId,
+        wallet,
+        identity.keyHash,
+        grantedAuthorityHash,
+        0,
+        disclosure.uri,
+        validFrom,
+        validUntil,
+      ],
     }),
   );
 
@@ -984,6 +1205,8 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     sessionPublicKey: session.publicKey,
     wallet,
     expiry,
+    validFrom: Number(validFrom),
+    validUntil: Number(validUntil),
     disclosureURI: disclosure.uri,
     ...(session.transactionHash === undefined ? {} : { grantTxHash: session.transactionHash }),
     ...(revoke.transactionHash === undefined ? {} : { revokeTxHash: revoke.transactionHash }),
@@ -1004,7 +1227,62 @@ export async function runWriteSequence(context: SequenceContext): Promise<Sequen
     { label: "mandateId", value: mandateId },
     { label: "activationTxHash", value: activationTxHash },
     { label: "disclosureURI", value: disclosure.uri },
+    { label: "validFrom", value: validFrom.toString(10) },
+    { label: "validUntil", value: validUntil.toString(10) },
   ]);
+
+  // ---- record the revocation -----------------------------------------------
+  //
+  // Last, because there is no activation to revoke until the write above landed,
+  // and the registry rejects a revocation for a mandate it does not hold. The
+  // account was revoked long before this point; what this adds is the public
+  // record of it, without which a reader finding an empty account cannot tell a
+  // revoked mandate from one that was never granted.
+  journal.begin("record-revocation");
+  if (!sessionRevoked) {
+    journal.fail(
+      "record-revocation",
+      "the session was never revoked on the account, so there is nothing to record",
+    );
+    result.haltReason = "no account-side revocation to record";
+    return result;
+  }
+
+  const revocationTxHash = await sendAdmin(
+    context.registry,
+    encodeFunctionData({
+      abi: REGISTRY_WRITE_ABI,
+      functionName: "recordRevocation",
+      args: [mandateId],
+    }),
+  );
+
+  const revocationLog = parseEventLogs({
+    abi: REGISTRY_WRITE_ABI,
+    eventName: "MandateRevoked",
+    logs: (await client.getTransactionReceipt({ hash: revocationTxHash })).logs,
+  })[0];
+
+  if (revocationLog === undefined || revocationLog.args.mandateId !== mandateId) {
+    journal.fail(
+      "record-revocation",
+      `the registry emitted ${revocationLog?.args.mandateId ?? "no mandate id"}, not the activated ${mandateId}`,
+      [{ label: "revocationTxHash", value: revocationTxHash }],
+    );
+    return result;
+  }
+
+  const revokedAt = Number(revocationLog.args.revokedAt);
+  result.mandate = { ...mandate, revokedAt, revocationTxHash };
+
+  journal.pass(
+    "record-revocation",
+    `mandate ${mandateId} is on record as revoked at ${revokedAt}`,
+    [
+      { label: "revocationTxHash", value: revocationTxHash },
+      { label: "revokedAt", value: String(revokedAt) },
+    ],
+  );
 
   return result;
 }

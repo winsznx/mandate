@@ -3,12 +3,33 @@ import { canonicalize } from "@mandate/domain";
 import { writeBlocker } from "../src/phase7/blockers.js";
 import { resolveConfig } from "../src/phase7/config.js";
 import { ARTIFACT_ROOT_RELATIVE, artifactDirectoryFor, buildManifest } from "../src/phase7/manifest.js";
+import type { ExecutionRecord } from "../src/phase7/manifest.js";
 import { standingAllowancePlan } from "../src/phase7/plan.js";
 import { Phase7Journal } from "../src/phase7/steps.js";
 
 const RUN_ID = "20260817T170948Z";
 
-function manifestOf(): Record<string, unknown> {
+const REFUSED_INTENT: ExecutionRecord = {
+  step: "cap-breach-attempt",
+  label: "repay 6000000 raw USDT, taking the bucket past its 25000000 cap",
+  target: "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+  selector: "0x0e752702",
+  amountRaw: "6000000",
+  status: "REVERTED",
+  attribution: {
+    validatorError: "ExceededSpendLimit",
+    mechanism: "SPEND_CAP",
+    accountState: {
+      callPermitted: true,
+      keyRegistered: true,
+      spendCapRaw: "25000000",
+      spentInBucketRaw: "20000000",
+      allowanceAtAttemptRaw: "155000000",
+    },
+  },
+};
+
+function manifestOf(executions: readonly ExecutionRecord[] = []): Record<string, unknown> {
   const config = resolveConfig("bsc-testnet", {});
   const journal = new Phase7Journal();
   journal.begin("chain-identity");
@@ -34,7 +55,7 @@ function manifestOf(): Record<string, unknown> {
       allowance: standingAllowancePlan(),
     },
     resumePoint: journal.resumePoint(),
-    executions: [],
+    executions,
     artifacts: [`${ARTIFACT_ROOT_RELATIVE}/${RUN_ID}/proof-manifest.json`],
   });
 
@@ -96,6 +117,21 @@ describe("the proof manifest", () => {
     // #then no checkout-specific absolute path leaks into a published document
     expect(serialised).not.toMatch(/"\/(Users|home|var|tmp)\//);
     expect(artifactDirectoryFor(RUN_ID).relative).toBe(`${ARTIFACT_ROOT_RELATIVE}/${RUN_ID}`);
+  });
+
+  it("carries the account state that attributed a refusal", () => {
+    // #given a refused intent, which has no transaction hash and so has nothing
+    // but the account's own state at the attempt to stand on
+    const executions = manifestOf([REFUSED_INTENT])["executions"] as Record<string, unknown>[];
+    const state = executions[0]?.["attribution"] as Record<string, unknown>;
+
+    // #then the nested attribution survives canonical encoding, so a run that
+    // records one does not die writing its own manifest
+    expect(state["validatorError"]).toBe("ExceededSpendLimit");
+    expect(state["mechanism"]).toBe("SPEND_CAP");
+    expect((state["accountState"] as Record<string, unknown>)["allowanceAtAttemptRaw"]).toBe(
+      "155000000",
+    );
   });
 
   it("distinguishes a blocker that stops writes from one that stops the run", () => {

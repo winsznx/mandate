@@ -4,8 +4,10 @@ packages:
   - "services/*"
   - "reference/*"
   - "agents/reference/*"
+# esbuild compiles a native binary in its postinstall; tsx does not run
+# without it, so every script in this repo depends on this being true.
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
 minimumReleaseAgeExclude:
   - viem@2.55.17
 onlyBuiltDependencies:

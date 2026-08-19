@@ -15,7 +15,7 @@ import { StepList } from "../../../src/components/step-list";
 import { VerdictBanner } from "../../../src/components/verdict-banner";
 import { CHAIN_ID, FEATURED_AGENT, NETWORK_NAME } from "../../../src/proof/config";
 import { establishedClaims, rungDescription, withheldClaims } from "../../../src/proof/claims";
-import { formatUtc, mandateLabel, shortHash } from "../../../src/proof/format";
+import { formatUtc, mandateLabel, shortAddress, shortHash } from "../../../src/proof/format";
 import { buildLifecycle } from "../../../src/proof/lifecycle";
 import {
   ChainUnreachableError,
@@ -141,7 +141,8 @@ async function ProofBody({ mandateId }: { mandateId: Hex }) {
         <p className="lede">
           Mandate {report.subject.label} on {report.network.name}. Everything below is read from the receipt
           registry at{" "}
-          <AddressLink address={report.network.registry} label="0x4c2b…a299" /> and from the documents that
+          <AddressLink address={report.network.registry} label={shortAddress(report.network.registry)} /> and
+          from the documents that
           registry commits to by hash. Nothing is read from a MANDATE database, because there is not one.
         </p>
 

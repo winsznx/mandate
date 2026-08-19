@@ -36,8 +36,20 @@ export const FEATURED_AGENT = {
   identityRegistry: IDENTITY_REGISTRY,
 } as const;
 
+/**
+ * The finished mandate this deployment publishes.
+ *
+ * It has to be one the *live* registry holds. An earlier id here named a run
+ * that predated the lifecycle-event redeploy, so `getActivation` answered with
+ * a zeroed struct and the proof page 404ed on its own headline link. Any change
+ * to this constant should be checked against the registry before it lands: the
+ * failure is silent from the outside and total from the inside.
+ */
 export const FEATURED_MANDATE_ID: Hex =
-  "0x2392e1fcb2464cc390690f57dac7f46148b248fc15a9a4dfab0569fb4e598d1a";
+  "0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda";
+
+export const FEATURED_RECEIPT_ID: Hex =
+  "0x982f8c2e409876df73e897089f09875778aac17ec51d8b651a4908c6c2a1ba16";
 
 /**
  * Where the run record lives.
@@ -50,7 +62,7 @@ export const FEATURED_MANDATE_ID: Hex =
 export const DEFAULT_EVIDENCE_BASE =
   "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/";
 
-export const FEATURED_RUN_ID = "20260818T125522Z";
+export const FEATURED_RUN_ID = "20260819T005008Z";
 
 const EXPLORER_BASE = "https://testnet.bscscan.com";
 

@@ -803,3 +803,440 @@ a {
 .spaced-sm {
   margin-top: var(--spacing-12);
 }
+
+/* --- site chrome --------------------------------------------------------- */
+
+.masthead__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+}
+
+.masthead__link {
+  font-size: var(--text-caption);
+  color: var(--text-body);
+  text-decoration: none;
+}
+
+.masthead__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.masthead__link[aria-current="page"] {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}
+
+.site-footer {
+  margin-top: var(--spacing-128);
+  padding-top: var(--spacing-24);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.site-footer__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+}
+
+/* --- the provenance ladder ----------------------------------------------- */
+
+/*
+ * The ladder is the page's organising idea, so it is drawn rather than badged.
+ *
+ * Six segments, filled to the rung. Achromatic throughout: the fill is
+ * Espresso, the empty segments are a hairline, and the position is repeated as
+ * a glyph and as "4 of 6" in text so nothing about the rung depends on seeing
+ * the bars at all.
+ */
+.ladder {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.ladder__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.ladder__bar {
+  width: 5px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+}
+
+/* Height rises with the rung, so the shape of the gauge is itself the reading. */
+.ladder__bar:nth-child(1) { height: 8px; }
+.ladder__bar:nth-child(2) { height: 11px; }
+.ladder__bar:nth-child(3) { height: 14px; }
+.ladder__bar:nth-child(4) { height: 17px; }
+.ladder__bar:nth-child(5) { height: 20px; }
+.ladder__bar:nth-child(6) { height: 23px; }
+
+.ladder__bar--filled {
+  background: var(--color-espresso);
+  border-color: var(--color-espresso);
+}
+
+.ladder__text {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
+}
+
+.ladder__name {
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.1px;
+}
+
+.ladder__rank {
+  font-size: var(--text-micro);
+  color: var(--text-tertiary);
+}
+
+.ladder__glyph {
+  font-size: var(--text-caption);
+  line-height: 1;
+}
+
+.ladder--lg .ladder__name {
+  font-size: var(--text-body-lg);
+  letter-spacing: var(--tracking-body-lg);
+}
+
+.ladder--lg .ladder__bar {
+  width: 7px;
+}
+
+.ladder--lg .ladder__bar:nth-child(1) { height: 12px; }
+.ladder--lg .ladder__bar:nth-child(2) { height: 17px; }
+.ladder--lg .ladder__bar:nth-child(3) { height: 22px; }
+.ladder--lg .ladder__bar:nth-child(4) { height: 27px; }
+.ladder--lg .ladder__bar:nth-child(5) { height: 32px; }
+.ladder--lg .ladder__bar:nth-child(6) { height: 37px; }
+
+/* --- listings ------------------------------------------------------------ */
+
+/*
+ * A listing's rung is expressed as material, not as a badge.
+ *
+ * The whole point of the taxonomy is that a claim and a proof are different
+ * kinds of statement, so they are given different amounts of page. A Claimed
+ * agent sits on a flat panel with body-sized type and a single line of
+ * explanation. A Mandate-native one gets Paper White, a full hairline ring, a
+ * solid left rule, display-weight type and room for its evidence. Neither uses
+ * colour to say which it is, and both carry the rung in words.
+ */
+.listing {
+  display: block;
+  border-radius: var(--radius-cards);
+  background: var(--surface-panel);
+  padding: var(--spacing-16);
+  border-left: 1px solid var(--border-hairline);
+}
+
+.listing__name {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.1px;
+}
+
+.listing__summary {
+  max-width: 68ch;
+  margin-top: var(--spacing-8);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-body);
+}
+
+.listing__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.listing__body > * + * {
+  margin-top: var(--spacing-12);
+}
+
+.listing__evidence {
+  display: grid;
+  gap: var(--spacing-8);
+  padding-top: var(--spacing-12);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.listing__evidence li {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-body);
+  max-width: 72ch;
+}
+
+.listing--r1 {
+  padding: var(--spacing-20);
+}
+
+.listing--r2 {
+  background: var(--surface-card);
+  box-shadow: var(--shadow-subtle);
+  padding: var(--spacing-20);
+  border-left-color: var(--text-tertiary);
+}
+
+.listing--r2 .listing__name {
+  font-size: var(--text-body-lg);
+  letter-spacing: var(--tracking-body-lg);
+}
+
+.listing--r3 {
+  background: var(--surface-card);
+  box-shadow: var(--shadow-subtle);
+  padding: var(--spacing-24);
+  border-left: 2px solid var(--color-charcoal);
+}
+
+.listing--r3 .listing__name {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  letter-spacing: var(--tracking-subheading);
+}
+
+.listing--r4,
+.listing--r5 {
+  background: var(--surface-card);
+  box-shadow: var(--shadow-subtle);
+  padding: var(--spacing-24);
+  border-left: 4px solid var(--color-espresso);
+}
+
+.listing--r5 {
+  border-left-style: double;
+  border-left-width: 6px;
+}
+
+.listing--r4 .listing__name,
+.listing--r5 .listing__name {
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+  font-weight: var(--font-weight-regular);
+}
+
+@media (min-width: 720px) {
+  .listing--r4,
+  .listing--r5 {
+    padding: var(--spacing-32);
+  }
+}
+
+.listing__clamp {
+  padding: var(--spacing-16);
+  border-radius: var(--radius-inputs);
+  background: var(--status-stale-surface);
+  border: 1px dashed var(--text-tertiary);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-body);
+  max-width: 72ch;
+}
+
+.listing__clamp-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-8);
+}
+
+/* --- task chooser -------------------------------------------------------- */
+
+.tasks {
+  display: grid;
+  gap: var(--spacing-16);
+  margin-top: var(--spacing-24);
+}
+
+@media (min-width: 720px) {
+  .tasks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.task {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-cards);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-subtle);
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.task:hover {
+  background: var(--surface-panel);
+}
+
+.task__title {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  letter-spacing: var(--tracking-subheading);
+}
+
+.task__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding-top: var(--spacing-12);
+  margin-top: auto;
+  border-top: 1px solid var(--border-hairline);
+}
+
+/* --- definition rows ----------------------------------------------------- */
+
+.rows {
+  border-top: 1px solid var(--border-hairline);
+}
+
+.row {
+  display: grid;
+  gap: var(--spacing-4) var(--spacing-24);
+  padding: var(--spacing-20) 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+@media (min-width: 860px) {
+  .row {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.row__term {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.row__detail {
+  max-width: 72ch;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-body);
+}
+
+.row__detail > * + * {
+  margin-top: var(--spacing-8);
+}
+
+/* --- empty state --------------------------------------------------------- */
+
+/*
+ * An empty state is a statement of fact, so it is given the same surface as a
+ * result rather than being greyed out like a failure. It says what is missing,
+ * why it is missing, and the nearest real thing a reader can go and look at.
+ */
+.empty {
+  border-radius: var(--radius-cards);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-subtle);
+  padding: var(--spacing-24);
+}
+
+@media (min-width: 720px) {
+  .empty {
+    padding: var(--spacing-32);
+  }
+}
+
+.empty__title {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  letter-spacing: var(--tracking-subheading);
+}
+
+.empty__body {
+  max-width: 68ch;
+  margin-top: var(--spacing-12);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+  color: var(--text-body);
+}
+
+.empty__body > * + * {
+  margin-top: var(--spacing-12);
+}
+
+.empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-24);
+}
+
+/* --- inline lists -------------------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+}
+
+.chip {
+  padding: var(--spacing-4) var(--spacing-12);
+  border-radius: var(--radius-badges);
+  border: 1px solid var(--border-hairline);
+  font-size: var(--text-micro);
+  color: var(--text-body);
+}
+
+.bullets {
+  display: grid;
+  gap: var(--spacing-8);
+}
+
+.bullets li {
+  position: relative;
+  padding-left: var(--spacing-20);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--text-body);
+  max-width: 72ch;
+}
+
+.bullets li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--text-tertiary);
+}
+
+.grid-three {
+  display: grid;
+  gap: var(--spacing-16);
+}
+
+@media (min-width: 900px) {
+  .grid-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.figure {
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}

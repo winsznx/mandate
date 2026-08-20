@@ -6,7 +6,7 @@ Studio scaffold and self-hosted by the MANDATE team. BNB does not operate them.
 | Package | Name | Category | Skill | Strategy |
 |---|---|---|---|---|
 | `health-factor-a` | Conservative Guardian | `HEALTH_FACTOR` | `restore-health-factor` | **implemented** |
-| `health-factor-b` | Efficient Guardian | `HEALTH_FACTOR` | `restore-health-factor` | pending |
+| `health-factor-b` | Efficient Guardian | `HEALTH_FACTOR` | `restore-health-factor` | **implemented** |
 | `rebalancing-a` | Narrow Band Allocator | `REBALANCING` | `rebalance-allocation` | **implemented** |
 | `rebalancing-b` | Wide Band Allocator | `REBALANCING` | `rebalance-allocation` | **implemented** |
 | `grid-a` | Tight Grid | `GRID` | `run-grid` | **implemented** |
@@ -14,11 +14,12 @@ Studio scaffold and self-hosted by the MANDATE team. BNB does not operate them.
 | `yield-a` | Cost-Aware Optimizer | `YIELD` | `optimise-yield` | **implemented** |
 | `yield-b` | Diversified Optimizer | `YIELD` | `optimise-yield` | **implemented** |
 
-One of the eight is still a scaffold. `health-factor-b` serves a real card, a
-real healthcheck and a real skill route, and refuses to deliberate. That is
-deliberate: the plumbing is proven and the agent is discoverable before its
-strategy lands, and an unwritten strategy says so on the wire instead of
-returning something plausible.
+All eight now deliberate. `health-factor-b` was the last scaffold, and until it
+landed it served a real card, a real healthcheck and a real skill route and
+refused to deliberate on the wire. The runtime keeps that path — `pendingStrategy`
+and JSON-RPC `-32001` — because the next agent added here should be discoverable
+before its strategy is written, and because an unwritten strategy has to say so
+instead of returning something plausible.
 
 The four categories are not equally deep, and the marketplace should not pretend
 otherwise. `health-factor-a` is the flagship: it is the action MANDATE's first
@@ -27,8 +28,9 @@ reconstruction. The other three categories are honestly **Trial-verified** —
 each has a strategy, an independent reference model that reaches its own
 conclusion by its own route, an evaluator that holds no opinion, and a
 deterministic scenario built from frozen live-chain readings — and they publish
-`StrategyTrialEvidence` rather than `TrialEvidence`, because their models derive
-none of the solvency quantities that document commits to. That is MANDATE's own
+`StrategyTrialEvidence` (`mandate.strategy-trial-evidence/1`) rather than
+`TrialEvidence` (`mandate.trial-evidence/1`), because their models derive none of
+the solvency quantities that document commits to. That is MANDATE's own
 evidence taxonomy applied to itself rather than papered over.
 
 The actions differ in what they can be granted, and each agent's README states

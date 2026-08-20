@@ -14,6 +14,7 @@ import {
   account,
   fixedReader,
   market,
+  position,
 } from "./fixtures.js";
 
 const REQUEST = {
@@ -32,35 +33,6 @@ function strategy(state: VenusAccountState): AgentExecutor {
     policy: CONSERVATIVE_GUARDIAN_POLICY,
     deployment: VENUS_BSC_TESTNET,
     reader: fixedReader(state),
-  });
-}
-
-/**
- * A position whose health factor is `collateral / borrow`.
- *
- * Collateral sits in vUSDC and the debt in vUSDT, which is the shape the agent
- * is authorised for: it may repay USDT and nothing else.
- */
-function position(collateralUsd: number, borrowUsdt: bigint): VenusAccountState {
-  return account({
-    markets: [
-      market({
-        vToken: VCOLLATERAL,
-        collateralUsd,
-        liquidationThresholdMantissa: MANTISSA,
-        borrowBalance: 0n,
-        priceMantissa: USDC_PRICE_6DP,
-        underlyingDecimals: 6,
-      }),
-      market({
-        vToken: VENUS_BSC_TESTNET.vToken,
-        collateralUsd: 0,
-        liquidationThresholdMantissa: (80n * MANTISSA) / 100n,
-        borrowBalance: borrowUsdt,
-        priceMantissa: USDT_PRICE_6DP,
-        underlyingDecimals: 6,
-      }),
-    ],
   });
 }
 

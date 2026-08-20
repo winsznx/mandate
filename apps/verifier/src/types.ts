@@ -16,5 +16,7 @@ export type {
   EvidenceArtifact,
   /** The richer trial document. A bundle may commit to either form. */
   TrialEvidence,
+  /** The strategy trial document. Its own bundle commits to it. */
+  StrategyTrialEvidence,
   TrialOutcome,
 } from "@mandate/domain/schemas";

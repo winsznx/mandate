@@ -6,6 +6,7 @@ export * from "./registry.js";
 export * from "./replay.js";
 export * from "./report.js";
 export * from "./steps.js";
+export * from "./strategy-replay.js";
 export * from "./types.js";
 export * from "./uri.js";
 export * from "./verify.js";

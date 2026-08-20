@@ -22,7 +22,18 @@ import { REPAY_BORROW_SELECTOR, TEST_POLICY, VUSDT, positionWith } from "./fixtu
  * 2.505 as carrying no debt at all.
  */
 
-const AGENT_ROOT = new URL("../../../agents/reference/health-factor-a/", import.meta.url);
+/**
+ * Both agents in the category, because the invariant is about the boundary
+ * between an agent and this model rather than about one package. The pair share
+ * their risk arithmetic with each other on purpose — they are two policies over
+ * one deliberation — and neither may share any of it with the model that judges
+ * them.
+ */
+const AGENT_ROOTS = [
+  { name: "@mandate/agent-health-factor-a", root: new URL("../../../agents/reference/health-factor-a/", import.meta.url) },
+  { name: "@mandate/agent-health-factor-b", root: new URL("../../../agents/reference/health-factor-b/", import.meta.url) },
+] as const;
+
 const REFERENCE_ROOT = new URL("../", import.meta.url);
 
 function sourceFiles(root: URL, subdirectory: string): { name: string; content: string }[] {
@@ -42,26 +53,14 @@ function packageManifest(root: URL): { dependencies?: Record<string, string> } {
   };
 }
 
-describe("the reference model and the agent are separate implementations", () => {
-  it("hashes to a different implementation than the agent's source", () => {
-    // #given each side's source tree hashed the same way
-    const agentSources: Record<string, CanonicalValue> = {};
-    for (const file of sourceFiles(AGENT_ROOT, "src/")) {
-      agentSources[file.name] = file.content;
-    }
-
-    // #then the two identities differ, so a receipt naming one cannot be read
-    // as having been produced by the other
-    expect(referenceImplementationHash()).not.toBe(canonicalHash(agentSources));
-  });
-
+describe("the reference model and the agents are separate implementations", () => {
   it("produces a stable identity across calls", () => {
     // #given the same unmodified source tree
     // #then the hash a receipt commits to does not move between runs
     expect(referenceImplementationHash()).toBe(referenceImplementationHash());
   });
 
-  it("imports nothing from the agent under test", () => {
+  it("imports nothing from any agent under test", () => {
     // #given every source file in this model
     const files = sourceFiles(REFERENCE_ROOT, "src/");
     expect(files.length).toBeGreaterThan(0);
@@ -74,41 +73,59 @@ describe("the reference model and the agent are separate implementations", () =>
     }
   });
 
-  it("is imported by no agent under test", () => {
-    // #given every source file in the agent
-    const files = sourceFiles(AGENT_ROOT, "src/");
-    expect(files.length).toBeGreaterThan(0);
+  for (const agent of AGENT_ROOTS) {
+    describe(agent.name, () => {
+      it("hashes to a different implementation than this model's source", () => {
+        // #given each side's source tree hashed the same way
+        const agentSources: Record<string, CanonicalValue> = {};
+        for (const file of sourceFiles(agent.root, "src/")) {
+          agentSources[file.name] = file.content;
+        }
 
-    // #then none of them reaches into this model. The dependency has to be
-    // absent in both directions: an agent that could read the answer key would
-    // pass by copying it.
-    for (const file of files) {
-      expect(file.content).not.toMatch(/from\s+["'][^"']*reference-health-factor/);
-      expect(file.content).not.toMatch(/from\s+["'][^"']*reference\/health-factor/);
-    }
-  });
+        // #then the two identities differ, so a receipt naming one cannot be
+        // read as having been produced by the other
+        expect(referenceImplementationHash()).not.toBe(canonicalHash(agentSources));
+      });
 
-  it("declares no dependency on the agent, and the agent declares none on it", () => {
-    // #given both package manifests
-    const reference = packageManifest(REFERENCE_ROOT).dependencies ?? {};
-    const agent = packageManifest(AGENT_ROOT).dependencies ?? {};
+      it("imports nothing from this model", () => {
+        // #given every source file in the agent
+        const files = sourceFiles(agent.root, "src/");
+        expect(files.length).toBeGreaterThan(0);
 
-    // #then neither can resolve the other even if a future import were added
-    expect(Object.keys(reference)).not.toContain("@mandate/agent-health-factor-a");
-    expect(Object.keys(agent)).not.toContain("@mandate/reference-health-factor");
-  });
+        // #then none of them reaches into this model. The dependency has to be
+        // absent in both directions: an agent that could read the answer key
+        // would pass by copying it.
+        for (const file of files) {
+          expect(file.content).not.toMatch(/from\s+["'][^"']*reference-health-factor/);
+          expect(file.content).not.toMatch(/from\s+["'][^"']*reference\/health-factor/);
+        }
+      });
 
-  it("shares only the raw-facts adapter with the agent", () => {
-    // #given the packages both sides depend on
-    const reference = Object.keys(packageManifest(REFERENCE_ROOT).dependencies ?? {});
-    const agent = Object.keys(packageManifest(AGENT_ROOT).dependencies ?? {});
-    const shared = reference.filter((name) => agent.includes(name));
+      it("declares no dependency on this model, and this model declares none on it", () => {
+        // #given both package manifests
+        const reference = packageManifest(REFERENCE_ROOT).dependencies ?? {};
+        const dependencies = packageManifest(agent.root).dependencies ?? {};
 
-    // #then the overlap carries facts and encodings, never a risk judgement.
-    // `@mandate/venus-bsc` is asserted elsewhere to export no health
-    // computation at all, which is what makes sharing it safe.
-    expect(shared.sort()).toEqual(["@mandate/domain", "viem"]);
-  });
+        // #then neither can resolve the other even if a future import were added
+        expect(Object.keys(reference)).not.toContain(agent.name);
+        expect(Object.keys(dependencies)).not.toContain("@mandate/reference-health-factor");
+      });
+
+      it("shares only the raw-facts adapter with this model", () => {
+        // #given the packages both sides depend on
+        const reference = Object.keys(packageManifest(REFERENCE_ROOT).dependencies ?? {});
+        const dependencies = Object.keys(packageManifest(agent.root).dependencies ?? {});
+        const shared = reference.filter((name) => dependencies.includes(name));
+
+        // #then the overlap carries facts and encodings, never a risk judgement.
+        // `@mandate/venus-bsc` is asserted elsewhere to export no health
+        // computation at all, which is what makes sharing it safe. The sibling
+        // pair share their own arithmetic with each other, and that overlap
+        // never reaches this side of the boundary.
+        expect(shared.sort()).toEqual(["@mandate/domain", "viem"]);
+      });
+    });
+  }
 });
 
 describe("the model reaches its answer without the protocol's verdict", () => {

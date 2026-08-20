@@ -28,8 +28,9 @@ reconstruction. The other three categories are honestly **Trial-verified** —
 each has a strategy, an independent reference model that reaches its own
 conclusion by its own route, an evaluator that holds no opinion, and a
 deterministic scenario built from frozen live-chain readings — and they publish
-`StrategyTrialEvidence` rather than `TrialEvidence`, because their models derive
-none of the solvency quantities that document commits to. That is MANDATE's own
+`StrategyTrialEvidence` (`mandate.strategy-trial-evidence/1`) rather than
+`TrialEvidence` (`mandate.trial-evidence/1`), because their models derive none of
+the solvency quantities that document commits to. That is MANDATE's own
 evidence taxonomy applied to itself rather than papered over.
 
 The actions differ in what they can be granted, and each agent's README states

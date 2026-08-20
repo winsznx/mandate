@@ -66,6 +66,32 @@ reference model, recomputes `granted ⊆ tested` with its own comparator, and
 checks the executions against chain. It never reads our database. It never
 trusts a boolean in the artifact.
 
+## The strategy-trial categories
+
+MANDATE has four agent categories: `HEALTH_FACTOR`, `YIELD`, `GRID`, and
+`REBALANCING`. The health-factor path above is the one proven end to end,
+through a granted mandate and an on-chain execution. The other three deliberate
+and are trial-verified, and they stop short of that: a trial runs and an
+independent model judges it, but no strategy trial has yet been put on chain,
+granted as a mandate, or replayed by the verifier.
+
+A strategy trial differs from the health-factor trial in one place, and the
+schema makes the difference explicit rather than papering over it. Both fork the
+chain, run the agent against a real market, and judge its proposal against an
+independent reference model that ran on the pre-state *before* the agent was
+invoked. The health-factor trial emits `TrialEvidence`
+(`mandate.trial-evidence/1`), whose reference block commits to a health factor, a
+liquidation-threshold-weighted collateral total, and a per-leg exposure table. A
+yield, grid, or rebalancing model derives none of those, and emitting them
+anyway would read to a verifier as a solvency claim no model made. So a strategy
+trial emits `StrategyTrialEvidence` (`mandate.strategy-trial-evidence/1`)
+instead, whose reference block states what those models actually compute.
+Everything else the two documents share, down to the four questions a verifier
+answers from the artifact alone, is shared literally.
+
+The reference agents that populate these categories, two per category, live in
+[`agents/reference`](agents/reference/README.md).
+
 ## What is deliberately NOT claimed
 
 Every public claim lives in [`claims/ledger.json`](claims/ledger.json) with its
@@ -96,8 +122,10 @@ packages/authority-ir      the subset comparator
 packages/authority-compiler  AuthorityIR → enforceable session
 packages/altana            session grant/execute/revoke, effective-authority reads
 packages/venus-bsc         protocol facts and chain reads only — no risk maths
+packages/agent-runtime     shared HTTP/JSON-RPC runtime for the reference agents
 reference/health-factor    the independent reference model
-services/trial-runner      forked-chain trial execution and evidence
+agents/reference           eight reference agents, two per category
+services/trial-runner      forked-chain trials and evidence, health-factor and strategy
 services/authority-proof   the end-to-end proof orchestration
 apps/verifier              the independent verifier
 contracts/                 MandateReceiptRegistry
@@ -129,10 +157,12 @@ and turned up one upstream issue worth reporting:
 
 ## Status
 
-The dominant mechanism is proven end to end on testnet. The marketplace surface
-around it is early: one of four agent categories is fully implemented, and the
-consumer-facing flows are still being built. The backlog is tracked privately; the short version is that one of four agent
-categories is implemented and the consumer-facing flows are still being built.
+The core authority mechanism is proven end to end on testnet. The marketplace
+surface around it is early: all four agent categories deliberate, but only
+health-factor is proven through to a granted mandate on chain. The other three
+are trial-verified and stop at strategy evidence, with the verifier's strategy
+replay path and the consumer-facing flows still being built. The backlog is
+tracked privately.
 
 ## License
 

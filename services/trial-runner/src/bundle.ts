@@ -82,9 +82,9 @@ export const STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION =
  * receipt's `evidenceHash` is the canonical hash of this whole document rather
  * than of the artifact alone.
  *
- * The verifier does not yet parse this version. Until it does, a receipt
- * pointing at a strategy bundle degrades to unreadable rather than passing
- * silently — the honest state for a path whose judging side is still to land.
+ * The verifier parses this version and replays it on its own path, apart from
+ * the health-factor steps. A round-trip test in the verifier package pins these
+ * two assemblers against its reader, so the shapes cannot drift out of step.
  */
 export const StrategyEvidenceBundleSchema = z
   .object({

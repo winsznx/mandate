@@ -176,6 +176,22 @@ export interface StartAgentOptions {
 }
 
 /**
+ * When `MANDATE_EMIT_CARD` names a path, `startAgent` writes the card the agent
+ * would serve to that path and returns without binding a port.
+ *
+ * The marketplace inventory is the card each agent serves, so the published
+ * artifact has to come from the same construction path a running agent uses
+ * rather than a hand-written copy that can drift from it. `PUBLIC_URL` sets the
+ * `url` the emitted card advertises.
+ */
+async function emitCard(card: AgentCard, target: string): Promise<void> {
+  const { writeFile, mkdir } = await import("node:fs/promises");
+  const { dirname } = await import("node:path");
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, `${JSON.stringify(card, null, 2)}\n`, "utf8");
+}
+
+/**
  * Boot an agent from the environment.
  *
  * `SIGTERM` is handled because that is how a container platform asks for a
@@ -184,6 +200,13 @@ export interface StartAgentOptions {
 export async function startAgent(options: StartAgentOptions): Promise<AgentServer> {
   const config = readRuntimeConfig();
   const agent = createAgentServer({ ...options, config });
+
+  const emitTarget = process.env["MANDATE_EMIT_CARD"];
+  if (emitTarget !== undefined && emitTarget !== "") {
+    await emitCard(agent.card, emitTarget);
+    return agent;
+  }
+
   await agent.listen();
 
   const shutdown = (): void => {

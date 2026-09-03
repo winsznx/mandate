@@ -1,0 +1,68 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Narrow Band Allocator",
+  "description": "Holds an equal-weight allocation across the Venus Core-pool stablecoin markets and corrects it as soon as a market falls 100 bps of the portfolio behind its target. Tops up the under-weight side through vToken.mint(uint256), which takes an amount and no recipient; it never withdraws, because redeemUnderlying(uint256) can push a borrowing account's health factor below one and needs a guard this authority does not carry. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
+  "url": "https://mandate-rebalancing-a.up.railway.app",
+  "preferredTransport": "JSONRPC",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "rebalance-allocation",
+      "name": "Hold a published allocation across lending markets",
+      "description": "Reads the Venus Core-pool stablecoin markets, measures each against the target weights this agent publishes, and proposes a mint(uint256) that tops up the most under-weight market out of idle wallet capital. Tops up only; it cannot withdraw from an over-weight market, because redeemUnderlying(uint256) needs a health-factor guard. Returns a proposed action; it never executes one.",
+      "tags": [
+        "venus",
+        "bnb-chain",
+        "rebalancing",
+        "defi"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "x-mandate": {
+    "category": "REBALANCING",
+    "scaffold": "bnb-agent-studio",
+    "hosting": "self-hosted",
+    "referenceAgent": true,
+    "proposesOnly": true,
+    "strategyStatus": "IMPLEMENTED",
+    "policy": {
+      "policyId": "narrow-band-allocator",
+      "targets": [
+        {
+          "vToken": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+          "weightBps": 5000
+        },
+        {
+          "vToken": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7",
+          "weightBps": 5000
+        }
+      ],
+      "driftTriggerBps": 100,
+      "minRebalanceUsdMantissa": "10000000000000000000",
+      "amountToleranceBps": 50,
+      "action": "mint(uint256)",
+      "rebalanceDirection": "top-up only",
+      "withheldAction": "redeemUnderlying(uint256)",
+      "withheldActionReason": "GUARD_REQUIRED: withdrawing collateral can push the health factor below 1",
+      "driftMeasure": "basis points of total portfolio USD, supplied plus idle"
+    },
+    "policyHash": "0x2469819c7212ef414cce6592904f780de2ef546a19ba2d5683197faefd484cbe",
+    "versionIsAuthoritative": false
+  }
+}

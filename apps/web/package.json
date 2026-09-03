@@ -4,29 +4,35 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --webpack --port 3000",
-    "build": "next build --webpack",
+    "snapshot": "node ../../scripts/emit-published-snapshot.mjs",
+    "dev": "pnpm snapshot && next dev --webpack --port 3000",
+    "build": "pnpm snapshot && next build --webpack",
     "start": "next start --port 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf .next .turbo"
+    "cf:build": "pnpm clean && pnpm snapshot && opennextjs-cloudflare build",
+    "cf:preview": "pnpm clean && pnpm snapshot && opennextjs-cloudflare preview",
+    "cf:deploy": "pnpm clean && pnpm snapshot && opennextjs-cloudflare deploy",
+    "clean": "rm -rf .next .turbo .open-next"
   },
   "dependencies": {
     "@mandate/altana": "workspace:*",
     "@mandate/authority-ir": "workspace:*",
     "@mandate/domain": "workspace:*",
     "@mandate/ui": "workspace:*",
-    "next": "16.3.1",
+    "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "viem": "2.55.17",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.6",
     "@types/node": "26.2.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "typescript": "7.0.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.125.0"
   }
 }

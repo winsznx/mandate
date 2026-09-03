@@ -8,6 +8,9 @@ packages:
 # without it, so every script in this repo depends on this being true.
 allowBuilds:
   esbuild: true
+  # workerd compiles a native binary in its postinstall; the OpenNext
+  # Cloudflare build cannot run without it.
+  workerd: true
 minimumReleaseAgeExclude:
   - viem@2.55.17
 onlyBuiltDependencies:

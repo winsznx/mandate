@@ -1,0 +1,59 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Diversified Optimizer",
+  "description": "Moves idle stablecoin into Venus Core-pool markets under a 60% per-market ceiling, accepting a lower headline rate rather than concentrating the whole position in one market. Acts through vToken.mint(uint256), which takes an amount and no recipient. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
+  "url": "https://mandate-yield-b.up.railway.app",
+  "preferredTransport": "JSONRPC",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "optimise-yield",
+      "name": "Deploy idle capital at the best supported rate",
+      "description": "Reads the Venus Core-pool stablecoin markets, ranks the ones accepting supply by their annualised rate net of a cost buffer, and proposes a mint(uint256) that moves idle wallet capital into the best of them. Returns a proposed action; it never executes one.",
+      "tags": [
+        "venus",
+        "bnb-chain",
+        "yield",
+        "defi"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "x-mandate": {
+    "category": "YIELD",
+    "scaffold": "bnb-agent-studio",
+    "hosting": "self-hosted",
+    "referenceAgent": true,
+    "proposesOnly": true,
+    "strategyStatus": "IMPLEMENTED",
+    "policy": {
+      "policyId": "diversified-optimizer",
+      "minNetSupplyRateBps": 50,
+      "gasCostBufferBps": 25,
+      "blocksPerYear": 10000000,
+      "minDeploymentUsdMantissa": "10000000000000000000",
+      "maxVenueShareBps": 6000,
+      "amountToleranceBps": 50,
+      "rateSource": "vToken.supplyRatePerBlock",
+      "rateAnnualisation": "simple, blocksPerYear as published",
+      "action": "mint(uint256)"
+    },
+    "policyHash": "0xede417434cd678f0cfb20c2f02794e579f3aa70ea2fd79c26c0dec6b42cda3e2",
+    "versionIsAuthoritative": false
+  }
+}

@@ -9,6 +9,14 @@ anything outside that boundary is refused by your own account contract.
 
 Not by our server. By the chain.
 
+| | |
+|---|---|
+| Marketplace | https://mandate-web.timjosh507.workers.dev |
+| Finished mandate | [`/proof/0xf3a9b4d0…`](https://mandate-web.timjosh507.workers.dev/proof/0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda) |
+| Network | BSC Testnet (chain 97) |
+| Verify from a terminal | `pnpm install && pnpm verify:mandate 0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda --chain 97` |
+| Status | Core mechanism proven end to end on testnet. Marketplace surface early — see [Status](#status). |
+
 ---
 
 ## The mechanism

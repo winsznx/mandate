@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mandate-web",
+  "main": ".open-next/worker.js",
+  // >= 2026-08-04 turns on nodejs_compat + nodejs_compat_v2 automatically.
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NEXT_PUBLIC_CHAIN_ID": "97"
+  }
+}

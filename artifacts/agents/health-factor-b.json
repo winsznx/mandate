@@ -1,0 +1,57 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Efficient Guardian",
+  "description": "Defends a Venus Core-pool borrow position on BNB Smart Chain, running closer to the liquidation line than the Conservative Guardian. Intervenes when the liquidation-threshold-weighted health factor falls below 1.15 and proposes a repayBorrow(uint256) that restores it to 1.20, leaving more of the position borrowed at the cost of a thinner buffer. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
+  "url": "https://mandate-health-factor-b.up.railway.app",
+  "preferredTransport": "JSONRPC",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "restore-health-factor",
+      "name": "Restore health factor",
+      "description": "Reads a Venus Core-pool position and proposes a repayBorrow sized to lift the liquidation-threshold-weighted health factor back to the policy target. Returns a proposed action; it never executes one.",
+      "tags": [
+        "venus",
+        "bnb-chain",
+        "health-factor",
+        "defi"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "x-mandate": {
+    "category": "HEALTH_FACTOR",
+    "scaffold": "bnb-agent-studio",
+    "hosting": "self-hosted",
+    "referenceAgent": true,
+    "proposesOnly": true,
+    "strategyStatus": "IMPLEMENTED",
+    "policy": {
+      "policyId": "efficient-guardian",
+      "interventionThresholdMantissa": "1150000000000000000",
+      "targetHealthFactorMantissa": "1200000000000000000",
+      "minimumRepayUsdMantissa": "1000000000000000000",
+      "maxReconstructionDriftBps": 100,
+      "healthFactorSource": "Comptroller.getAccountLiquidity",
+      "healthFactorWeighting": "LIQUIDATION_THRESHOLD",
+      "action": "repayBorrow(uint256)"
+    },
+    "policyHash": "0x22b7780fd6da391be2d6d17a2e66752765e61c47b6accf608de3f0f0773945eb",
+    "versionIsAuthoritative": false
+  }
+}

@@ -2,7 +2,7 @@
   "protocolVersion": "0.3.0",
   "name": "Efficient Guardian",
   "description": "Defends a Venus Core-pool borrow position on BNB Smart Chain, running closer to the liquidation line than the Conservative Guardian. Intervenes when the liquidation-threshold-weighted health factor falls below 1.15 and proposes a repayBorrow(uint256) that restores it to 1.20, leaving more of the position borrowed at the cost of a thinner buffer. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
-  "url": "https://mandate-health-factor-b.up.railway.app",
+  "url": "https://mandate-agents.timjosh507.workers.dev/health-factor-b",
   "preferredTransport": "JSONRPC",
   "version": "1.0.0",
   "capabilities": {

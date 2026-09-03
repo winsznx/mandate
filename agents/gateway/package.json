@@ -1,0 +1,32 @@
+{
+  "name": "@mandate/agent-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@mandate/agent-grid-a": "workspace:*",
+    "@mandate/agent-grid-b": "workspace:*",
+    "@mandate/agent-health-factor-a": "workspace:*",
+    "@mandate/agent-health-factor-b": "workspace:*",
+    "@mandate/agent-rebalancing-a": "workspace:*",
+    "@mandate/agent-rebalancing-b": "workspace:*",
+    "@mandate/agent-runtime": "workspace:*",
+    "@mandate/agent-yield-a": "workspace:*",
+    "@mandate/agent-yield-b": "workspace:*",
+    "viem": "2.55.17"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260817.1",
+    "@types/node": "26.2.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wrangler": "4.125.0"
+  }
+}

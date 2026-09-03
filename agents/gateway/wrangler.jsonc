@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mandate-agents",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "GATEWAY_ORIGIN": "https://mandate-agents.timjosh507.workers.dev",
+    "CHAIN_ID": "97"
+  }
+}

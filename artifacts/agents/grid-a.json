@@ -2,7 +2,7 @@
   "protocolVersion": "0.3.0",
   "name": "Tight Grid",
   "description": "Runs a 25 bps grid ladder eight rungs deep on a Curve-style stableswap pool, harvesting small dislocations and carrying a larger inventory swing as a result. Acts through exchange(int128,int128,uint256,uint256), which takes two coin indices, an amount and a minimum output, and no recipient. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
-  "url": "https://mandate-grid-a.up.railway.app",
+  "url": "https://mandate-agents.timjosh507.workers.dev/grid-a",
   "preferredTransport": "JSONRPC",
   "version": "1.0.0",
   "capabilities": {

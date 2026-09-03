@@ -11,8 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "cf:build": "pnpm clean && pnpm snapshot && opennextjs-cloudflare build",
-    "cf:preview": "pnpm clean && pnpm snapshot && opennextjs-cloudflare preview",
-    "cf:deploy": "pnpm clean && pnpm snapshot && opennextjs-cloudflare deploy",
+    "cf:preview": "pnpm cf:build && opennextjs-cloudflare preview",
+    "cf:deploy": "pnpm cf:build && opennextjs-cloudflare deploy",
     "clean": "rm -rf .next .turbo .open-next"
   },
   "dependencies": {

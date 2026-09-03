@@ -2,7 +2,7 @@
   "protocolVersion": "0.3.0",
   "name": "Wide Grid",
   "description": "Runs a 100 bps grid ladder four rungs deep on a Curve-style stableswap pool, ignoring the small dislocations its sibling trades and holding a much smaller inventory swing. Acts through exchange(int128,int128,uint256,uint256), which takes two coin indices, an amount and a minimum output, and no recipient. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
-  "url": "https://mandate-grid-b.up.railway.app",
+  "url": "https://mandate-agents.timjosh507.workers.dev/grid-b",
   "preferredTransport": "JSONRPC",
   "version": "1.0.0",
   "capabilities": {

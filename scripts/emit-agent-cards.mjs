@@ -20,17 +20,22 @@ import { dirname, join, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** slug -> intended public host. Kept here so one edit repoints the fleet. */
-const AGENT_HOSTS = {
-  "grid-a": "https://mandate-grid-a.up.railway.app",
-  "grid-b": "https://mandate-grid-b.up.railway.app",
-  "health-factor-a": "https://mandate-health-factor-a.up.railway.app",
-  "health-factor-b": "https://mandate-health-factor-b.up.railway.app",
-  "rebalancing-a": "https://mandate-rebalancing-a.up.railway.app",
-  "rebalancing-b": "https://mandate-rebalancing-b.up.railway.app",
-  "yield-a": "https://mandate-yield-a.up.railway.app",
-  "yield-b": "https://mandate-yield-b.up.railway.app",
-};
+/**
+ * slug -> public host. All eight run on one Cloudflare Worker
+ * (`agents/gateway`), path-routed by slug. One edit repoints the fleet.
+ */
+const GATEWAY_ORIGIN = "https://mandate-agents.timjosh507.workers.dev";
+const SLUGS = [
+  "grid-a",
+  "grid-b",
+  "health-factor-a",
+  "health-factor-b",
+  "rebalancing-a",
+  "rebalancing-b",
+  "yield-a",
+  "yield-b",
+];
+const AGENT_HOSTS = Object.fromEntries(SLUGS.map((slug) => [slug, `${GATEWAY_ORIGIN}/${slug}`]));
 
 let emitted = 0;
 for (const [slug, host] of Object.entries(AGENT_HOSTS)) {

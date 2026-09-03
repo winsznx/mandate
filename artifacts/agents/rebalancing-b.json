@@ -2,7 +2,7 @@
   "protocolVersion": "0.3.0",
   "name": "Wide Band Allocator",
   "description": "Holds an equal-weight allocation across the Venus Core-pool stablecoin markets and lets it wander 600 bps of the portfolio before correcting, trading a portfolio that sits further from its weights for far fewer transactions. Tops up the under-weight side through vToken.mint(uint256), which takes an amount and no recipient; it never withdraws, because redeemUnderlying(uint256) can push a borrowing account's health factor below one and needs a guard this authority does not carry. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
-  "url": "https://mandate-rebalancing-b.up.railway.app",
+  "url": "https://mandate-agents.timjosh507.workers.dev/rebalancing-b",
   "preferredTransport": "JSONRPC",
   "version": "1.0.0",
   "capabilities": {

@@ -264,7 +264,7 @@ a {
 .hero__figure {
   position: relative;
   border-radius: var(--radius-images);
-  padding: var(--spacing-32);
+  padding: var(--spacing-24) var(--spacing-24) var(--spacing-20);
   background:
     radial-gradient(120% 80% at 12% 0%, #f7dcc4 0%, rgba(247, 220, 196, 0) 58%),
     radial-gradient(130% 95% at 100% 100%, #e6c3ca 0%, rgba(230, 195, 202, 0) 52%),

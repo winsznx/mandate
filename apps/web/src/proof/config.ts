@@ -46,10 +46,10 @@ export const FEATURED_AGENT = {
  * failure is silent from the outside and total from the inside.
  */
 export const FEATURED_MANDATE_ID: Hex =
-  "0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda";
+  "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b";
 
 export const FEATURED_RECEIPT_ID: Hex =
-  "0x982f8c2e409876df73e897089f09875778aac17ec51d8b651a4908c6c2a1ba16";
+  "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76";
 
 /**
  * Where the run record lives.

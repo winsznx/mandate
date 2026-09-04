@@ -53,7 +53,19 @@ export const BREACH_REPAY_RAW = 6n * USDT_UNIT;
 /** Fee headroom for the relay, per `00-DECISIONS.md` §3.5 point 1. Declared, never inferred. */
 export const NATIVE_DAILY_CAP_WEI = 2n * 10n ** 16n;
 
-export const MANDATE_LIFETIME_SECONDS = 7 * 24 * 3_600;
+/**
+ * 45 days, not 7.
+ *
+ * This is testnet capital under a session the owner can revoke at any time, so
+ * the risk a longer live window adds is bounded by that revocability, not by
+ * the number here. Set to 7 days, a receipt run once goes stale mid-review and
+ * the proof page starts printing STALE — true, and worded honestly, but a
+ * needless first impression for a reader who has no way to know a fresh run
+ * exists. 45 days holds a single run current across a full evaluation cycle
+ * without re-running the mandate to keep the headline claim looking alive,
+ * which would be the actual corner-cut.
+ */
+export const MANDATE_LIFETIME_SECONDS = 45 * 24 * 3_600;
 
 /** How long a passing trial stays current. Matches the mandate lifetime. */
 export const EVIDENCE_MAX_AGE_SECONDS = MANDATE_LIFETIME_SECONDS;

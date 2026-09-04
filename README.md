@@ -12,9 +12,9 @@ Not by our server. By the chain.
 | | |
 |---|---|
 | Marketplace | https://mandate-web.timjosh507.workers.dev |
-| Finished mandate | [`/proof/0xf3a9b4d0…`](https://mandate-web.timjosh507.workers.dev/proof/0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda) |
+| Finished mandate | [`/proof/0xae988cd9…`](https://mandate-web.timjosh507.workers.dev/proof/0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b) |
 | Network | BSC Testnet (chain 97) |
-| Verify from a terminal | `pnpm install && pnpm verify:mandate 0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda --chain 97` |
+| Verify from a terminal | `pnpm install && pnpm verify:mandate 0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b --chain 97` |
 | Status | Core mechanism proven end to end on testnet. Marketplace surface early — see [Status](#status). |
 
 ---
@@ -54,7 +54,7 @@ A Venus health-factor agent was tested, granted a bounded mandate, and used it.
 | Receipt registry | [`0x0791af52…`](https://testnet.bscscan.com/address/0x0791af52629206b5434a6865e9e1536a493854ca) — Sourcify-verified |
 | Agent | ERC-8004 `#1842` |
 | Tested authority | Venus `vUSDT.repayBorrow(uint256)`, USDT ≤ 25 per UTC day |
-| Granted authority | identical, expiring in 24h |
+| Granted authority | identical, expiring in 45 days |
 | Permitted action | repaid 20 USDT — succeeded |
 | Cap breach | +6 USDT refused with `ExceededSpendLimit` |
 | Wrong target / selector | refused with `UnauthorizedCall` |

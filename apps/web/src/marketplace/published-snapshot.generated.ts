@@ -5214,6 +5214,2212 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
     },
     "writesConfirmed": true
   },
+  "artifacts/evidence/20260904T155251Z/proof-manifest.json": {
+    "agent": {
+      "agentId": "0",
+      "identityRegistry": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
+      "registered": false,
+      "registrationUri": "mandate://unregistered/health-factor-a"
+    },
+    "allowance": {
+      "capBindsBreach": true,
+      "headroomRaw": "1099000000",
+      "note": "Sized to the mandate lifetime, not to one period. If this were sized to the daily cap the breach would revert on the ERC-20 allowance and the run would prove a misconfiguration.",
+      "remainingAfterAtCapRaw": "1105000000",
+      "standingAllowanceRaw": "1125000000"
+    },
+    "artifacts": [
+      "artifacts/phase-7/20260904T155251Z/evidence-bundle.json",
+      "artifacts/phase-7/20260904T155251Z/trial-evidence.json",
+      "artifacts/phase-7/20260904T155251Z/receipt-fields.json",
+      "artifacts/phase-7/20260904T155251Z/mandate-disclosure.json",
+      "artifacts/phase-7/20260904T155251Z/proof-manifest.json"
+    ],
+    "autoResume": false,
+    "autoResumeNote": "This run never resumes a write sequence. Read the on-chain state named below, decide what exists, and start a fresh run.",
+    "blockers": [],
+    "chain": {
+      "blockNumber": "129090363",
+      "observedChainId": 97,
+      "relayStatus": "{\"status\":\"rpc ok\",\"version\":\"26.1.4 (VERGEN_)\",\"quoteSigner\":\"0xff30c78644ef0fb",
+      "relayUrl": "https://testnet-relay.altana.network"
+    },
+    "executions": [
+      {
+        "amountRaw": "1125000000",
+        "label": "admin-path approve sized to the mandate lifetime",
+        "selector": "0x095ea7b3",
+        "status": "SUCCESS",
+        "step": "standing-approval",
+        "target": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+        "txHash": "0x688ddf608cec64224510a134d781701be9dc01c5cfda210a46d90d1b63320978"
+      },
+      {
+        "amountRaw": "20000000",
+        "label": "repay 20000000 raw USDT, inside the granted scope",
+        "selector": "0x0e752702",
+        "status": "SUCCESS",
+        "step": "execute-repay",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+        "txHash": "0x36cf134ccc8275d6f88d9141769933e27389bd83a92cc26072524d153fcb5791"
+      },
+      {
+        "amountRaw": "6000000",
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": true,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "SPEND_CAP",
+          "validatorError": "ExceededSpendLimit"
+        },
+        "label": "repay 6000000 raw USDT, taking the bucket past its 25000000 cap",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "cap-breach-attempt",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "OUT_OF_SCOPE_CALL",
+          "validatorError": "UnauthorizedCall"
+        },
+        "label": "the granted selector on a vToken outside the permission set",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "wrong-target-attempt",
+        "target": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7"
+      },
+      {
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "OUT_OF_SCOPE_CALL",
+          "validatorError": "UnauthorizedCall"
+        },
+        "label": "a selector outside the permission set on the granted vToken",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0xc5ebeaec",
+        "status": "REVERTED",
+        "step": "wrong-target-attempt",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "amountRaw": "1",
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": false,
+            "spendCapRaw": "0",
+            "spentInBucketRaw": "0"
+          },
+          "mechanism": "SESSION_INVALID"
+        },
+        "label": "a previously permitted repayment, after revocation",
+        "revertClass": "SESSION_INVALID",
+        "revertName": "KeyDoesNotExist",
+        "revertSelector": "0xe57b6304",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "post-revoke-execution-fails",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "amountRaw": "0",
+        "label": "admin-path approve(vUSDT, 0)",
+        "selector": "0x095ea7b3",
+        "status": "SUCCESS",
+        "step": "clear-standing-approval",
+        "target": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+        "txHash": "0x0048bdc588d1f511a5a6c0b8ffee26d2947c4013c6f040306a46d320059e15e2"
+      }
+    ],
+    "finishedAt": 1788537341,
+    "mandate": {
+      "activationTxHash": "0x563ccbe3cc6d03c50e638c3935ecb893e6e6ba780c866e4ef7fa3e795bc8f041",
+      "disclosureURI": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155251Z/mandate-disclosure.json",
+      "expiry": 1792425171,
+      "grantTxHash": "0x28957ab924cef26b375ef8e8bebd07a94040932df763ead92f447809b3852155",
+      "grantedAuthorityHash": "0xf0cfbe75e9c888443798ce4e137006ab856f4f57d27d6ab5169556a4427c45f4",
+      "mandateId": "0xc50fb760926725972426b61ccd2c3ec5ae5578743cf859ea7b63ec6bb524d17a",
+      "revocationTxHash": "0xc2d76bc863707c8c5b2079f7b9cf4e043b5afc77155f633cd92735398f3e7d4f",
+      "revokeTxHash": "0x2ef1d858c302f23d839e4be59fb7e8f04e6e4ee84efe49b83a47f70bd6558d7c",
+      "revokedAt": 1788537335,
+      "sessionKeyHash": "0x3d1767fa78a8a089b49457ebcc6d75d2fe784c8741e0d87bf4842645165f96a0",
+      "sessionKeyId": "0x0e30137cf8675efe64711317cb58c5540f74a10a96340b83e349e8ccba99c2cb",
+      "sessionPublicKey": "0x0421e0d061d447f82f918f4a2c4b810a92386ab611d2e54b916483b5073e702135f1982c80b052bb6257aa0778373d5b68273e62cb515a37ccb236be96fe2dc9f5",
+      "validFrom": 1788537286,
+      "validUntil": 1792425171,
+      "wallet": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+    },
+    "network": {
+      "chainId": 97,
+      "name": "BSC Testnet"
+    },
+    "owner": {
+      "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+      "balanceWei": "291691999761826835",
+      "note": "Funds every write, including the relay fee for the agent's executions: an Altana session is sponsored out of the wallet it acts on, so no tBNB is ever sent to the agent's key.",
+      "role": "owner"
+    },
+    "pinned": {
+      "altanaAccountImplementation": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de",
+      "altanaKeyStore": "0x6b8361c29d05d498b1a12b54a37310f94171e94a",
+      "altanaOrchestrator": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9",
+      "contracts": [
+        {
+          "address": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de",
+          "expectedCodeSize": 23384,
+          "label": "Altana account implementation",
+          "observedCodeSize": 23384
+        },
+        {
+          "address": "0x6b8361c29d05d498b1a12b54a37310f94171e94a",
+          "expectedCodeSize": 8756,
+          "label": "Altana KeyStore",
+          "observedCodeSize": 8756
+        },
+        {
+          "address": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9",
+          "expectedCodeSize": 9035,
+          "label": "Altana Orchestrator",
+          "observedCodeSize": 9035
+        },
+        {
+          "address": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+          "expectedCodeSize": 4744,
+          "label": "Venus vUSDT",
+          "observedCodeSize": 4744
+        },
+        {
+          "address": "0x94d1820b2d1c7c7452a163983dc888cec546b77d",
+          "expectedCodeSize": 1508,
+          "label": "Venus Comptroller",
+          "observedCodeSize": 1508
+        },
+        {
+          "address": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+          "expectedCodeSize": 2095,
+          "label": "USDT mock (6 dp)",
+          "observedCodeSize": 2095
+        }
+      ],
+      "venusComptroller": "0x94d1820b2d1c7c7452a163983dc888cec546b77d",
+      "venusUnderlying": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+      "venusVToken": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+      "venusVTokenImplementation": "0x73ff75092da265b87b25ffb943c47c90419a04a6"
+    },
+    "receipt": {
+      "evidenceURI": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155251Z/evidence-bundle.json",
+      "publishTxHash": "0x52c21baea847aee7791359213e6313c4e38b5c9622d3e49f063e7d7efa98095f",
+      "publisher": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+      "receiptId": "0x2276e2ba8d51b864e7c1ef4616844e2dae75e3233547850d659dc75aee7851b0"
+    },
+    "roles": {
+      "agent": {
+        "address": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc",
+        "designation": {
+          "agent": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc",
+          "chainId": 97,
+          "runId": "20260904T155251Z",
+          "schemaVersion": "mandate.session-key-designation/1",
+          "sessionKey": "0x0b815163704075c163429002c1fe22ed2f8f9e93"
+        },
+        "designationNote": "EIP-191 over the canonical designation. Recovering it yields the agent address, which the owner could not have produced, so the key that signed this run's executions was chosen by the agent.",
+        "designationSignature": "0x3b6186601e4868c51dc36d5ebec87b6b96b551418faf3d6d49b0de69e32334581ca38343b5554d53c5791d19cbf00ae36e622e4553772f46d93185669fb627491b",
+        "holds": "the session key this run acts under; never the wallet's admin authority",
+        "sessionKey": "0x0b815163704075c163429002c1fe22ed2f8f9e93"
+      },
+      "owner": {
+        "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+        "grants": "the session, and revokes it unilaterally",
+        "holds": "the Venus position and the wallet's admin authority"
+      },
+      "publisher": {
+        "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+        "holds": "publication of the trial receipt and the activation and revocation records",
+        "note": "the owner publishes for now; this is disclosed rather than claimed to be a third party",
+        "sameAs": "owner"
+      },
+      "separation": {
+        "agentIsPublisher": false,
+        "assertion": "The owner and the agent are different keys. The owner granted the session; the agent signed every execution attempted under it.",
+        "ownerIsAgent": false,
+        "publisherIsOwner": true,
+        "undeclaredCollisions": []
+      }
+    },
+    "rpcUrl": "https://bsc-testnet-rpc.publicnode.com",
+    "runId": "20260904T155251Z",
+    "schemaVersion": "mandate.phase-7-proof/1",
+    "spendBucket": {
+      "bucketEnd": "1788566400",
+      "bucketStart": "1788480000",
+      "period": "day",
+      "periodEnum": 2,
+      "pinnedVectorResult": "1786492800",
+      "remainingSecondsAtStart": 29229,
+      "semanticsMatchUtcMidnight": true
+    },
+    "startedAt": 1788537171,
+    "status": "FAILED",
+    "steps": [
+      {
+        "evidence": [
+          {
+            "label": "blockNumber",
+            "value": "129090363"
+          }
+        ],
+        "id": "chain-identity",
+        "observed": "chain 97 at block 129090363",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "Altana account implementation",
+            "value": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de 23384 B"
+          },
+          {
+            "label": "Altana KeyStore",
+            "value": "0x6b8361c29d05d498b1a12b54a37310f94171e94a 8756 B"
+          },
+          {
+            "label": "Altana Orchestrator",
+            "value": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9 9035 B"
+          },
+          {
+            "label": "Venus vUSDT",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 4744 B"
+          },
+          {
+            "label": "Venus Comptroller",
+            "value": "0x94d1820b2d1c7c7452a163983dc888cec546b77d 1508 B"
+          },
+          {
+            "label": "USDT mock (6 dp)",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 2095 B"
+          }
+        ],
+        "id": "altana-pins",
+        "observed": "6 pinned contracts match their recorded code size",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [],
+        "id": "relay-health",
+        "observed": "{\"status\":\"rpc ok\",\"version\":\"26.1.4 (VERGEN_)\",\"quoteSigner\":\"0xff30c78644ef0fb",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "target",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+          },
+          {
+            "label": "implementation",
+            "value": "0x73ff75092da265b87b25ffb943c47c90419a04a6"
+          },
+          {
+            "label": "implementationCodeHash",
+            "value": "0x07be7d50696863d816c35478f99af270669c02c9c76be536a19682b4f02d3192"
+          },
+          {
+            "label": "profileId",
+            "value": "venus-vusdt-repayborrow-97"
+          }
+        ],
+        "id": "venus-target",
+        "observed": "vUSDT at 0xb7526572ffe56ab9d7489838bf2e18e3323b441a runs the audited implementation and dispatches 0x0e752702",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "bucketStart",
+            "value": "1788480000"
+          },
+          {
+            "label": "bucketEnd",
+            "value": "1788566400"
+          },
+          {
+            "label": "pinnedVectorResult",
+            "value": "1786492800"
+          }
+        ],
+        "id": "spend-bucket",
+        "observed": "bucket 2026-09-04T00:00:00.000Z -> 2026-09-05T00:00:00.000Z, 29229s remaining",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "owner",
+            "value": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299"
+          },
+          {
+            "label": "balanceWei",
+            "value": "291691999761826835"
+          }
+        ],
+        "id": "owner-balance",
+        "observed": "0.291691999761826835 tBNB at 0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "owner",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "agent",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "publisher",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 (same as owner)"
+          },
+          {
+            "label": "agentSessionKey",
+            "value": "0x0b815163704075c163429002c1fe22ed2f8f9e93"
+          },
+          {
+            "label": "sessionKeyDesignatedBy",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "designationSignature",
+            "value": "0x3b6186601e4868c51dc36d5ebec87b6b96b551418faf3d6d49b0de69e32334581ca38343b5554d53c5791d19cbf00ae36e622e4553772f46d93185669fb627491b"
+          }
+        ],
+        "id": "role-separation",
+        "observed": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 and agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc are distinct, and the agent designated session key 0x0b815163704075c163429002c1fe22ed2f8f9e93",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "registry",
+            "value": "0x0791af52629206b5434a6865e9e1536a493854ca"
+          },
+          {
+            "label": "evidenceBaseUri",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/"
+          }
+        ],
+        "id": "publication-target",
+        "observed": "registry 0x0791af52629206b5434a6865e9e1536a493854ca via contracts/deployments/97.json",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "wallet",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "borrowBalanceRaw",
+            "value": "123200000"
+          },
+          {
+            "label": "underlyingBalanceRaw",
+            "value": "743200000"
+          }
+        ],
+        "id": "mandate-wallet",
+        "observed": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299 holds 123200000 raw debt and 743200000 raw USDT",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "standingAllowanceRaw",
+            "value": "1125000000"
+          },
+          {
+            "label": "remainingAfterAtCapRaw",
+            "value": "1105000000"
+          },
+          {
+            "label": "breachAmountRaw",
+            "value": "6000000"
+          }
+        ],
+        "id": "allowance-sizing",
+        "observed": "the 6000000 breach has 1099000000 raw of allowance headroom, so ExceededSpendLimit(address) and not an allowance failure is what must reject it",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "agentVersionHash",
+            "value": "0x36907f1f66aa217db6a0c21dff71600e19d5f0fd2f4597794ff59c424f9dc6bd"
+          },
+          {
+            "label": "endpoint",
+            "value": "mandate://agents/reference/health-factor-a"
+          }
+        ],
+        "id": "reference-agent",
+        "observed": "health-factor-a declares 1 skill(s)",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "trialSpecHash",
+            "value": "0x36e6cc1f90c18d006f110e4b7223cc6d354a4024c17e46e04d7d2af7eed6df2e"
+          },
+          {
+            "label": "scenarioHash",
+            "value": "0x03d0b319c03857a402068ad11569db83f9f7beb973905947eee02595a5a76aba"
+          },
+          {
+            "label": "snapshotBlock",
+            "value": "129090163"
+          },
+          {
+            "label": "testedAuthorityHash",
+            "value": "0x7175760e09e82dac1e8e4ff7e09f6e6deb9d2dbabf3669df3f845c82a9dc668c"
+          }
+        ],
+        "id": "trial-spec",
+        "observed": "frozen at 0x36e6cc1f90c18d006f110e4b7223cc6d354a4024c17e46e04d7d2af7eed6df2e",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "forkBlock",
+            "value": "129090163"
+          },
+          {
+            "label": "rpcSourceClass",
+            "value": "archive"
+          },
+          {
+            "label": "evidenceBundleHash",
+            "value": "0xa36f39b326e45ab2ff2ad49cc90be1289b2f903d3413347978dfb6764f84e0df"
+          },
+          {
+            "label": "trialEvidenceHash",
+            "value": "0xb2d2935f20b36c20f6a4cc04672171e84748c1d2070a762701067d39725943d6"
+          }
+        ],
+        "id": "trial-run",
+        "observed": "PASS on a archive fork at block 129090163",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "reason-0",
+            "value": "all 10 evaluator check(s) passed and the debt moved by the 18014815 the model expected"
+          }
+        ],
+        "id": "reference-replay",
+        "observed": "recomputed PASS from the evidence without reading the stated result",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "result",
+            "value": "PASS"
+          },
+          {
+            "label": "replayDerived",
+            "value": "PASS"
+          }
+        ],
+        "id": "trial-verdict",
+        "observed": "PASS, and the replay agrees",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "receiptId",
+            "value": "0x2276e2ba8d51b864e7c1ef4616844e2dae75e3233547850d659dc75aee7851b0"
+          },
+          {
+            "label": "publishTxHash",
+            "value": "0x52c21baea847aee7791359213e6313c4e38b5c9622d3e49f063e7d7efa98095f"
+          },
+          {
+            "label": "registry",
+            "value": "0x0791af52629206b5434a6865e9e1536a493854ca"
+          },
+          {
+            "label": "evidenceURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155251Z/evidence-bundle.json"
+          }
+        ],
+        "id": "publish-receipt",
+        "observed": "receipt 0x2276e2ba8d51b864e7c1ef4616844e2dae75e3233547850d659dc75aee7851b0 published",
+        "phase": "PUBLISH",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "grantedAuthorityHash",
+            "value": "0xf0cfbe75e9c888443798ce4e137006ab856f4f57d27d6ab5169556a4427c45f4"
+          },
+          {
+            "label": "testedAuthorityHash",
+            "value": "0x7175760e09e82dac1e8e4ff7e09f6e6deb9d2dbabf3669df3f845c82a9dc668c"
+          },
+          {
+            "label": "permissionsHash",
+            "value": "0xb43c1cc895677982b63c32bab159509059d6e0510badf54b6ad4362259179252"
+          },
+          {
+            "label": "UPGRADEABLE_TARGET",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a can be upgraded by 0xce10739590001705f7ff231611ba4a48b2820327, so this profile can stop describing it at any time"
+          },
+          {
+            "label": "RESIDUAL_APPROVAL",
+            "value": "An allowance of 1125000000 for 0xb7526572ffe56ab9d7489838bf2e18e3323b441a on 0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c survives revocation and must be cleared separately"
+          }
+        ],
+        "id": "compile-authority",
+        "observed": "compiled to 1 call rule(s) and 2 spend cap(s)",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "approvalTxHash",
+            "value": "0x688ddf608cec64224510a134d781701be9dc01c5cfda210a46d90d1b63320978"
+          },
+          {
+            "label": "allowanceRaw",
+            "value": "1125000000"
+          }
+        ],
+        "id": "standing-approval",
+        "observed": "allowance 1125000000 raw",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "grantTxHash",
+            "value": "0x28957ab924cef26b375ef8e8bebd07a94040932df763ead92f447809b3852155"
+          },
+          {
+            "label": "grantedBy",
+            "value": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "grantedTo",
+            "value": "agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "sessionPublicKey",
+            "value": "0x0421e0d061d447f82f918f4a2c4b810a92386ab611d2e54b916483b5073e702135f1982c80b052bb6257aa0778373d5b68273e62cb515a37ccb236be96fe2dc9f5"
+          },
+          {
+            "label": "sessionKeyAddress",
+            "value": "0x0b815163704075c163429002c1fe22ed2f8f9e93"
+          },
+          {
+            "label": "sessionKeyHash",
+            "value": "0x3d1767fa78a8a089b49457ebcc6d75d2fe784c8741e0d87bf4842645165f96a0"
+          },
+          {
+            "label": "sessionKeyId",
+            "value": "0x0e30137cf8675efe64711317cb58c5540f74a10a96340b83e349e8ccba99c2cb"
+          },
+          {
+            "label": "expiry",
+            "value": "1792425171"
+          }
+        ],
+        "id": "grant-session",
+        "observed": "the owner granted session key 0x0b815163704075c163429002C1fE22ed2F8F9e93 to agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc until 1792425171",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "observedAtBlock",
+            "value": "129090652"
+          },
+          {
+            "label": "validFrom",
+            "value": "1788537286"
+          },
+          {
+            "label": "validUntil",
+            "value": "1792425171"
+          },
+          {
+            "label": "enforcedCall",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702"
+          },
+          {
+            "label": "enforcedCall",
+            "value": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9 0x32323232"
+          },
+          {
+            "label": "enforcedSpend",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c day limit 25000000 spent 0"
+          },
+          {
+            "label": "enforcedSpend",
+            "value": "0x0000000000000000000000000000000000000000 day limit 20000000000000000 spent 0"
+          }
+        ],
+        "id": "read-enforced-authority",
+        "observed": "2 enforced call rule(s), 2 spend limit(s), 0 wallet-wide rule(s)",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "DISCLOSE UNREQUESTED_CALL_RULE",
+            "value": "The wallet layer added a wildcard-selector permission for the Orchestrator at 0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9. Every session key receives this; it is required for the session to submit anything at all, and it was not requested by MANDATE"
+          }
+        ],
+        "id": "compare-requested-enforced",
+        "observed": "1 disclosed difference(s), none critical",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "callsId",
+            "value": "0xb8f53aa61a2370149d8178ad946635d67568d62e0ee9ff7a212512bc1549efd8"
+          },
+          {
+            "label": "txHash",
+            "value": "0x36cf134ccc8275d6f88d9141769933e27389bd83a92cc26072524d153fcb5791"
+          },
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x0b815163704075c163429002c1fe22ed2f8f9e93"
+          },
+          {
+            "label": "agent",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          }
+        ],
+        "id": "execute-repay",
+        "observed": "the agent repaid 20000000 raw USDT under the session the owner granted it",
+        "phase": "EXECUTE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "debtBeforeRaw",
+            "value": "123200000"
+          },
+          {
+            "label": "debtAfterRaw",
+            "value": "103200000"
+          },
+          {
+            "label": "underlyingSpentRaw",
+            "value": "20000000"
+          },
+          {
+            "label": "accountCurrentSpentRaw",
+            "value": "20000000"
+          }
+        ],
+        "id": "venus-post-state",
+        "observed": "debt fell by 20000000 raw, 20000000 raw left the wallet, the account counted 20000000 against the bucket",
+        "phase": "EXECUTE",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "callsId",
+            "value": "none"
+          },
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x0b815163704075c163429002c1fe22ed2f8f9e93"
+          },
+          {
+            "label": "rejectionName",
+            "value": "ExceededSpendLimit"
+          },
+          {
+            "label": "allowanceAtAttemptRaw",
+            "value": "1105000000"
+          },
+          {
+            "label": "spentInBucketRaw",
+            "value": "20000000"
+          },
+          {
+            "label": "capRaw",
+            "value": "25000000"
+          }
+        ],
+        "id": "cap-breach-attempt",
+        "observed": "the agent's breach was rejected (REVERTED)",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "expectedMechanism",
+            "value": "SPEND_CAP"
+          },
+          {
+            "label": "revertSelector",
+            "value": "unrecovered"
+          },
+          {
+            "label": "revertSource",
+            "value": "NONE"
+          },
+          {
+            "label": "accountViewMechanism",
+            "value": "SPEND_CAP"
+          },
+          {
+            "label": "allowanceRuledOut",
+            "value": "true"
+          },
+          {
+            "label": "allowanceAtAttemptRaw",
+            "value": "1105000000"
+          }
+        ],
+        "id": "cap-breach-is-spend-limit",
+        "observed": "no revert bytes were recoverable, but the account raised ExceededSpendLimit and its own state at the attempt independently says SPEND_CAP (20000000 already spent in this bucket plus 6000000 exceeds the enforced cap of 25000000, and both the allowance and the balance cover the amount)",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x0b815163704075c163429002c1fe22ed2f8f9e93"
+          },
+          {
+            "label": "the granted selector on a vToken outside the permission set",
+            "value": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7 0x0e752702 no tx hash"
+          },
+          {
+            "label": "a selector outside the permission set on the granted vToken",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0xc5ebeaec no tx hash"
+          }
+        ],
+        "id": "wrong-target-attempt",
+        "observed": "2 out-of-scope call(s) submitted by the agent and rejected",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "the granted selector on a vToken outside the permission set",
+            "value": "no revert bytes were recoverable, but the account raised UnauthorizedCall and its own state at the attempt independently says OUT_OF_SCOPE_CALL (the account's own canExecute says this target and selector are outside the permission set)"
+          },
+          {
+            "label": "a selector outside the permission set on the granted vToken",
+            "value": "no revert bytes were recoverable, but the account raised UnauthorizedCall and its own state at the attempt independently says OUT_OF_SCOPE_CALL (the account's own canExecute says this target and selector are outside the permission set)"
+          }
+        ],
+        "id": "wrong-target-rejected",
+        "observed": "both rejections decode to UnauthorizedCall",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "revokeCallsId",
+            "value": "0x6890c23b460683d170b20f30e02f7e9e32925fb777750b39c725f53220692d06"
+          },
+          {
+            "label": "revokedBy",
+            "value": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "revokedKeyHeldBy",
+            "value": "agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "revokeTxHash",
+            "value": "0x2ef1d858c302f23d839e4be59fb7e8f04e6e4ee84efe49b83a47f70bd6558d7c"
+          },
+          {
+            "label": "accountHoldsKey",
+            "value": "false"
+          },
+          {
+            "label": "keyStoreSaysValid",
+            "value": "false"
+          }
+        ],
+        "id": "revoke-session",
+        "observed": "the owner revoked unilaterally and the account no longer holds the agent's key",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "accountHoldsKey",
+            "value": "false"
+          },
+          {
+            "label": "accountCanExecute",
+            "value": "false"
+          },
+          {
+            "label": "canExecuteRevert",
+            "value": "KeyDoesNotExist"
+          }
+        ],
+        "id": "post-revoke-execution-fails",
+        "observed": "the revoked session could not execute: Invalid parameters were provided to the RPC method.\nDouble check you have provided the correct parameters.\n\nURL: https://testnet-relay.altana.network\nRequest body: {\"method\":\"wallet_prepareCalls\",\"params\":[{\"calls\":[{\"data\":\"0x0e7527020000000000000000000000000000000000000000000000000000000000000001\",\"to\":\"0xb7526572ffe56ab9d7489838bf2e18e3323b441a\",\"value\":\"0x0\"}],\"capabilities\":{\"authorizeKeys\":[],\"meta\":{\"feeToken\":\"0x0000000000000000000000000000000000000000\"},\"preCall\":false},\"chainId\":\"0x61\",\"from\":\"0xdc5071910e6ca6855d45f96ba28ee0a2e5629299\",\"key\":{\"prehash\":false,\"publicKey\":\"0x0000000000000000000000000b815163704075c163429002c1fe22ed2f8f9e93\",\"type\":\"secp256k1\"}}]}\n\nDetails: key hash 0x3d1767fa78a8a089b49457ebcc6d75d2fe784c8741e0d87bf4842645165f96a0 is unknown\nVersion: viem@2.55.17",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "clearTxHash",
+            "value": "0x0048bdc588d1f511a5a6c0b8ffee26d2947c4013c6f040306a46d320059e15e2"
+          },
+          {
+            "label": "allowanceRaw",
+            "value": "0"
+          }
+        ],
+        "id": "clear-standing-approval",
+        "observed": "the standing allowance reads zero",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "disclosureURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155251Z/mandate-disclosure.json"
+          },
+          {
+            "label": "disclosurePath",
+            "value": "artifacts/phase-7/20260904T155251Z/mandate-disclosure.json"
+          },
+          {
+            "label": "standing-approval",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 0x095ea7b3 SUCCESS 0x688ddf608cec64224510a134d781701be9dc01c5cfda210a46d90d1b63320978"
+          },
+          {
+            "label": "execute-repay",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 SUCCESS 0x36cf134ccc8275d6f88d9141769933e27389bd83a92cc26072524d153fcb5791"
+          },
+          {
+            "label": "cap-breach-attempt",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "wrong-target-attempt",
+            "value": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "wrong-target-attempt",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0xc5ebeaec REVERTED no tx hash"
+          },
+          {
+            "label": "post-revoke-execution-fails",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "clear-standing-approval",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 0x095ea7b3 SUCCESS 0x0048bdc588d1f511a5a6c0b8ffee26d2947c4013c6f040306a46d320059e15e2"
+          }
+        ],
+        "id": "evidence-artifact",
+        "observed": "7 execution(s) disclosed at artifacts/phase-7/20260904T155251Z/mandate-disclosure.json",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "mandateId",
+            "value": "0xc50fb760926725972426b61ccd2c3ec5ae5578743cf859ea7b63ec6bb524d17a"
+          },
+          {
+            "label": "activationTxHash",
+            "value": "0x563ccbe3cc6d03c50e638c3935ecb893e6e6ba780c866e4ef7fa3e795bc8f041"
+          },
+          {
+            "label": "disclosureURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155251Z/mandate-disclosure.json"
+          },
+          {
+            "label": "validFrom",
+            "value": "1788537286"
+          },
+          {
+            "label": "validUntil",
+            "value": "1792425171"
+          }
+        ],
+        "id": "record-activation",
+        "observed": "mandate 0xc50fb760926725972426b61ccd2c3ec5ae5578743cf859ea7b63ec6bb524d17a recorded against receipt 0x2276e2ba8d51b864e7c1ef4616844e2dae75e3233547850d659dc75aee7851b0",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "revocationTxHash",
+            "value": "0xc2d76bc863707c8c5b2079f7b9cf4e043b5afc77155f633cd92735398f3e7d4f"
+          },
+          {
+            "label": "revokedAt",
+            "value": "1788537335"
+          }
+        ],
+        "id": "record-revocation",
+        "observed": "mandate 0xc50fb760926725972426b61ccd2c3ec5ae5578743cf859ea7b63ec6bb524d17a is on record as revoked at 1788537335",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "trialVerdict",
+            "value": "PARTIALLY VERIFIED"
+          },
+          {
+            "label": "mandateVerdict",
+            "value": "PARTIALLY VERIFIED"
+          }
+        ],
+        "id": "independent-verifier",
+        "observed": "trial PARTIALLY VERIFIED, mandate PARTIALLY VERIFIED",
+        "phase": "CLOSE",
+        "status": "FAIL",
+        "writes": false
+      },
+      {
+        "evidence": [],
+        "id": "proof-manifest",
+        "observed": "written to artifacts/phase-7/20260904T155251Z/proof-manifest.json",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": false
+      }
+    ],
+    "trial": {
+      "evidenceBundleHash": "0xa36f39b326e45ab2ff2ad49cc90be1289b2f903d3413347978dfb6764f84e0df",
+      "forkBlock": "129090163",
+      "replayDerived": "PASS",
+      "result": "PASS",
+      "rpcSourceClass": "archive",
+      "scenarioHash": "0x03d0b319c03857a402068ad11569db83f9f7beb973905947eee02595a5a76aba",
+      "testedAuthorityHash": "0x7175760e09e82dac1e8e4ff7e09f6e6deb9d2dbabf3669df3f845c82a9dc668c",
+      "trialEvidenceHash": "0xb2d2935f20b36c20f6a4cc04672171e84748c1d2070a762701067d39725943d6",
+      "trialSpecHash": "0x36e6cc1f90c18d006f110e4b7223cc6d354a4024c17e46e04d7d2af7eed6df2e"
+    },
+    "verifier": {
+      "mandateExitCode": 2,
+      "mandateVerdict": "PARTIALLY VERIFIED",
+      "trialExitCode": 2,
+      "trialVerdict": "PARTIALLY VERIFIED"
+    },
+    "writesConfirmed": true
+  },
+  "artifacts/evidence/20260904T155705Z/proof-manifest.json": {
+    "agent": {
+      "agentId": "1842",
+      "identityRegistry": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
+      "registered": true,
+      "registrationUri": "https://mandate-agents.timjosh507.workers.dev/health-factor-a.json"
+    },
+    "allowance": {
+      "capBindsBreach": true,
+      "headroomRaw": "1099000000",
+      "note": "Sized to the mandate lifetime, not to one period. If this were sized to the daily cap the breach would revert on the ERC-20 allowance and the run would prove a misconfiguration.",
+      "remainingAfterAtCapRaw": "1105000000",
+      "standingAllowanceRaw": "1125000000"
+    },
+    "artifacts": [
+      "artifacts/phase-7/20260904T155705Z/evidence-bundle.json",
+      "artifacts/phase-7/20260904T155705Z/trial-evidence.json",
+      "artifacts/phase-7/20260904T155705Z/receipt-fields.json",
+      "artifacts/phase-7/20260904T155705Z/mandate-disclosure.json",
+      "artifacts/phase-7/20260904T155705Z/proof-manifest.json"
+    ],
+    "autoResume": false,
+    "autoResumeNote": "This run never resumes a write sequence. Read the on-chain state named below, decide what exists, and start a fresh run.",
+    "blockers": [],
+    "chain": {
+      "blockNumber": "129090927",
+      "observedChainId": 97,
+      "relayStatus": "{\"status\":\"rpc ok\",\"version\":\"26.1.4 (VERGEN_)\",\"quoteSigner\":\"0xff30c78644ef0fb",
+      "relayUrl": "https://testnet-relay.altana.network"
+    },
+    "executions": [
+      {
+        "amountRaw": "1125000000",
+        "label": "admin-path approve sized to the mandate lifetime",
+        "selector": "0x095ea7b3",
+        "status": "SUCCESS",
+        "step": "standing-approval",
+        "target": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+        "txHash": "0x54a5998101c890ca89ed0952ba1b876e8fa3cd20951726e005e02f5dfd4fb297"
+      },
+      {
+        "amountRaw": "20000000",
+        "label": "repay 20000000 raw USDT, inside the granted scope",
+        "selector": "0x0e752702",
+        "status": "SUCCESS",
+        "step": "execute-repay",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+        "txHash": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4"
+      },
+      {
+        "amountRaw": "6000000",
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": true,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "SPEND_CAP",
+          "validatorError": "ExceededSpendLimit"
+        },
+        "label": "repay 6000000 raw USDT, taking the bucket past its 25000000 cap",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "cap-breach-attempt",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "OUT_OF_SCOPE_CALL",
+          "validatorError": "UnauthorizedCall"
+        },
+        "label": "the granted selector on a vToken outside the permission set",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "wrong-target-attempt",
+        "target": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7"
+      },
+      {
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": true,
+            "spendCapRaw": "25000000",
+            "spentInBucketRaw": "20000000"
+          },
+          "mechanism": "OUT_OF_SCOPE_CALL",
+          "validatorError": "UnauthorizedCall"
+        },
+        "label": "a selector outside the permission set on the granted vToken",
+        "revertClass": "",
+        "revertName": "",
+        "revertSelector": "",
+        "selector": "0xc5ebeaec",
+        "status": "REVERTED",
+        "step": "wrong-target-attempt",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "amountRaw": "1",
+        "attribution": {
+          "accountState": {
+            "allowanceAtAttemptRaw": "1105000000",
+            "callPermitted": false,
+            "keyRegistered": false,
+            "spendCapRaw": "0",
+            "spentInBucketRaw": "0"
+          },
+          "mechanism": "SESSION_INVALID"
+        },
+        "label": "a previously permitted repayment, after revocation",
+        "revertClass": "SESSION_INVALID",
+        "revertName": "KeyDoesNotExist",
+        "revertSelector": "0xe57b6304",
+        "selector": "0x0e752702",
+        "status": "REVERTED",
+        "step": "post-revoke-execution-fails",
+        "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+      },
+      {
+        "amountRaw": "0",
+        "label": "admin-path approve(vUSDT, 0)",
+        "selector": "0x095ea7b3",
+        "status": "SUCCESS",
+        "step": "clear-standing-approval",
+        "target": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+        "txHash": "0x58c16e43ebcab13f8dde8999bc83899942684a64db7b313fc1c27a8ed6b97486"
+      }
+    ],
+    "finishedAt": 1788537603,
+    "mandate": {
+      "activationTxHash": "0x740c35a0a3505fa73c753ca058971e81a17a26712f244acb3f949660eefbba8a",
+      "disclosureURI": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155705Z/mandate-disclosure.json",
+      "expiry": 1792425425,
+      "grantTxHash": "0xa929284b16cc0605eeb0fb4fe1cf29c0deda266421a999ac72d97d0d54eff905",
+      "grantedAuthorityHash": "0x18f3cb1807a1d8ea574f733069d747b76b988f8c9f4824c3f5fcc8a28d536f24",
+      "mandateId": "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b",
+      "revocationTxHash": "0x8cbb73e4ba081479bba6dd472e1d5f3f1374153beac12e6b7817afd593f7effa",
+      "revokeTxHash": "0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b",
+      "revokedAt": 1788537598,
+      "sessionKeyHash": "0x671a7f2a5e1213ee6d1cf092906dee94d13b022120c5904dbf2e157d80949082",
+      "sessionKeyId": "0x70196919608cd23ce98c828da34896eb710da35ce844ab27f24bc71136ce4836",
+      "sessionPublicKey": "0x0415dfab1a376f12375fc9e80dbb007f80893a2df1787398f9d8df0979de68273d4bd013223411611b4723232fd7204550b399c608df3522a59dca6e358dbbfa12",
+      "validFrom": 1788537548,
+      "validUntil": 1792425425,
+      "wallet": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+    },
+    "network": {
+      "chainId": 97,
+      "name": "BSC Testnet"
+    },
+    "owner": {
+      "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+      "balanceWei": "290686405870605605",
+      "note": "Funds every write, including the relay fee for the agent's executions: an Altana session is sponsored out of the wallet it acts on, so no tBNB is ever sent to the agent's key.",
+      "role": "owner"
+    },
+    "pinned": {
+      "altanaAccountImplementation": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de",
+      "altanaKeyStore": "0x6b8361c29d05d498b1a12b54a37310f94171e94a",
+      "altanaOrchestrator": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9",
+      "contracts": [
+        {
+          "address": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de",
+          "expectedCodeSize": 23384,
+          "label": "Altana account implementation",
+          "observedCodeSize": 23384
+        },
+        {
+          "address": "0x6b8361c29d05d498b1a12b54a37310f94171e94a",
+          "expectedCodeSize": 8756,
+          "label": "Altana KeyStore",
+          "observedCodeSize": 8756
+        },
+        {
+          "address": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9",
+          "expectedCodeSize": 9035,
+          "label": "Altana Orchestrator",
+          "observedCodeSize": 9035
+        },
+        {
+          "address": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+          "expectedCodeSize": 4744,
+          "label": "Venus vUSDT",
+          "observedCodeSize": 4744
+        },
+        {
+          "address": "0x94d1820b2d1c7c7452a163983dc888cec546b77d",
+          "expectedCodeSize": 1508,
+          "label": "Venus Comptroller",
+          "observedCodeSize": 1508
+        },
+        {
+          "address": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+          "expectedCodeSize": 2095,
+          "label": "USDT mock (6 dp)",
+          "observedCodeSize": 2095
+        }
+      ],
+      "venusComptroller": "0x94d1820b2d1c7c7452a163983dc888cec546b77d",
+      "venusUnderlying": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c",
+      "venusVToken": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+      "venusVTokenImplementation": "0x73ff75092da265b87b25ffb943c47c90419a04a6"
+    },
+    "receipt": {
+      "evidenceURI": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155705Z/evidence-bundle.json",
+      "publishTxHash": "0x49455881216a503f509f123d91b94f099fd11ecbf2b94cb909f5f9c12227775a",
+      "publisher": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+      "receiptId": "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76"
+    },
+    "roles": {
+      "agent": {
+        "address": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc",
+        "designation": {
+          "agent": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc",
+          "chainId": 97,
+          "runId": "20260904T155705Z",
+          "schemaVersion": "mandate.session-key-designation/1",
+          "sessionKey": "0x6a32aba76885024d0297322f3c1845e4842d4415"
+        },
+        "designationNote": "EIP-191 over the canonical designation. Recovering it yields the agent address, which the owner could not have produced, so the key that signed this run's executions was chosen by the agent.",
+        "designationSignature": "0x9e50d24088641d3ed189a859fa420527d0824d7738a7a6f9bb25b2cb802b39cd77e146b30b7ed85dc02dccefba90c2ebcb4dd837d3c40e7623ef60c0a84d5f511c",
+        "holds": "the session key this run acts under; never the wallet's admin authority",
+        "sessionKey": "0x6a32aba76885024d0297322f3c1845e4842d4415"
+      },
+      "owner": {
+        "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+        "grants": "the session, and revokes it unilaterally",
+        "holds": "the Venus position and the wallet's admin authority"
+      },
+      "publisher": {
+        "address": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299",
+        "holds": "publication of the trial receipt and the activation and revocation records",
+        "note": "the owner publishes for now; this is disclosed rather than claimed to be a third party",
+        "sameAs": "owner"
+      },
+      "separation": {
+        "agentIsPublisher": false,
+        "assertion": "The owner and the agent are different keys. The owner granted the session; the agent signed every execution attempted under it.",
+        "ownerIsAgent": false,
+        "publisherIsOwner": true,
+        "undeclaredCollisions": []
+      }
+    },
+    "rpcUrl": "https://bsc-testnet-rpc.publicnode.com",
+    "runId": "20260904T155705Z",
+    "schemaVersion": "mandate.phase-7-proof/1",
+    "spendBucket": {
+      "bucketEnd": "1788566400",
+      "bucketStart": "1788480000",
+      "period": "day",
+      "periodEnum": 2,
+      "pinnedVectorResult": "1786492800",
+      "remainingSecondsAtStart": 28975,
+      "semanticsMatchUtcMidnight": true
+    },
+    "startedAt": 1788537425,
+    "status": "FAILED",
+    "steps": [
+      {
+        "evidence": [
+          {
+            "label": "blockNumber",
+            "value": "129090927"
+          }
+        ],
+        "id": "chain-identity",
+        "observed": "chain 97 at block 129090927",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "Altana account implementation",
+            "value": "0x33ad2f49ab9f122f5f0fdf579f575724eff353de 23384 B"
+          },
+          {
+            "label": "Altana KeyStore",
+            "value": "0x6b8361c29d05d498b1a12b54a37310f94171e94a 8756 B"
+          },
+          {
+            "label": "Altana Orchestrator",
+            "value": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9 9035 B"
+          },
+          {
+            "label": "Venus vUSDT",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 4744 B"
+          },
+          {
+            "label": "Venus Comptroller",
+            "value": "0x94d1820b2d1c7c7452a163983dc888cec546b77d 1508 B"
+          },
+          {
+            "label": "USDT mock (6 dp)",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 2095 B"
+          }
+        ],
+        "id": "altana-pins",
+        "observed": "6 pinned contracts match their recorded code size",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [],
+        "id": "relay-health",
+        "observed": "{\"status\":\"rpc ok\",\"version\":\"26.1.4 (VERGEN_)\",\"quoteSigner\":\"0xff30c78644ef0fb",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "target",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a"
+          },
+          {
+            "label": "implementation",
+            "value": "0x73ff75092da265b87b25ffb943c47c90419a04a6"
+          },
+          {
+            "label": "implementationCodeHash",
+            "value": "0x07be7d50696863d816c35478f99af270669c02c9c76be536a19682b4f02d3192"
+          },
+          {
+            "label": "profileId",
+            "value": "venus-vusdt-repayborrow-97"
+          }
+        ],
+        "id": "venus-target",
+        "observed": "vUSDT at 0xb7526572ffe56ab9d7489838bf2e18e3323b441a runs the audited implementation and dispatches 0x0e752702",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "bucketStart",
+            "value": "1788480000"
+          },
+          {
+            "label": "bucketEnd",
+            "value": "1788566400"
+          },
+          {
+            "label": "pinnedVectorResult",
+            "value": "1786492800"
+          }
+        ],
+        "id": "spend-bucket",
+        "observed": "bucket 2026-09-04T00:00:00.000Z -> 2026-09-05T00:00:00.000Z, 28975s remaining",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "owner",
+            "value": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299"
+          },
+          {
+            "label": "balanceWei",
+            "value": "290686405870605605"
+          }
+        ],
+        "id": "owner-balance",
+        "observed": "0.290686405870605605 tBNB at 0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "owner",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "agent",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "publisher",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 (same as owner)"
+          },
+          {
+            "label": "agentSessionKey",
+            "value": "0x6a32aba76885024d0297322f3c1845e4842d4415"
+          },
+          {
+            "label": "sessionKeyDesignatedBy",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "designationSignature",
+            "value": "0x9e50d24088641d3ed189a859fa420527d0824d7738a7a6f9bb25b2cb802b39cd77e146b30b7ed85dc02dccefba90c2ebcb4dd837d3c40e7623ef60c0a84d5f511c"
+          }
+        ],
+        "id": "role-separation",
+        "observed": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299 and agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc are distinct, and the agent designated session key 0x6a32aba76885024d0297322f3c1845e4842d4415",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "registry",
+            "value": "0x0791af52629206b5434a6865e9e1536a493854ca"
+          },
+          {
+            "label": "evidenceBaseUri",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/"
+          }
+        ],
+        "id": "publication-target",
+        "observed": "registry 0x0791af52629206b5434a6865e9e1536a493854ca via contracts/deployments/97.json",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "wallet",
+            "value": "0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "borrowBalanceRaw",
+            "value": "103200000"
+          },
+          {
+            "label": "underlyingBalanceRaw",
+            "value": "723200000"
+          }
+        ],
+        "id": "mandate-wallet",
+        "observed": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299 holds 103200000 raw debt and 723200000 raw USDT",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "standingAllowanceRaw",
+            "value": "1125000000"
+          },
+          {
+            "label": "remainingAfterAtCapRaw",
+            "value": "1105000000"
+          },
+          {
+            "label": "breachAmountRaw",
+            "value": "6000000"
+          }
+        ],
+        "id": "allowance-sizing",
+        "observed": "the 6000000 breach has 1099000000 raw of allowance headroom, so ExceededSpendLimit(address) and not an allowance failure is what must reject it",
+        "phase": "PREFLIGHT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "agentVersionHash",
+            "value": "0x36907f1f66aa217db6a0c21dff71600e19d5f0fd2f4597794ff59c424f9dc6bd"
+          },
+          {
+            "label": "endpoint",
+            "value": "mandate://agents/reference/health-factor-a"
+          }
+        ],
+        "id": "reference-agent",
+        "observed": "health-factor-a declares 1 skill(s)",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "trialSpecHash",
+            "value": "0xeed57ccbfbd14324632ef19bd38b1b9013eba6a6811b474417c390bd6ca885c0"
+          },
+          {
+            "label": "scenarioHash",
+            "value": "0x46dcbac1ceeef0503a5e9d67ec5648891c1d0de9b8b022d5d469de6dcd1ffaed"
+          },
+          {
+            "label": "snapshotBlock",
+            "value": "129090727"
+          },
+          {
+            "label": "testedAuthorityHash",
+            "value": "0x686193d824731c493643907c959403678661ba040ddb0cc6e13555b92eea3984"
+          }
+        ],
+        "id": "trial-spec",
+        "observed": "frozen at 0xeed57ccbfbd14324632ef19bd38b1b9013eba6a6811b474417c390bd6ca885c0",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "forkBlock",
+            "value": "129090727"
+          },
+          {
+            "label": "rpcSourceClass",
+            "value": "archive"
+          },
+          {
+            "label": "evidenceBundleHash",
+            "value": "0x476d1b2eee11af686b72eaf83bd55e7b19effb878f4142c4991c9d9537acea87"
+          },
+          {
+            "label": "trialEvidenceHash",
+            "value": "0xc189a50281de8c3422e6d30f7eb03161e3092dbffe836c6783088d623f89d8ea"
+          }
+        ],
+        "id": "trial-run",
+        "observed": "PASS on a archive fork at block 129090727",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "reason-0",
+            "value": "all 10 evaluator check(s) passed and the debt moved by the 18014815 the model expected"
+          }
+        ],
+        "id": "reference-replay",
+        "observed": "recomputed PASS from the evidence without reading the stated result",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "result",
+            "value": "PASS"
+          },
+          {
+            "label": "replayDerived",
+            "value": "PASS"
+          }
+        ],
+        "id": "trial-verdict",
+        "observed": "PASS, and the replay agrees",
+        "phase": "TRIAL",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "receiptId",
+            "value": "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76"
+          },
+          {
+            "label": "publishTxHash",
+            "value": "0x49455881216a503f509f123d91b94f099fd11ecbf2b94cb909f5f9c12227775a"
+          },
+          {
+            "label": "registry",
+            "value": "0x0791af52629206b5434a6865e9e1536a493854ca"
+          },
+          {
+            "label": "evidenceURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155705Z/evidence-bundle.json"
+          }
+        ],
+        "id": "publish-receipt",
+        "observed": "receipt 0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76 published",
+        "phase": "PUBLISH",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "grantedAuthorityHash",
+            "value": "0x18f3cb1807a1d8ea574f733069d747b76b988f8c9f4824c3f5fcc8a28d536f24"
+          },
+          {
+            "label": "testedAuthorityHash",
+            "value": "0x686193d824731c493643907c959403678661ba040ddb0cc6e13555b92eea3984"
+          },
+          {
+            "label": "permissionsHash",
+            "value": "0x8779436049686dc27dd05bb87862c4cb281f7b15ff91472d0f2f6165070fa7a9"
+          },
+          {
+            "label": "UPGRADEABLE_TARGET",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a can be upgraded by 0xce10739590001705f7ff231611ba4a48b2820327, so this profile can stop describing it at any time"
+          },
+          {
+            "label": "RESIDUAL_APPROVAL",
+            "value": "An allowance of 1125000000 for 0xb7526572ffe56ab9d7489838bf2e18e3323b441a on 0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c survives revocation and must be cleared separately"
+          }
+        ],
+        "id": "compile-authority",
+        "observed": "compiled to 1 call rule(s) and 2 spend cap(s)",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "approvalTxHash",
+            "value": "0x54a5998101c890ca89ed0952ba1b876e8fa3cd20951726e005e02f5dfd4fb297"
+          },
+          {
+            "label": "allowanceRaw",
+            "value": "1125000000"
+          }
+        ],
+        "id": "standing-approval",
+        "observed": "allowance 1125000000 raw",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "grantTxHash",
+            "value": "0xa929284b16cc0605eeb0fb4fe1cf29c0deda266421a999ac72d97d0d54eff905"
+          },
+          {
+            "label": "grantedBy",
+            "value": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "grantedTo",
+            "value": "agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "sessionPublicKey",
+            "value": "0x0415dfab1a376f12375fc9e80dbb007f80893a2df1787398f9d8df0979de68273d4bd013223411611b4723232fd7204550b399c608df3522a59dca6e358dbbfa12"
+          },
+          {
+            "label": "sessionKeyAddress",
+            "value": "0x6a32aba76885024d0297322f3c1845e4842d4415"
+          },
+          {
+            "label": "sessionKeyHash",
+            "value": "0x671a7f2a5e1213ee6d1cf092906dee94d13b022120c5904dbf2e157d80949082"
+          },
+          {
+            "label": "sessionKeyId",
+            "value": "0x70196919608cd23ce98c828da34896eb710da35ce844ab27f24bc71136ce4836"
+          },
+          {
+            "label": "expiry",
+            "value": "1792425425"
+          }
+        ],
+        "id": "grant-session",
+        "observed": "the owner granted session key 0x6a32Aba76885024d0297322f3C1845e4842D4415 to agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc until 1792425425",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "observedAtBlock",
+            "value": "129091233"
+          },
+          {
+            "label": "validFrom",
+            "value": "1788537548"
+          },
+          {
+            "label": "validUntil",
+            "value": "1792425425"
+          },
+          {
+            "label": "enforcedCall",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702"
+          },
+          {
+            "label": "enforcedCall",
+            "value": "0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9 0x32323232"
+          },
+          {
+            "label": "enforcedSpend",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c day limit 25000000 spent 0"
+          },
+          {
+            "label": "enforcedSpend",
+            "value": "0x0000000000000000000000000000000000000000 day limit 20000000000000000 spent 0"
+          }
+        ],
+        "id": "read-enforced-authority",
+        "observed": "2 enforced call rule(s), 2 spend limit(s), 0 wallet-wide rule(s)",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "DISCLOSE UNREQUESTED_CALL_RULE",
+            "value": "The wallet layer added a wildcard-selector permission for the Orchestrator at 0xcb5cef3c54aa90e9a7ad602a258d3d360cc862b9. Every session key receives this; it is required for the session to submit anything at all, and it was not requested by MANDATE"
+          }
+        ],
+        "id": "compare-requested-enforced",
+        "observed": "1 disclosed difference(s), none critical",
+        "phase": "GRANT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "callsId",
+            "value": "0xcbc4a8c94f2ccec3fd000e3ce716bd1dde7fa34a7437a957262479c6c89ab8fc"
+          },
+          {
+            "label": "txHash",
+            "value": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4"
+          },
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x6a32aba76885024d0297322f3c1845e4842d4415"
+          },
+          {
+            "label": "agent",
+            "value": "0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          }
+        ],
+        "id": "execute-repay",
+        "observed": "the agent repaid 20000000 raw USDT under the session the owner granted it",
+        "phase": "EXECUTE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "debtBeforeRaw",
+            "value": "103200000"
+          },
+          {
+            "label": "debtAfterRaw",
+            "value": "83200000"
+          },
+          {
+            "label": "underlyingSpentRaw",
+            "value": "20000000"
+          },
+          {
+            "label": "accountCurrentSpentRaw",
+            "value": "20000000"
+          }
+        ],
+        "id": "venus-post-state",
+        "observed": "debt fell by 20000000 raw, 20000000 raw left the wallet, the account counted 20000000 against the bucket",
+        "phase": "EXECUTE",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "callsId",
+            "value": "none"
+          },
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x6a32aba76885024d0297322f3c1845e4842d4415"
+          },
+          {
+            "label": "rejectionName",
+            "value": "ExceededSpendLimit"
+          },
+          {
+            "label": "allowanceAtAttemptRaw",
+            "value": "1105000000"
+          },
+          {
+            "label": "spentInBucketRaw",
+            "value": "20000000"
+          },
+          {
+            "label": "capRaw",
+            "value": "25000000"
+          }
+        ],
+        "id": "cap-breach-attempt",
+        "observed": "the agent's breach was rejected (REVERTED)",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "expectedMechanism",
+            "value": "SPEND_CAP"
+          },
+          {
+            "label": "revertSelector",
+            "value": "unrecovered"
+          },
+          {
+            "label": "revertSource",
+            "value": "NONE"
+          },
+          {
+            "label": "accountViewMechanism",
+            "value": "SPEND_CAP"
+          },
+          {
+            "label": "allowanceRuledOut",
+            "value": "true"
+          },
+          {
+            "label": "allowanceAtAttemptRaw",
+            "value": "1105000000"
+          }
+        ],
+        "id": "cap-breach-is-spend-limit",
+        "observed": "no revert bytes were recoverable, but the account raised ExceededSpendLimit and its own state at the attempt independently says SPEND_CAP (20000000 already spent in this bucket plus 6000000 exceeds the enforced cap of 25000000, and both the allowance and the balance cover the amount)",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "signedBy",
+            "value": "agent session key 0x6a32aba76885024d0297322f3c1845e4842d4415"
+          },
+          {
+            "label": "the granted selector on a vToken outside the permission set",
+            "value": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7 0x0e752702 no tx hash"
+          },
+          {
+            "label": "a selector outside the permission set on the granted vToken",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0xc5ebeaec no tx hash"
+          }
+        ],
+        "id": "wrong-target-attempt",
+        "observed": "2 out-of-scope call(s) submitted by the agent and rejected",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "the granted selector on a vToken outside the permission set",
+            "value": "no revert bytes were recoverable, but the account raised UnauthorizedCall and its own state at the attempt independently says OUT_OF_SCOPE_CALL (the account's own canExecute says this target and selector are outside the permission set)"
+          },
+          {
+            "label": "a selector outside the permission set on the granted vToken",
+            "value": "no revert bytes were recoverable, but the account raised UnauthorizedCall and its own state at the attempt independently says OUT_OF_SCOPE_CALL (the account's own canExecute says this target and selector are outside the permission set)"
+          }
+        ],
+        "id": "wrong-target-rejected",
+        "observed": "both rejections decode to UnauthorizedCall",
+        "phase": "REJECT",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "revokeCallsId",
+            "value": "0x458f411a47f27b5eb54c39da76cc5292d3b5a331903479e500276183c2d52916"
+          },
+          {
+            "label": "revokedBy",
+            "value": "owner 0xdc5071910e6ca6855d45f96ba28ee0a2e5629299"
+          },
+          {
+            "label": "revokedKeyHeldBy",
+            "value": "agent 0x29f7b9913dd16278db7a6cfca145953a854ca0dc"
+          },
+          {
+            "label": "revokeTxHash",
+            "value": "0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b"
+          },
+          {
+            "label": "accountHoldsKey",
+            "value": "false"
+          },
+          {
+            "label": "keyStoreSaysValid",
+            "value": "false"
+          }
+        ],
+        "id": "revoke-session",
+        "observed": "the owner revoked unilaterally and the account no longer holds the agent's key",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "accountHoldsKey",
+            "value": "false"
+          },
+          {
+            "label": "accountCanExecute",
+            "value": "false"
+          },
+          {
+            "label": "canExecuteRevert",
+            "value": "KeyDoesNotExist"
+          }
+        ],
+        "id": "post-revoke-execution-fails",
+        "observed": "the revoked session could not execute: Invalid parameters were provided to the RPC method.\nDouble check you have provided the correct parameters.\n\nURL: https://testnet-relay.altana.network\nRequest body: {\"method\":\"wallet_prepareCalls\",\"params\":[{\"calls\":[{\"data\":\"0x0e7527020000000000000000000000000000000000000000000000000000000000000001\",\"to\":\"0xb7526572ffe56ab9d7489838bf2e18e3323b441a\",\"value\":\"0x0\"}],\"capabilities\":{\"authorizeKeys\":[],\"meta\":{\"feeToken\":\"0x0000000000000000000000000000000000000000\"},\"preCall\":false},\"chainId\":\"0x61\",\"from\":\"0xdc5071910e6ca6855d45f96ba28ee0a2e5629299\",\"key\":{\"prehash\":false,\"publicKey\":\"0x0000000000000000000000006a32aba76885024d0297322f3c1845e4842d4415\",\"type\":\"secp256k1\"}}]}\n\nDetails: key hash 0x671a7f2a5e1213ee6d1cf092906dee94d13b022120c5904dbf2e157d80949082 is unknown\nVersion: viem@2.55.17",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "clearTxHash",
+            "value": "0x58c16e43ebcab13f8dde8999bc83899942684a64db7b313fc1c27a8ed6b97486"
+          },
+          {
+            "label": "allowanceRaw",
+            "value": "0"
+          }
+        ],
+        "id": "clear-standing-approval",
+        "observed": "the standing allowance reads zero",
+        "phase": "REVOKE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "disclosureURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155705Z/mandate-disclosure.json"
+          },
+          {
+            "label": "disclosurePath",
+            "value": "artifacts/phase-7/20260904T155705Z/mandate-disclosure.json"
+          },
+          {
+            "label": "standing-approval",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 0x095ea7b3 SUCCESS 0x54a5998101c890ca89ed0952ba1b876e8fa3cd20951726e005e02f5dfd4fb297"
+          },
+          {
+            "label": "execute-repay",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 SUCCESS 0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4"
+          },
+          {
+            "label": "cap-breach-attempt",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "wrong-target-attempt",
+            "value": "0xd5c4c2e2facbeb59d0216d0595d63fcdc6f9a1a7 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "wrong-target-attempt",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0xc5ebeaec REVERTED no tx hash"
+          },
+          {
+            "label": "post-revoke-execution-fails",
+            "value": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a 0x0e752702 REVERTED no tx hash"
+          },
+          {
+            "label": "clear-standing-approval",
+            "value": "0xa11c8d9dc9b66e209ef60f0c8d969d3cd988782c 0x095ea7b3 SUCCESS 0x58c16e43ebcab13f8dde8999bc83899942684a64db7b313fc1c27a8ed6b97486"
+          }
+        ],
+        "id": "evidence-artifact",
+        "observed": "7 execution(s) disclosed at artifacts/phase-7/20260904T155705Z/mandate-disclosure.json",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": false
+      },
+      {
+        "evidence": [
+          {
+            "label": "mandateId",
+            "value": "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b"
+          },
+          {
+            "label": "activationTxHash",
+            "value": "0x740c35a0a3505fa73c753ca058971e81a17a26712f244acb3f949660eefbba8a"
+          },
+          {
+            "label": "disclosureURI",
+            "value": "https://raw.githubusercontent.com/winsznx/mandate/main/artifacts/evidence/20260904T155705Z/mandate-disclosure.json"
+          },
+          {
+            "label": "validFrom",
+            "value": "1788537548"
+          },
+          {
+            "label": "validUntil",
+            "value": "1792425425"
+          }
+        ],
+        "id": "record-activation",
+        "observed": "mandate 0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b recorded against receipt 0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "revocationTxHash",
+            "value": "0x8cbb73e4ba081479bba6dd472e1d5f3f1374153beac12e6b7817afd593f7effa"
+          },
+          {
+            "label": "revokedAt",
+            "value": "1788537598"
+          }
+        ],
+        "id": "record-revocation",
+        "observed": "mandate 0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b is on record as revoked at 1788537598",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": true
+      },
+      {
+        "evidence": [
+          {
+            "label": "trialVerdict",
+            "value": "PARTIALLY VERIFIED"
+          },
+          {
+            "label": "mandateVerdict",
+            "value": "PARTIALLY VERIFIED"
+          }
+        ],
+        "id": "independent-verifier",
+        "observed": "trial PARTIALLY VERIFIED, mandate PARTIALLY VERIFIED",
+        "phase": "CLOSE",
+        "status": "FAIL",
+        "writes": false
+      },
+      {
+        "evidence": [],
+        "id": "proof-manifest",
+        "observed": "written to artifacts/phase-7/20260904T155705Z/proof-manifest.json",
+        "phase": "CLOSE",
+        "status": "PASS",
+        "writes": false
+      }
+    ],
+    "trial": {
+      "evidenceBundleHash": "0x476d1b2eee11af686b72eaf83bd55e7b19effb878f4142c4991c9d9537acea87",
+      "forkBlock": "129090727",
+      "replayDerived": "PASS",
+      "result": "PASS",
+      "rpcSourceClass": "archive",
+      "scenarioHash": "0x46dcbac1ceeef0503a5e9d67ec5648891c1d0de9b8b022d5d469de6dcd1ffaed",
+      "testedAuthorityHash": "0x686193d824731c493643907c959403678661ba040ddb0cc6e13555b92eea3984",
+      "trialEvidenceHash": "0xc189a50281de8c3422e6d30f7eb03161e3092dbffe836c6783088d623f89d8ea",
+      "trialSpecHash": "0xeed57ccbfbd14324632ef19bd38b1b9013eba6a6811b474417c390bd6ca885c0"
+    },
+    "verifier": {
+      "mandateExitCode": 2,
+      "mandateVerdict": "PARTIALLY VERIFIED",
+      "trialExitCode": 2,
+      "trialVerdict": "PARTIALLY VERIFIED"
+    },
+    "writesConfirmed": true
+  },
   "contracts/deployments/97.json": {
     "chainId": 97,
     "network": "BSC Testnet",
@@ -5261,6 +7467,8 @@ export const SNAPSHOT_DIRS: Readonly<Record<string, readonly string[]>> = {
     "20260819T003133Z",
     "20260819T004435Z",
     "20260819T005008Z",
-    "20260819T045553Z"
+    "20260819T045553Z",
+    "20260904T155251Z",
+    "20260904T155705Z"
   ]
 } as const;

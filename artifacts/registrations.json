@@ -1,0 +1,51 @@
+{
+  "grid-a": {
+    "agentId": "2103",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/grid-a.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0x040988ecf8e9f7454b4eb5a9f64e489fbb6e5fc07ba5a97dd5a2b898c8fc9966"
+  },
+  "grid-b": {
+    "agentId": "2104",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/grid-b.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0xcc9a0c350d7193462c38e3557c3818e092a01654e06293164d236c4fda672226"
+  },
+  "health-factor-a": {
+    "agentId": "1842",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/health-factor-a.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0x4a9f93945fff368922e59f031c5d409cf9776664f46e77aa00747e5fc2f62432",
+    "note": "repointed via setAgentURI"
+  },
+  "health-factor-b": {
+    "agentId": "2105",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/health-factor-b.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0x6555c7a492f2d765d282b9caf9af26453dd352ab7913045fcf7c5af6db0f2a2d"
+  },
+  "rebalancing-a": {
+    "agentId": "2106",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/rebalancing-a.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0x2568530de65f7240051d9931941dbb308ce25ab890dcce125a2c2fae51b30e46"
+  },
+  "rebalancing-b": {
+    "agentId": "2107",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/rebalancing-b.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0xcf45ea2288470fa930977b9a0f3e5d3eed2c82107a0adef5b8635ed207f764c4"
+  },
+  "yield-a": {
+    "agentId": "2108",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/yield-a.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0x8b9ab3e029960190f336c5ff7da45f062c00f1f46e555f931f770fd36db9c545"
+  },
+  "yield-b": {
+    "agentId": "2109",
+    "agentURI": "https://mandate-agents.timjosh507.workers.dev/yield-b.json",
+    "owner": "0xdc5071910E6Ca6855d45f96BA28eE0a2E5629299",
+    "txHash": "0xee2b3b320b07cc88b245bb79aab0af295817b42da017e870a9b10c2299b60909"
+  }
+}

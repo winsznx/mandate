@@ -12,6 +12,10 @@
   "observability": {
     "enabled": true
   },
+  // A Worker cannot subrequest another Worker on the same account through its
+  // workers.dev URL (Cloudflare error 1042). The agent-endpoint probe reaches
+  // the reference-agent gateway through this binding instead.
+  "services": [{ "binding": "AGENTS", "service": "mandate-agents" }],
   "vars": {
     "NEXT_PUBLIC_CHAIN_ID": "97"
   }

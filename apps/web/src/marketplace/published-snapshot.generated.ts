@@ -60,7 +60,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "exchange(int128,int128,uint256,uint256)"
       },
       "policyHash": "0xd069300fdc4924ab31242697363655a8f0181e704cc95cc4094deb65e14655ac",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2103"
     }
   },
   "artifacts/agents/grid-b.json": {
@@ -120,7 +121,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "exchange(int128,int128,uint256,uint256)"
       },
       "policyHash": "0x584233d3fd76b7d45d6c09fe9654a4c4230ded5e1144c181b7fc602adce91f5b",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2104"
     }
   },
   "artifacts/agents/health-factor-a.json": {
@@ -177,7 +179,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "repayBorrow(uint256)"
       },
       "policyHash": "0x9605052df8b358d45b5f235902aa09a93e9d713970730b13fbb1ddbcceb251c3",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "1842"
     }
   },
   "artifacts/agents/health-factor-b.json": {
@@ -234,7 +237,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "repayBorrow(uint256)"
       },
       "policyHash": "0x22b7780fd6da391be2d6d17a2e66752765e61c47b6accf608de3f0f0773945eb",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2105"
     }
   },
   "artifacts/agents/rebalancing-a.json": {
@@ -302,7 +306,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "driftMeasure": "basis points of total portfolio USD, supplied plus idle"
       },
       "policyHash": "0x2469819c7212ef414cce6592904f780de2ef546a19ba2d5683197faefd484cbe",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2106"
     }
   },
   "artifacts/agents/rebalancing-b.json": {
@@ -370,7 +375,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "driftMeasure": "basis points of total portfolio USD, supplied plus idle"
       },
       "policyHash": "0x445b6f7c5df2a3f50e5570d7a8d6008045a413d65e89303ea84c7f9d044584de",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2107"
     }
   },
   "artifacts/agents/yield-a.json": {
@@ -429,7 +435,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "mint(uint256)"
       },
       "policyHash": "0x6ce45b76e5346266902f09be838b7cf8e6509f1007b1fd6a8a838fa137b0c79f",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2108"
     }
   },
   "artifacts/agents/yield-b.json": {
@@ -488,7 +495,8 @@ export const SNAPSHOT_FILES: Readonly<Record<string, unknown>> = {
         "action": "mint(uint256)"
       },
       "policyHash": "0xede417434cd678f0cfb20c2f02794e579f3aa70ea2fd79c26c0dec6b42cda3e2",
-      "versionIsAuthoritative": false
+      "versionIsAuthoritative": false,
+      "agentId": "2109"
     }
   },
   "artifacts/evidence/20260818T125522Z/proof-manifest.json": {

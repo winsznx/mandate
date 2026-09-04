@@ -40,6 +40,8 @@ export interface AgentRouterOptions {
   readonly strategyStatus: "IMPLEMENTED" | "PENDING";
   readonly logger?: Logger;
   readonly proposeTimeoutMs?: number;
+  /** The ERC-8004 id this build is registered under, surfaced in the card. */
+  readonly agentId?: string;
 }
 
 export interface RouterResponse {
@@ -81,7 +83,12 @@ export function createAgentRouter(options: AgentRouterOptions): AgentRouter {
   const logger =
     options.logger ??
     createLogger({ level: config.logLevel, base: { agent: executor.slug, chainId: config.chainId } });
-  const card = buildAgentCard({ executor, publicUrl: config.publicUrl, strategyStatus });
+  const card = buildAgentCard({
+    executor,
+    publicUrl: config.publicUrl,
+    strategyStatus,
+    agentId: options.agentId,
+  });
   const skillIds = new Set(executor.skills.map((skill) => skill.id));
   const proposeTimeoutMs = options.proposeTimeoutMs ?? DEFAULT_PROPOSE_TIMEOUT_MS;
   const startedAt = Date.now();

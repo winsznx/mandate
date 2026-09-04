@@ -15,10 +15,20 @@
  * Usage:  node scripts/emit-agent-cards.mjs
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** slug -> ERC-8004 agent id, from the on-chain registration record. */
+let registrations = {};
+try {
+  registrations = JSON.parse(readFileSync(join(repoRoot, "artifacts", "registrations.json"), "utf8"));
+} catch {
+  // No registrations yet: cards emit without an agentId, which is the honest
+  // state for an agent that has not been minted.
+}
 
 /**
  * slug -> public host. All eight run on one Cloudflare Worker
@@ -42,6 +52,8 @@ for (const [slug, host] of Object.entries(AGENT_HOSTS)) {
   const agentDir = join(repoRoot, "agents", "reference", slug);
   const cardPath = join(repoRoot, "artifacts", "agents", `${slug}.json`);
 
+  const agentId = registrations[slug]?.agentId;
+
   execFileSync("pnpm", ["exec", "tsx", "src/main.ts"], {
     cwd: agentDir,
     stdio: ["ignore", "inherit", "inherit"],
@@ -49,6 +61,7 @@ for (const [slug, host] of Object.entries(AGENT_HOSTS)) {
       ...process.env,
       AGENT_PUBLIC_URL: host,
       MANDATE_EMIT_CARD: cardPath,
+      ...(agentId === undefined ? {} : { AGENT_ID: agentId }),
     },
   });
 

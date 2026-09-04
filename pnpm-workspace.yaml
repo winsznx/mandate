@@ -5,6 +5,7 @@ packages:
   - "reference/*"
   - "agents/reference/*"
   - "agents/gateway"
+  - "scripts"
 # esbuild compiles a native binary in its postinstall; tsx does not run
 # without it, so every script in this repo depends on this being true.
 allowBuilds:

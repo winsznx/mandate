@@ -63,6 +63,7 @@
       "driftMeasure": "basis points of total portfolio USD, supplied plus idle"
     },
     "policyHash": "0x445b6f7c5df2a3f50e5570d7a8d6008045a413d65e89303ea84c7f9d044584de",
-    "versionIsAuthoritative": false
+    "versionIsAuthoritative": false,
+    "agentId": "2107"
   }
 }

@@ -13,9 +13,41 @@
  * problems with different fixes for the developer who has to act on them.
  */
 import { cache } from "react";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const PROBE_TIMEOUT_MS = 5_000;
-const WELL_KNOWN_PATH = "/.well-known/agent-card.json";
+
+/**
+ * The reference-agent gateway. Requests to it are routed through the `AGENTS`
+ * service binding: a Worker cannot reach another Worker on the same account
+ * through its workers.dev hostname (Cloudflare error 1042), so a plain `fetch`
+ * to this origin fails from the deployed site while succeeding everywhere else.
+ */
+const AGENT_GATEWAY_HOST = "mandate-agents.timjosh507.workers.dev";
+
+interface Fetcher {
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+}
+
+/** `fetch`, but through the service binding when the target is the agent gateway. */
+function fetcherFor(targetUrl: URL): Fetcher {
+  if (targetUrl.host !== AGENT_GATEWAY_HOST) return { fetch: (i, n) => fetch(i, n) };
+  try {
+    const binding = (getCloudflareContext().env as Record<string, unknown>)["AGENTS"];
+    if (binding !== undefined && binding !== null && typeof (binding as Fetcher).fetch === "function") {
+      return binding as Fetcher;
+    }
+  } catch {
+    // Outside the Workers runtime (local dev, tests): fall back to plain fetch.
+  }
+  return { fetch: (i, n) => fetch(i, n) };
+}
+/*
+ * Resolved relative to the card's `url`, not the origin. An agent served at
+ * `https://host/yield-a` has its card at `https://host/yield-a/.well-known/...`,
+ * so a leading slash here would drop the path segment and probe the wrong place.
+ */
+const WELL_KNOWN_PATH = ".well-known/agent-card.json";
 
 export type EndpointOutcome =
   | "ANSWERED"
@@ -86,7 +118,7 @@ export const probeEndpoint = cache(async (url: string | undefined): Promise<Endp
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 
   try {
-    const response = await fetch(probed, {
+    const response = await fetcherFor(target).fetch(probed, {
       signal: controller.signal,
       redirect: "follow",
       headers: { accept: "application/json" },

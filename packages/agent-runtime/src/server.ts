@@ -21,6 +21,8 @@ export interface AgentServerOptions {
   readonly strategyStatus: "IMPLEMENTED" | "PENDING";
   readonly logger?: Logger;
   readonly proposeTimeoutMs?: number;
+  /** The ERC-8004 id this build is registered under, surfaced in the card. */
+  readonly agentId?: string;
 }
 
 export interface AgentServer {
@@ -93,7 +95,14 @@ async function emitCard(card: AgentCard, target: string): Promise<void> {
  */
 export async function startAgent(options: StartAgentOptions): Promise<AgentServer> {
   const config = readRuntimeConfig();
-  const agent = createAgentServer({ ...options, config });
+  const envAgentId = process.env["AGENT_ID"];
+  const agent = createAgentServer({
+    ...options,
+    config,
+    ...(options.agentId === undefined && envAgentId !== undefined && envAgentId !== ""
+      ? { agentId: envAgentId }
+      : {}),
+  });
 
   const emitTarget = process.env["MANDATE_EMIT_CARD"];
   if (emitTarget !== undefined && emitTarget !== "") {

@@ -54,6 +54,7 @@
       "action": "mint(uint256)"
     },
     "policyHash": "0x6ce45b76e5346266902f09be838b7cf8e6509f1007b1fd6a8a838fa137b0c79f",
-    "versionIsAuthoritative": false
+    "versionIsAuthoritative": false,
+    "agentId": "2108"
   }
 }

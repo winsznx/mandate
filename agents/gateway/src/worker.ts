@@ -15,8 +15,9 @@
  * The executor for each slug is the identical one its `node:http` entry point
  * builds — imported from the agent's own `./executor` export, not re-declared.
  */
-import { createFetchHandler, readRuntimeConfig } from "@mandate/agent-runtime";
+import { buildAgentCard, createFetchHandler, readRuntimeConfig } from "@mandate/agent-runtime";
 import type { AgentExecutor, AgentRuntimeConfig, FetchHandler } from "@mandate/agent-runtime";
+import registrations from "../../../artifacts/registrations.json" with { type: "json" };
 import { buildExecutor as gridA } from "@mandate/agent-grid-a/executor";
 import { buildExecutor as gridB } from "@mandate/agent-grid-b/executor";
 import { buildExecutor as healthFactorA } from "@mandate/agent-health-factor-a/executor";
@@ -27,6 +28,13 @@ import { buildExecutor as yieldA } from "@mandate/agent-yield-a/executor";
 import { buildExecutor as yieldB } from "@mandate/agent-yield-b/executor";
 
 type Builder = (config: AgentRuntimeConfig) => AgentExecutor;
+
+/** slug -> { agentId } for agents registered on the ERC-8004 identity registry. */
+const REGISTRATIONS = registrations as Record<string, { agentId?: string } | undefined>;
+
+function agentIdFor(slug: string): string | undefined {
+  return REGISTRATIONS[slug]?.agentId;
+}
 
 const BUILDERS: Readonly<Record<string, Builder>> = {
   "grid-a": gridA,
@@ -65,13 +73,26 @@ function handlerFor(slug: string, env: Env): FetchHandler | undefined {
     CHAIN_ID: env.CHAIN_ID,
   });
 
+  const agentId = agentIdFor(slug);
   const handler = createFetchHandler({
     executor: build(config),
     config,
     strategyStatus: "IMPLEMENTED",
+    ...(agentId === undefined ? {} : { agentId }),
   });
   handlers.set(slug, handler);
   return handler;
+}
+
+/** Build a config for one slug without a handler, for the card-only routes. */
+function configFor(slug: string, env: Env): AgentRuntimeConfig {
+  const origin = env.GATEWAY_ORIGIN ?? "http://localhost:8787";
+  return readRuntimeConfig({
+    AGENT_PUBLIC_URL: `${origin.replace(/\/$/, "")}/${slug}`,
+    RPC_URL: env.RPC_URL,
+    RPC_FALLBACK_URL: env.RPC_FALLBACK_URL,
+    CHAIN_ID: env.CHAIN_ID,
+  });
 }
 
 export default {
@@ -86,6 +107,26 @@ export default {
         service: "mandate-agent-gateway",
         agents: Object.keys(BUILDERS),
       });
+    }
+
+    // `/<slug>.json` serves the agent's card at a URL that ends in its slug, so
+    // an ERC-8004 registration can point at it and a resolver can bind the
+    // registration to exactly this card.
+    if (segments.length === 1 && slug.endsWith(".json")) {
+      const cardSlug = slug.slice(0, -".json".length);
+      const build = BUILDERS[cardSlug];
+      if (build === undefined) {
+        return Response.json({ error: `no agent '${cardSlug}'` }, { status: 404 });
+      }
+      const config = configFor(cardSlug, env);
+      const agentId = agentIdFor(cardSlug);
+      const card = buildAgentCard({
+        executor: build(config),
+        publicUrl: config.publicUrl,
+        strategyStatus: "IMPLEMENTED",
+        ...(agentId === undefined ? {} : { agentId }),
+      });
+      return Response.json(card);
     }
 
     const handler = handlerFor(slug, env);

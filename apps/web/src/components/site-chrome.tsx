@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { CHAIN_ID, NETWORK_NAME } from "../proof/config";
+import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
 
 const NAV = [
   { href: "/", label: "Marketplace" },
@@ -19,7 +19,10 @@ export function Masthead({ current }: { current?: string | undefined }) {
   return (
     <header className="masthead">
       <Link className="wordmark" href="/">
-        ✱ MANDATE
+        <span aria-hidden="true" className="wordmark__mark">
+          ✱
+        </span>
+        MANDATE
       </Link>
       <nav aria-label="Sections" className="masthead__nav">
         {NAV.map((item) => (
@@ -36,6 +39,9 @@ export function Masthead({ current }: { current?: string | undefined }) {
       <span className="masthead__meta">
         {NETWORK_NAME} · chain {CHAIN_ID}
       </span>
+      <Link className="masthead__cta" href={`/proof/${FEATURED_MANDATE_ID}`}>
+        Read the proof
+      </Link>
     </header>
   );
 }

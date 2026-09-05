@@ -26,11 +26,13 @@ import {
   AuthorityIRSchema,
   Bytes32Schema,
   EvidenceArtifactSchema,
+  StrategyTrialEvidenceSchema,
   TrialEvidenceSchema,
   TrialSpecSchema,
 } from "@mandate/domain/schemas";
 
 export const EVIDENCE_BUNDLE_SCHEMA_VERSION = "mandate.evidence-bundle/1" as const;
+export const STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION = "mandate.strategy-evidence-bundle/1" as const;
 export const MANDATE_DISCLOSURE_SCHEMA_VERSION = "mandate.mandate-disclosure/1" as const;
 
 export const EvidenceBundleSchema = z
@@ -65,6 +67,30 @@ export const EvidenceBundleSchema = z
   .strict();
 
 export type EvidenceBundle = z.infer<typeof EvidenceBundleSchema>;
+
+/**
+ * The strategy counterpart to `EvidenceBundleSchema`, kept as its own schema
+ * rather than a third member of that union.
+ *
+ * A strategy artifact commits to what a yield, grid or rebalancing model
+ * computes, none of the solvency quantities the health-factor reference block
+ * carries. Folding it into the health-factor bundle would let the verifier's
+ * health-factor replay try to read a health factor off a document that has
+ * none. So the two bundles are recognised separately and replayed separately,
+ * and `parseEvidenceDocument` reports which family it found. The shape mirrors
+ * the trial-runner's `assembleStrategyBundle` output exactly, and a round-trip
+ * test asserts the two stay in step.
+ */
+export const StrategyEvidenceBundleSchema = z
+  .object({
+    schemaVersion: z.literal(STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION),
+    artifact: StrategyTrialEvidenceSchema,
+    trialSpec: TrialSpecSchema,
+    testedAuthority: AuthorityIRSchema,
+  })
+  .strict();
+
+export type StrategyEvidenceBundle = z.infer<typeof StrategyEvidenceBundleSchema>;
 
 /** A transaction the disclosure claims demonstrates something. Everything about it is re-read from chain. */
 /**
@@ -163,11 +189,28 @@ export type MandateDisclosure = z.infer<typeof MandateDisclosureSchema>;
 
 export type EvidenceDocumentKind = "BUNDLE" | "ARTIFACT_ONLY";
 
-export interface ParsedEvidenceDocument {
-  kind: EvidenceDocumentKind;
-  bundle?: EvidenceBundle;
-  artifact: z.infer<typeof EvidenceArtifactSchema> | z.infer<typeof TrialEvidenceSchema>;
-}
+/**
+ * The result of interpreting an evidence document, tagged by the trial family
+ * it belongs to so a consumer replays it with the matching model.
+ *
+ * `HEALTH_FACTOR` covers both a full `mandate.evidence-bundle/1` and a bare
+ * legacy artifact. `STRATEGY` is always a full
+ * `mandate.strategy-evidence-bundle/1`; a bare strategy artifact is not
+ * recognised on its own, the same way a bare `mandate.trial-evidence/1` is not.
+ */
+export type ParsedEvidenceDocument =
+  | {
+      family: "HEALTH_FACTOR";
+      kind: EvidenceDocumentKind;
+      bundle?: EvidenceBundle;
+      artifact: z.infer<typeof EvidenceArtifactSchema> | z.infer<typeof TrialEvidenceSchema>;
+    }
+  | {
+      family: "STRATEGY";
+      kind: "BUNDLE";
+      bundle: StrategyEvidenceBundle;
+      artifact: StrategyEvidenceBundle["artifact"];
+    };
 
 /**
  * Interpret an evidence document whose hash has already been checked.
@@ -189,17 +232,31 @@ export function parseEvidenceDocument(document: unknown):
     if (!parsed.success) {
       return { ok: false, reason: `evidence bundle is malformed: ${formatIssues(parsed.error)}` };
     }
-    return { ok: true, value: { kind: "BUNDLE", bundle: parsed.data, artifact: parsed.data.artifact } };
+    return {
+      ok: true,
+      value: { family: "HEALTH_FACTOR", kind: "BUNDLE", bundle: parsed.data, artifact: parsed.data.artifact },
+    };
+  }
+
+  if (version === STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION) {
+    const parsed = StrategyEvidenceBundleSchema.safeParse(document);
+    if (!parsed.success) {
+      return { ok: false, reason: `strategy evidence bundle is malformed: ${formatIssues(parsed.error)}` };
+    }
+    return {
+      ok: true,
+      value: { family: "STRATEGY", kind: "BUNDLE", bundle: parsed.data, artifact: parsed.data.artifact },
+    };
   }
 
   const artifact = EvidenceArtifactSchema.safeParse(document);
   if (artifact.success) {
-    return { ok: true, value: { kind: "ARTIFACT_ONLY", artifact: artifact.data } };
+    return { ok: true, value: { family: "HEALTH_FACTOR", kind: "ARTIFACT_ONLY", artifact: artifact.data } };
   }
 
   return {
     ok: false,
-    reason: `evidence document is neither ${EVIDENCE_BUNDLE_SCHEMA_VERSION} nor a bare evidence artifact: ${formatIssues(artifact.error)}`,
+    reason: `evidence document is none of ${EVIDENCE_BUNDLE_SCHEMA_VERSION}, ${STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION}, or a bare evidence artifact: ${formatIssues(artifact.error)}`,
   };
 }
 

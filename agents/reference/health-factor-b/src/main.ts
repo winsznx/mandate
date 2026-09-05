@@ -1,12 +1,14 @@
 /**
- * Process entry point.
+ * Process entry point for local runs and the Docker image.
  *
- * Identical in shape to every other reference agent: the HTTP face, the agent
- * card, the JSON-RPC decode, logging and the healthcheck all come from
- * `@mandate/agent-runtime`. This agent contributes a strategy and nothing else,
- * and that strategy is a declared stub.
+ * The HTTP face, the agent card, the JSON-RPC decode, logging and the
+ * healthcheck all come from `@mandate/agent-runtime`. The executor is built in
+ * `executor.ts` so the Workers gateway can construct the same one.
  */
-import { startAgent } from "@mandate/agent-runtime";
-import { createStrategy } from "./strategy.js";
+import { readRuntimeConfig, startAgent } from "@mandate/agent-runtime";
+import { buildExecutor } from "./executor.js";
 
-await startAgent({ executor: createStrategy(), strategyStatus: "PENDING" });
+await startAgent({
+  strategyStatus: "IMPLEMENTED",
+  executor: buildExecutor(readRuntimeConfig()),
+});

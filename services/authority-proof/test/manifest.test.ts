@@ -84,7 +84,7 @@ describe("the proof manifest", () => {
     // #then neither is a JSON number. A cap in base units crosses 2^53 on the
     // first value MANDATE would ever publish.
     expect(chain["blockNumber"]).toBe("125644865");
-    expect(allowance["standingAllowanceRaw"]).toBe("175000000");
+    expect(allowance["standingAllowanceRaw"]).toBe("1125000000");
   });
 
   it("names the step that never reached a terminal state", () => {

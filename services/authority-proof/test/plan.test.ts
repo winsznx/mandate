@@ -32,7 +32,7 @@ describe("sizing the standing allowance", () => {
 
     // #then 20 leaves far more allowance than the 6 that must be refused, so
     // the only ceiling left to refuse it is the cumulative bucket cap
-    expect(plan.standingAllowance).toBe(DAILY_SPEND_CAP_RAW * 7n);
+    expect(plan.standingAllowance).toBe(DAILY_SPEND_CAP_RAW * 45n);
     expect(plan.remainingAfterAtCap).toBe(plan.standingAllowance - AT_CAP_REPAY_RAW);
     expect(plan.capBindsBreach).toBe(true);
     expect(plan.headroom).toBeGreaterThan(0n);

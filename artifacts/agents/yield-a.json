@@ -1,0 +1,60 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Cost-Aware Optimizer",
+  "description": "Moves idle stablecoin into the Venus Core-pool market paying the best rate, and only when that rate clears the cost of moving it. Concentrates without limit: where the best net rate is, the capital goes. Acts through vToken.mint(uint256), which takes an amount and no recipient. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
+  "url": "https://mandate-agents.timjosh507.workers.dev/yield-a",
+  "preferredTransport": "JSONRPC",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "optimise-yield",
+      "name": "Deploy idle capital at the best supported rate",
+      "description": "Reads the Venus Core-pool stablecoin markets, ranks the ones accepting supply by their annualised rate net of a cost buffer, and proposes a mint(uint256) that moves idle wallet capital into the best of them. Returns a proposed action; it never executes one.",
+      "tags": [
+        "venus",
+        "bnb-chain",
+        "yield",
+        "defi"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "x-mandate": {
+    "category": "YIELD",
+    "scaffold": "bnb-agent-studio",
+    "hosting": "self-hosted",
+    "referenceAgent": true,
+    "proposesOnly": true,
+    "strategyStatus": "IMPLEMENTED",
+    "policy": {
+      "policyId": "cost-aware-optimizer",
+      "minNetSupplyRateBps": 75,
+      "gasCostBufferBps": 25,
+      "blocksPerYear": 10000000,
+      "minDeploymentUsdMantissa": "10000000000000000000",
+      "maxVenueShareBps": null,
+      "amountToleranceBps": 50,
+      "rateSource": "vToken.supplyRatePerBlock",
+      "rateAnnualisation": "simple, blocksPerYear as published",
+      "action": "mint(uint256)"
+    },
+    "policyHash": "0x6ce45b76e5346266902f09be838b7cf8e6509f1007b1fd6a8a838fa137b0c79f",
+    "versionIsAuthoritative": false,
+    "agentId": "2108"
+  }
+}

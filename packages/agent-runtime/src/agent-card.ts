@@ -51,6 +51,15 @@ export interface MandateCardExtension {
   readonly policyHash: Hex;
   /** `version` above is self-reported and unbumped upstream. Bind trials to `agentVersionHash`. */
   readonly versionIsAuthoritative: false;
+  /**
+   * The ERC-8004 agent id this build is registered under, when it is.
+   *
+   * A convenience for finding the registration, not a fact in itself: the
+   * binding that counts is the on-chain registration pointing back at this
+   * card. Excluded from `agentCardHash` for the same reason `url` is — the
+   * identity an agent is minted under is not part of its behaviour.
+   */
+  readonly agentId?: string;
 }
 
 export interface AgentCard {
@@ -72,10 +81,12 @@ export interface BuildAgentCardOptions {
   /** Public base URL. JSON-RPC is served at the root, matching the Studio scaffold. */
   readonly publicUrl: string;
   readonly strategyStatus: "IMPLEMENTED" | "PENDING";
+  /** The ERC-8004 id this build is registered under, when it is. */
+  readonly agentId?: string | undefined;
 }
 
 export function buildAgentCard(options: BuildAgentCardOptions): AgentCard {
-  const { executor, publicUrl, strategyStatus } = options;
+  const { executor, publicUrl, strategyStatus, agentId } = options;
   return {
     protocolVersion: A2A_PROTOCOL_VERSION,
     name: executor.displayName,
@@ -101,6 +112,7 @@ export function buildAgentCard(options: BuildAgentCardOptions): AgentCard {
       policy: executor.policy,
       policyHash: canonicalHash(executor.policy),
       versionIsAuthoritative: false,
+      ...(agentId === undefined || agentId === "" ? {} : { agentId }),
     },
   };
 }
@@ -108,15 +120,23 @@ export function buildAgentCard(options: BuildAgentCardOptions): AgentCard {
 /**
  * `cardHash` as it enters the composite `agentVersionHash`.
  *
- * `url` is stripped because it moves whenever the agent is redeployed behind a
- * different hostname while the agent itself is unchanged. Everything that
- * describes behaviour — skills, descriptions, capabilities, the published
- * policy — stays in the preimage, so editing any of them supersedes the trial
- * that certified the previous build.
+ * `url` and `x-mandate.agentId` are stripped because both move without the
+ * agent's behaviour changing: `url` when it is redeployed behind a different
+ * hostname, `agentId` when it is registered or re-registered on the identity
+ * registry. Everything that describes behaviour — skills, descriptions,
+ * capabilities, the published policy — stays in the preimage, so editing any of
+ * them supersedes the trial that certified the previous build.
  */
 export function agentCardHash(card: AgentCard): Hex {
   const stable: Record<string, CanonicalValue> = { ...(card as unknown as Record<string, CanonicalValue>) };
   delete stable["url"];
+
+  const extension = stable["x-mandate"];
+  if (extension !== null && typeof extension === "object" && !Array.isArray(extension)) {
+    const { agentId: _omitted, ...rest } = extension as Record<string, CanonicalValue>;
+    stable["x-mandate"] = rest;
+  }
+
   return canonicalHash(stable);
 }
 

@@ -23,7 +23,7 @@ import type { CanonicalValue } from "@mandate/domain/canonical";
 import { deriveMandateId } from "@mandate/domain";
 import type { Address, Hex, PublicClient } from "viem";
 import { parseEvidenceDocument, parseMandateDisclosure } from "./bundle.js";
-import type { EvidenceBundle, MandateDisclosure } from "./bundle.js";
+import type { EvidenceBundle, MandateDisclosure, StrategyEvidenceBundle } from "./bundle.js";
 import type { ResolvedTarget } from "./config.js";
 import { checkEvidenceIntegrity } from "./evidence.js";
 import type { EvidenceIntegrityResult } from "./evidence.js";
@@ -39,6 +39,7 @@ import {
 import type { OnChainActivation, OnChainReceipt } from "./registry.js";
 import { replayEvaluation } from "./replay.js";
 import { replayRichEvidence } from "./replay-rich.js";
+import { replayStrategyEvidence } from "./strategy-replay.js";
 import { healthFactorModelRunner } from "./reference-binding.js";
 import type { ReplayResult } from "./replay.js";
 import { decideVerdict, fail, orderSteps, pass, skip } from "./steps.js";
@@ -137,6 +138,8 @@ interface EvidenceState {
   /** Either the flat form or the richer `mandate.trial-evidence/1`, whichever was published. */
   artifact?: EvidenceArtifact | TrialEvidence;
   bundle?: EvidenceBundle;
+  /** Set when the document is a `mandate.strategy-evidence-bundle/1`. Replayed on its own path, never by the health-factor steps. */
+  strategy?: StrategyEvidenceBundle;
   /** Set when the document could not be retrieved or read at all. */
   unavailable?: string;
   /** True once a hash mismatch has ruled the document out entirely. */
@@ -179,6 +182,21 @@ async function loadEvidence(receipt: OnChainReceipt, options: VerifyOptions): Pr
     // The bytes are authentic; they just do not describe a trial in a shape
     // this verifier understands. That is a disclosure gap, not a forgery.
     return { integrity, unavailable: parsed.reason, poisoned: false };
+  }
+
+  if (parsed.value.family === "STRATEGY") {
+    // Authentic bytes in a shape the verifier now recognises, but the
+    // health-factor steps read a health factor and a reference block a strategy
+    // artifact does not carry. Hold it on its own field for the strategy replay,
+    // and reuse `unavailable` so those steps stand down with the reason instead
+    // of reaching for fields that are not there.
+    return {
+      integrity,
+      strategy: parsed.value.bundle,
+      unavailable:
+        "the evidence is a strategy bundle, which the health-factor steps do not score (see the strategy note)",
+      poisoned: false,
+    };
   }
 
   return {
@@ -674,6 +692,12 @@ export async function verifyTrial(receiptId: Hex, options: VerifyOptions): Promi
       `The evidence URI serves a bare evidence artifact rather than a ${"mandate.evidence-bundle/1"} document, so the TrialSpec and the tested AuthorityIR were not disclosed and the authority steps could not run.`,
     );
   }
+  if (gathered.evidence.strategy !== undefined) {
+    const strategyReplay = replayStrategyEvidence(gathered.evidence.strategy.artifact);
+    notes.push(
+      `The evidence URI serves a mandate.strategy-evidence-bundle/1 document. The health-factor steps do not score it, since a strategy artifact carries none of the solvency quantities they read. Replaying its evaluator checks alone derives ${strategyReplay.derived}. That is informational only: no strategy trial is granted or gated on chain yet, so it does not move the verdict.`,
+    );
+  }
 
   notes.push(
     "A trial receipt certifies a tested envelope and grants nothing. The grant, session and execution steps belong to a mandate: run verify:mandate <mandateId>.",
@@ -747,6 +771,12 @@ export async function verifyMandate(mandateId: Hex, options: VerifyOptions): Pro
   if (gathered.evidence.bundle === undefined && gathered.evidence.artifact !== undefined) {
     notes.push(
       "The evidence URI serves a bare evidence artifact, so the tested AuthorityIR was not disclosed and the subset relation could not be recomputed.",
+    );
+  }
+  if (gathered.evidence.strategy !== undefined) {
+    const strategyReplay = replayStrategyEvidence(gathered.evidence.strategy.artifact);
+    notes.push(
+      `The evidence URI serves a mandate.strategy-evidence-bundle/1 document. The subset relation and the health-factor steps do not score it, since a strategy artifact carries none of the quantities they read. Replaying its evaluator checks alone derives ${strategyReplay.derived}. That is informational only: no strategy trial is granted or gated on chain yet, so it does not move the verdict.`,
     );
   }
 

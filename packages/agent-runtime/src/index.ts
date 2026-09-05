@@ -3,6 +3,8 @@ export * from "./chain.js";
 export * from "./config.js";
 export * from "./errors.js";
 export * from "./executor.js";
+export * from "./fetch-handler.js";
 export * from "./logging.js";
+export * from "./router.js";
 export * from "./server.js";
 export * from "./task.js";

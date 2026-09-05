@@ -6,7 +6,9 @@
   "exports": {
     ".": "./src/strategy.ts",
     "./policy": "./src/policy.ts",
-    "./venus": "./src/venus/index.ts"
+    "./venus": "./src/venus/index.ts",
+    "./test-fixtures": "./test/fixtures.ts",
+    "./executor": "./src/executor.ts"
   },
   "scripts": {
     "start": "tsx src/main.ts",

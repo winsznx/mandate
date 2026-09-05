@@ -27,13 +27,19 @@ import type {
   QualificationStage,
 } from "@mandate/domain";
 import type { Address, Hex } from "viem";
-import { IDENTITY_REGISTRY } from "../proof/config";
+import { CHAIN_ID, IDENTITY_REGISTRY } from "../proof/config";
 import type { Category } from "./categories";
 import { categoryByKey } from "./categories";
 import type { ActivationFact, IdentityFact, ReceiptFact } from "./chain-facts";
 import { readActivationFact, readIdentity, readReceiptFact } from "./chain-facts";
-import type { EndpointProbe } from "./endpoint";
-import { endpointAnswered, endpointRequiresAuth, probeEndpoint } from "./endpoint";
+import type { EndpointProbe, TaskProbe } from "./endpoint";
+import {
+  endpointAnswered,
+  endpointRequiresAuth,
+  probeCategoryTask,
+  probeEndpoint,
+  taskAccepted,
+} from "./endpoint";
 import type { PublishedAgentCard, PublishedRun } from "./inventory";
 import { loadAgentCards, loadPublishedRuns, runsForAgent } from "./inventory";
 
@@ -165,6 +171,8 @@ export interface AgentListing {
   identityRegistry: Address;
   identity: IdentityFact;
   endpoint: EndpointProbe;
+  /** Present when the endpoint answered and a task probe was attempted. */
+  taskProbe: TaskProbe | undefined;
   latestRun: PublishedRun | undefined;
   receipt: ReceiptFact | undefined;
   activation: ActivationFact | undefined;
@@ -203,6 +211,12 @@ export async function buildListing(
   const endpoint = await probeEndpoint(card.url);
   const candidateId = card.declaredAgentId ?? agentIdFromRuns(card, runs);
 
+  // Only worth asking a live agent to deliberate. A dead endpoint cannot accept
+  // a task, and probing every bulk-mint registration would be wasteful.
+  const taskProbe: TaskProbe | undefined = endpointAnswered(endpoint)
+    ? await probeCategoryTask(card.url, card.skills[0]?.id, CHAIN_ID)
+    : undefined;
+
   const identity: IdentityFact =
     candidateId === undefined
       ? { observed: "ABSENT", registrationUri: undefined, owner: undefined, reason: undefined }
@@ -236,10 +250,11 @@ export async function buildListing(
       endpointAnswered: endpointAnswered(endpoint),
       endpointRequiresAuth: endpointRequiresAuth(endpoint),
       declaresCategory: true,
-      // Direct evidence only: a trial handed this agent a task in its category
-      // and the agent answered. An endpoint that merely serves a card has not
-      // shown that.
-      acceptsCategoryTask: latestRun !== undefined,
+      // Direct evidence the running agent accepts the shape of task its
+      // category defines: either a MANDATE trial handed it one, or it answered
+      // a task probe with a well-formed deliberation just now. An endpoint that
+      // only serves a card has shown neither.
+      acceptsCategoryTask: latestRun !== undefined || (taskProbe !== undefined && taskAccepted(taskProbe)),
       hasCurrentPassingTrial: trialIsCurrent,
       hasMandateNativeExecution: mandateNative,
       publisherIsBulkMinter: false,
@@ -264,6 +279,7 @@ export async function buildListing(
     identityRegistry: IDENTITY_REGISTRY,
     identity,
     endpoint,
+    taskProbe,
     latestRun,
     receipt,
     activation,
@@ -274,7 +290,7 @@ export async function buildListing(
     clampReason: shown.clamped
       ? clampReason(evidenceProvenance, shown.provenance, qualification.stage)
       : undefined,
-    proved: provedLines({ card, identity, registrationNamesThisCard, latestRun, receipt, activation, mandateNative, trialIsCurrent }),
+    proved: provedLines({ card, identity, registrationNamesThisCard, taskProbe, latestRun, receipt, activation, mandateNative, trialIsCurrent }),
     outstanding: qualification.blockedBy.map(disqualificationWording),
     chainUnreadable:
       identity.observed === "UNREADABLE" ||
@@ -316,6 +332,7 @@ function provedLines(input: {
   card: PublishedAgentCard;
   identity: IdentityFact;
   registrationNamesThisCard: boolean;
+  taskProbe: TaskProbe | undefined;
   latestRun: PublishedRun | undefined;
   receipt: ReceiptFact | undefined;
   activation: ActivationFact | undefined;
@@ -327,6 +344,12 @@ function provedLines(input: {
   if (input.registrationNamesThisCard && input.identity.registrationUri !== undefined) {
     lines.push(
       `The ERC-8004 identity registry resolves this agent to the card at ${input.identity.registrationUri}, so the card is a public commitment rather than a file in a repository.`,
+    );
+  }
+
+  if (input.taskProbe?.outcome === "ACCEPTED") {
+    lines.push(
+      `Handed a live task in its declared skill just now, the agent returned a well-formed deliberation (${input.taskProbe.decision}), so it accepts the shape of task this category defines.`,
     );
   }
 

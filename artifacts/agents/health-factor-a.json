@@ -2,7 +2,7 @@
   "protocolVersion": "0.3.0",
   "name": "Conservative Guardian",
   "description": "Defends a Venus Core-pool borrow position on BNB Smart Chain. Intervenes when the liquidation-threshold-weighted health factor falls below 1.30 and proposes a repayBorrow that restores it to 1.35. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
-  "url": "https://mandate-health-factor-a.up.railway.app",
+  "url": "https://mandate-agents.timjosh507.workers.dev/health-factor-a",
   "preferredTransport": "JSONRPC",
   "version": "1.0.0",
   "capabilities": {
@@ -52,6 +52,7 @@
       "action": "repayBorrow(uint256)"
     },
     "policyHash": "0x9605052df8b358d45b5f235902aa09a93e9d713970730b13fbb1ddbcceb251c3",
-    "versionIsAuthoritative": false
+    "versionIsAuthoritative": false,
+    "agentId": "1842"
   }
 }

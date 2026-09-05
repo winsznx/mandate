@@ -1,17 +1,14 @@
 /**
- * Process entry point.
+ * Process entry point for local runs and the Docker image.
  *
- * Identical in shape to every other reference agent: the HTTP face, the agent
- * card, the JSON-RPC decode, logging and the healthcheck all come from
- * `@mandate/agent-runtime`. This agent contributes a ladder and nothing else,
- * because the deliberation is its sibling's.
+ * The HTTP face, the agent card, the JSON-RPC decode, logging and the
+ * healthcheck all come from `@mandate/agent-runtime`. The executor is built in
+ * `executor.ts` so the Workers gateway can construct the same one.
  */
-import { createChainClient, readRuntimeConfig, startAgent } from "@mandate/agent-runtime";
-import { createLiveStrategy } from "./strategy.js";
-
-const config = readRuntimeConfig();
+import { readRuntimeConfig, startAgent } from "@mandate/agent-runtime";
+import { buildExecutor } from "./executor.js";
 
 await startAgent({
   strategyStatus: "IMPLEMENTED",
-  executor: createLiveStrategy(createChainClient(config), config.chainId),
+  executor: buildExecutor(readRuntimeConfig()),
 });

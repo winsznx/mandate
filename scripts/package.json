@@ -1,0 +1,20 @@
+{
+  "name": "@mandate/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Operational scripts: agent card emission, ERC-8004 registration, published snapshot.",
+  "scripts": {
+    "emit:cards": "node emit-agent-cards.mjs",
+    "emit:snapshot": "node emit-published-snapshot.mjs",
+    "register:agents": "node --import tsx register-agents.ts"
+  },
+  "dependencies": {
+    "@mandate/domain": "workspace:*",
+    "viem": "2.55.17"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12",
+    "typescript": "7.0.2"
+  }
+}

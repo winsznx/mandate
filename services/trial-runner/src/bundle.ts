@@ -30,6 +30,7 @@ import {
   AuthorityIRSchema,
   EvidenceArtifactSchema,
   EVIDENCE_ARTIFACT_SCHEMA_VERSION,
+  StrategyTrialEvidenceSchema,
   TrialEvidenceSchema,
   TrialSpecSchema,
   canonicalHash,
@@ -40,6 +41,7 @@ import type {
   EvidenceArtifact,
   EvidenceProvenance,
   RawProtocolObservation,
+  StrategyTrialEvidence,
   TrialEvidence,
   TrialSpec,
 } from "@mandate/domain";
@@ -58,6 +60,42 @@ export const EvidenceBundleSchema = z
   .strict();
 
 export type EvidenceBundle = z.infer<typeof EvidenceBundleSchema>;
+
+export const STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION =
+  "mandate.strategy-evidence-bundle/1" as const;
+
+/**
+ * The bundle a strategy trial's receipt commits to.
+ *
+ * A separate document from `mandate.evidence-bundle/1` for the same reason
+ * `StrategyTrialEvidence` is separate from `TrialEvidence`: the artifact it
+ * carries is a genuinely different shape, not a richer or poorer projection of
+ * the same one. Folding it into the health-factor bundle's `artifact` union
+ * would push the strategy schema through the verifier's replay layer, which
+ * reads a health-factor artifact's `environment.forkBlock`, reference block and
+ * check trace directly; the union is what that layer dispatches on, and a third
+ * member it cannot yet interpret would make a health-factor verification
+ * depend on strategy code.
+ *
+ * The envelope is otherwise identical: the frozen spec and the tested authority
+ * are carried in full so a verifier can re-run the subset comparator, and the
+ * receipt's `evidenceHash` is the canonical hash of this whole document rather
+ * than of the artifact alone.
+ *
+ * The verifier parses this version and replays it on its own path, apart from
+ * the health-factor steps. A round-trip test in the verifier package pins these
+ * two assemblers against its reader, so the shapes cannot drift out of step.
+ */
+export const StrategyEvidenceBundleSchema = z
+  .object({
+    schemaVersion: z.literal(STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION),
+    artifact: StrategyTrialEvidenceSchema,
+    trialSpec: TrialSpecSchema,
+    testedAuthority: AuthorityIRSchema,
+  })
+  .strict();
+
+export type StrategyEvidenceBundle = z.infer<typeof StrategyEvidenceBundleSchema>;
 
 export class BundleAssemblyError extends Error {
   constructor(message: string) {
@@ -298,6 +336,49 @@ export function assembleBundle(
   if (!parsed.success) {
     throw new BundleAssemblyError(
       `the assembled bundle is not valid: ${JSON.stringify(parsed.error.issues.slice(0, 5))}`,
+    );
+  }
+
+  return {
+    bundle: parsed.data,
+    bundleHash: canonicalHash(parsed.data as unknown as CanonicalValue),
+  };
+}
+
+export interface AssembledStrategyBundle {
+  readonly bundle: StrategyEvidenceBundle;
+  /** What the receipt's `evidenceHash` must be. Over the bundle, never the bare artifact. */
+  readonly bundleHash: Hex;
+}
+
+/**
+ * Bundle a strategy artifact with the documents a receipt commits to.
+ *
+ * The health-factor assembler's twin, kept separate rather than shared: the two
+ * validate against different schemas and the codebase carries the strategy path
+ * as its own assembly throughout. A shared helper would have to be generic over
+ * the artifact schema and would entangle the health-factor bundle, whose mirror
+ * against the verifier's schema is load-bearing.
+ */
+export function assembleStrategyBundle(
+  evidence: StrategyTrialEvidence,
+  evidenceHash: Hex,
+  trialSpec: TrialSpec,
+): AssembledStrategyBundle {
+  const testedAuthority: AuthorityIR = trialSpec.authority;
+  void evidenceHash;
+
+  const document: CanonicalValue = {
+    schemaVersion: STRATEGY_EVIDENCE_BUNDLE_SCHEMA_VERSION,
+    artifact: evidence as unknown as CanonicalValue,
+    trialSpec: trialSpec as unknown as CanonicalValue,
+    testedAuthority: testedAuthority as unknown as CanonicalValue,
+  };
+
+  const parsed = StrategyEvidenceBundleSchema.safeParse(document);
+  if (!parsed.success) {
+    throw new BundleAssemblyError(
+      `the assembled strategy bundle is not valid: ${JSON.stringify(parsed.error.issues.slice(0, 5))}`,
     );
   }
 

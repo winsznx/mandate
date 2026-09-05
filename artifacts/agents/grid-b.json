@@ -1,0 +1,61 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Wide Grid",
+  "description": "Runs a 100 bps grid ladder four rungs deep on a Curve-style stableswap pool, ignoring the small dislocations its sibling trades and holding a much smaller inventory swing. Acts through exchange(int128,int128,uint256,uint256), which takes two coin indices, an amount and a minimum output, and no recipient. Reference agent built from the BNB Agent Studio scaffold and self-hosted by the MANDATE team.",
+  "url": "https://mandate-agents.timjosh507.workers.dev/grid-b",
+  "preferredTransport": "JSONRPC",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "run-grid",
+      "name": "Advance a grid ladder by one rung",
+      "description": "Prices a Curve-style stableswap pool, locates it on a ladder centred on the pool's own fair rate, and proposes a single exchange(int128,int128,uint256,uint256) for one tranche when the account's inventory is a whole rung away from the ladder's target. Returns a proposed action; it never executes one.",
+      "tags": [
+        "stableswap",
+        "bnb-chain",
+        "grid",
+        "defi"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "x-mandate": {
+    "category": "GRID",
+    "scaffold": "bnb-agent-studio",
+    "hosting": "self-hosted",
+    "referenceAgent": true,
+    "proposesOnly": true,
+    "strategyStatus": "IMPLEMENTED",
+    "policy": {
+      "policyId": "wide-grid",
+      "spacingBps": 100,
+      "levels": 4,
+      "inventoryStepBps": 500,
+      "trancheRawUnits": "1000000000000000000",
+      "maxSlippageBps": 50,
+      "probeSizeRawUnits": "1000000000000000000",
+      "amountToleranceBps": 50,
+      "priceSource": "pool.get_dy at the published probe size",
+      "ladderCentre": "stored_rates ratio",
+      "action": "exchange(int128,int128,uint256,uint256)"
+    },
+    "policyHash": "0x584233d3fd76b7d45d6c09fe9654a4c4230ded5e1144c181b7fc602adce91f5b",
+    "versionIsAuthoritative": false,
+    "agentId": "2104"
+  }
+}

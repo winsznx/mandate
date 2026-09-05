@@ -17,12 +17,12 @@
     "deployedBytecodeSize": 9021
   },
   "commit": {
-    "sha": "2a84320231fcaa62188713bb84563a2ac5d4d85d",
-    "dirty": true
+    "sha": "ea7a3a3fca1bafb51beb7335ecf95963fd157e2b",
+    "dirty": false
   },
   "verification": {
     "verifier": "sourcify",
-    "status": "NOT_VERIFIED",
-    "checkedAt": "2026-08-19T00:01:24.165Z"
+    "status": "VERIFIED",
+    "checkedAt": "2026-09-03T21:10:37.073Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "mandate.claim-ledger/1",
-  "generatedAt": "2026-08-18",
+  "generatedAt": "2026-09-04",
   "network": {
     "chainId": 97,
     "name": "BSC Testnet"
@@ -21,13 +21,13 @@
     "receiptRegistry": "0x0791af52629206b5434a6865e9e1536a493854ca",
     "identityRegistry": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
     "agentId": 1842,
-    "receiptId": "0x982f8c2e409876df73e897089f09875778aac17ec51d8b651a4908c6c2a1ba16",
-    "mandateId": "0xf3a9b4d09741817fe07c58c98abe6e74f680acf1ef8a099ee74e7b6c6ece9cda",
+    "receiptId": "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76",
+    "mandateId": "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b",
     "supersededRegistry": {
       "address": "0x4c2b4d81a0b5ffb9b13f8c6b22fbbdc9d69da299",
       "reason": "superseded by the lifecycle-event redeploy. Its receipts are abandoned rather than migrated, because a receipt is a commitment and moving one would defeat the point of making it."
     },
-    "otherReceiptsInRegistry": "Three receipts exist. Two come from superseded or crashed runs and are published with reachable evidence rather than left as unverifiable commitments. One of those has no mandate because its run died between publishing the receipt and activating."
+    "otherReceiptsInRegistry": "Five receipts exist. Three come from superseded, crashed or unregistered runs and are published with reachable evidence rather than left as unverifiable commitments. This run (20260904T155705Z) supersedes the 2026-08-19 featured mandate as the current one: the earlier run did not expire or fail, its 7-day freshness window simply closed. Its receipt and mandate remain on chain and independently verifiable; they are just no longer what this deployment features. An intermediate run on 2026-09-04 published under agent id 0 (unregistered) because the identity was not yet bound to a card at the time; it is disclosed rather than hidden and has no mandate, because the operator re-ran with the correct agent id rather than granting a session against an unregistered identity."
   },
   "claims": [
     {
@@ -57,7 +57,7 @@
       "evidence": [
         {
           "type": "tx",
-          "value": "0xd6bf4b8f143bbb4cab886ee35e1048f071365d974e4215d3c655f12c351a9bd0"
+          "value": "0x49455881216a503f509f123d91b94f099fd11ecbf2b94cb909f5f9c12227775a"
         },
         {
           "type": "verifier-step",
@@ -99,7 +99,7 @@
         },
         {
           "type": "tx",
-          "value": "0x41ffa2074112f17de22c17e820fc7d448a3e561b23faa6e4ef1b22100d4533d8"
+          "value": "0xa929284b16cc0605eeb0fb4fe1cf29c0deda266421a999ac72d97d0d54eff905"
         }
       ],
       "limitations": [
@@ -114,7 +114,7 @@
       "evidence": [
         {
           "type": "tx",
-          "value": "0x55025a1f99122b979359274b3c41311e1892299f5af1c89d2e1dffdee4324c94"
+          "value": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4"
         },
         {
           "type": "verifier-step",
@@ -133,7 +133,7 @@
       "evidence": [
         {
           "type": "account-state",
-          "value": "at the attempt: cap 25000000, spent 20000000, allowance 155000000 \u2014 the allowance is ruled out as the binding constraint"
+          "value": "at the attempt: cap 25000000, spent 20000000, allowance 1105000000 \u2014 the allowance is ruled out as the binding constraint"
         },
         {
           "type": "validator-error",
@@ -190,7 +190,7 @@
       "evidence": [
         {
           "type": "tx",
-          "value": "0x0afc93b69a08214d7cb656e38e0863b0eac402c775204b3fb059ae2a2111ae7c"
+          "value": "0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b"
         },
         {
           "type": "account-state",
@@ -393,7 +393,7 @@
         },
         {
           "type": "observation",
-          "value": "the spend-cap intent carries allowanceAtAttemptRaw 155000000 against amountRaw 6000000, ruling out an exhausted approval"
+          "value": "the spend-cap intent carries allowanceAtAttemptRaw 1105000000 against amountRaw 6000000, ruling out an exhausted approval"
         }
       ],
       "limitations": [

@@ -152,42 +152,62 @@ describe.skipIf(!online)("forking the real chain", () => {
 
   it(
     "refuses a pin the RPC has pruned rather than silently moving it",
-    async () => {
-      // #given a block far outside the public RPC's retention window
-      const pruned = (head as bigint) - 3_000_000n;
+    async (ctx) => {
+      // #given the earliest possible block: pruned on any RPC that is not a
+      // full archive from genesis. A fixed offset from head (this test used to
+      // subtract 3,000,000) ages badly — public retention windows lengthen
+      // over time with no notice, and the offset that was pruned in August
+      // silently became servable in September. Genesis is the one point that
+      // does not drift.
+      const genesis = 1n;
 
       // #when a fork is requested with no fallback permitted
-      const attempt = startFork({ rpcUrl: RPC, chainId: CHAIN_ID, blockNumber: pruned });
+      const attempt = startFork({ rpcUrl: RPC, chainId: CHAIN_ID, blockNumber: genesis });
 
-      // #then it fails as a queue-pausing infrastructure error. PRD §82.4 stops
-      // the queue rather than substituting state, and this is the code path
-      // that has to make that impossible to skip.
-      await expect(attempt).rejects.toThrow(TrialInfrastructureError);
-      await expect(attempt).rejects.toMatchObject({ kind: "FORK_STATE_UNAVAILABLE" });
+      // #then it fails as a queue-pausing infrastructure error, UNLESS this
+      // RPC genuinely serves full archive back to genesis — a real, different
+      // capability this test cannot assume away, and not the thing it exists
+      // to check. PRD §82.4 stops the queue rather than substituting state,
+      // and this is the code path that has to make that impossible to skip.
+      try {
+        const fork = await attempt;
+        await fork.stop();
+        ctx.skip(`${RPC} serves genesis as archive; there is no pruned block on this endpoint to refuse`);
+      } catch (error) {
+        expect(error).toBeInstanceOf(TrialInfrastructureError);
+        expect(error).toMatchObject({ kind: "FORK_STATE_UNAVAILABLE" });
+      }
     },
     TIMEOUT_MS,
   );
 
   it(
     "degrades to the head honestly when the caller permits it",
-    async () => {
-      // #given the same pruned block, with fallback allowed
-      const pruned = (head as bigint) - 3_000_000n;
+    async (ctx) => {
+      // #given the same genesis-depth block, with fallback allowed
+      const genesis = 1n;
       const fork = track(
         await startFork({
           rpcUrl: RPC,
           chainId: CHAIN_ID,
-          blockNumber: pruned,
+          blockNumber: genesis,
           allowHeadFallback: true,
         }),
       );
+
+      if (fork.rpcSourceClass === "archive") {
+        // Same real capability as above: nothing to degrade when the RPC can
+        // actually serve the requested block.
+        ctx.skip(`${RPC} serves genesis as archive; there is no degradation to observe`);
+        return;
+      }
 
       // #then the fork exists, sits on real state near the head, and the
       // artifact will carry both the class and the reason. Nothing was mocked:
       // the state on this fork is the chain's, it is simply not the block the
       // scenario asked for.
       expect(fork.rpcSourceClass).toBe("live");
-      expect(fork.blockNumber).toBeGreaterThan(pruned);
+      expect(fork.blockNumber).toBeGreaterThan(genesis);
       expect(fork.degradedReason).toContain("pruned");
       expect(fork.degradedReason).toContain("not reproducible");
       await cleanup();

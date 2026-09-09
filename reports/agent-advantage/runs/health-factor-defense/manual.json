@@ -1,0 +1,39 @@
+{
+  "taskId": "health-factor-defense",
+  "mode": "manual",
+  "operator": "human_reference_benchmark",
+  "startedAt": 1788537425000,
+  "endedAt": 1788538545000,
+  "elapsedMs": 1120000,
+  "transactions": [
+    {
+      "step": "approve-token",
+      "gasUsed": 45000,
+      "costTbnb": 0.00045
+    },
+    {
+      "step": "manual-repayBorrow",
+      "gasUsed": 135000,
+      "costTbnb": 0.00135
+    }
+  ],
+  "taskInput": {
+    "protocol": "Venus",
+    "market": "vUSDT",
+    "initialHealthFactor": 1.08,
+    "targetHealthFactor": 1.50
+  },
+  "taskOutput": {
+    "detectionDelayMs": 300000,
+    "uiNavigationMs": 180000,
+    "mathCalculationMs": 240000,
+    "approvalExecutionMs": 60000,
+    "repaymentExecutionMs": 340000,
+    "repaidUsdt": 20
+  },
+  "successCriteria": {
+    "healthFactorRestored": true,
+    "liquidationAvoided": false
+  },
+  "result": "PASS_WITH_HIGH_LIQUIDATION_RISK"
+}

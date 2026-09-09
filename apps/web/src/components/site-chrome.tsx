@@ -3,22 +3,12 @@ import type { ReactNode } from "react";
 import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
 
 const NAV = [
-  { href: "/", label: "Marketplace" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/mandates", label: "My Mandates" },
   { href: "/compare", label: "Compare" },
-  { href: "/mandates", label: "Mandates" },
   { href: "/developers", label: "Developers" },
-  { href: "/reports/agent-advantage", label: "TermiX Report" },
-  { href: "/methodology", label: "Methodology" },
-  { href: "/status", label: "Status" },
 ] as const;
 
-/**
- * The same header on every page, with the network stated on every page.
- *
- * The chain is in the masthead rather than in a footnote because it changes
- * what every number below it means. A reader who scrolls into a figure without
- * having seen "BSC Testnet" has been allowed to assume the wrong thing.
- */
 export function Masthead({ current }: { current?: string | undefined }) {
   return (
     <header className="masthead">
@@ -31,7 +21,7 @@ export function Masthead({ current }: { current?: string | undefined }) {
       <nav aria-label="Sections" className="masthead__nav">
         {NAV.map((item) => (
           <Link
-            aria-current={item.href === current ? "page" : undefined}
+            aria-current={item.href === current || (item.href === "/marketplace" && current === "/") ? "page" : undefined}
             className="masthead__link"
             href={item.href}
             key={item.href}
@@ -40,12 +30,14 @@ export function Masthead({ current }: { current?: string | undefined }) {
           </Link>
         ))}
       </nav>
-      <span className="masthead__meta">
-        {NETWORK_NAME} · chain {CHAIN_ID}
-      </span>
-      <Link className="masthead__cta" href={`/proof/${FEATURED_MANDATE_ID}`}>
-        Read the proof
-      </Link>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <span className="masthead__meta" style={{ background: "rgba(59, 130, 246, 0.12)", padding: "0.25rem 0.5rem", borderRadius: "4px", color: "#60a5fa" }}>
+          {NETWORK_NAME} (97)
+        </span>
+        <Link className="masthead__cta" href="/activate/health-factor-a">
+          Connect Wallet
+        </Link>
+      </div>
     </header>
   );
 }
@@ -53,24 +45,32 @@ export function Masthead({ current }: { current?: string | undefined }) {
 export function SiteFooter({ children }: { children?: ReactNode }) {
   return (
     <footer className="site-footer">
-      <div className="site-footer__row">
+      <div className="site-footer__row" style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+        <Link className="masthead__link" href="/demo">
+          Guided Demo Mode
+        </Link>
+        <Link className="masthead__link" href="/reports/agent-advantage">
+          TermiX Agent Advantage Report
+        </Link>
+        <Link className="masthead__link" href={`/proof/${FEATURED_MANDATE_ID}`}>
+          Proof Verification
+        </Link>
         <Link className="masthead__link" href="/methodology">
-          What the rungs mean
+          Methodology & Provenance
         </Link>
         <Link className="masthead__link" href="/status">
-          System status
+          System Status
         </Link>
       </div>
       {children}
       <p className="micro spaced">
         Everything on this site is {NETWORK_NAME}, chain {CHAIN_ID}. No mainnet claim is made anywhere. No
-        wallet is required to read any page, and nothing here asks you to sign.
+        wallet is required to browse, and no simulated transactions are presented as real.
       </p>
     </footer>
   );
 }
 
-/** A page shell. Every route uses it so the landmarks and the skip target stay identical. */
 export function Page({ current, children }: { current?: string | undefined; children: ReactNode }) {
   return (
     <div className="page">

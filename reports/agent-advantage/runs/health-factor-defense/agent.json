@@ -1,0 +1,36 @@
+{
+  "taskId": "health-factor-defense",
+  "mode": "agent",
+  "agentSlug": "health-factor-a",
+  "startedAt": 1788537425000,
+  "endedAt": 1788537437000,
+  "elapsedMs": 12000,
+  "transactions": [
+    {
+      "step": "execute-repay",
+      "target": "0xb7526572ffe56ab9d7489838bf2e18e3323b441a",
+      "selector": "0x0e752702",
+      "txHash": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4",
+      "gasUsed": 105420,
+      "gasPriceWei": "10000000000",
+      "costTbnb": 0.0010542
+    }
+  ],
+  "taskInput": {
+    "protocol": "Venus",
+    "market": "vUSDT",
+    "initialHealthFactor": 1.08,
+    "targetHealthFactor": 1.50
+  },
+  "taskOutput": {
+    "repaidUsdt": 20,
+    "finalHealthFactor": 1.50,
+    "decision": "PROPOSE"
+  },
+  "successCriteria": {
+    "healthFactorRestored": true,
+    "liquidationAvoided": true,
+    "authorityBounded": true
+  },
+  "result": "PASS"
+}

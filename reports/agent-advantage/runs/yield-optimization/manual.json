@@ -1,0 +1,27 @@
+{
+  "taskId": "yield-optimization",
+  "mode": "manual",
+  "operator": "human_reference_benchmark",
+  "startedAt": 1788537425000,
+  "endedAt": 1788537875000,
+  "elapsedMs": 450000,
+  "transactions": [
+    {
+      "step": "manual-vBNB-mint",
+      "costTbnb": 0.0015
+    }
+  ],
+  "taskInput": {
+    "protocol": "Venus",
+    "market": "vBNB",
+    "currentApy": 4.12
+  },
+  "taskOutput": {
+    "evaluationTimeMs": 300000,
+    "executionTimeMs": 150000
+  },
+  "successCriteria": {
+    "yieldEvaluated": true
+  },
+  "result": "PASS"
+}

@@ -1,0 +1,30 @@
+{
+  "taskId": "yield-optimization",
+  "mode": "agent",
+  "agentSlug": "yield-a",
+  "startedAt": 1788537425000,
+  "endedAt": 1788537429000,
+  "elapsedMs": 4000,
+  "transactions": [
+    {
+      "step": "vBNB-mint",
+      "target": "0x2e44e12c65684d07d73066365f6be1ed1bab37d2",
+      "selector": "0xa0712d68",
+      "costTbnb": 0.0006
+    }
+  ],
+  "taskInput": {
+    "protocol": "Venus",
+    "market": "vBNB",
+    "currentApy": 4.12
+  },
+  "taskOutput": {
+    "decision": "PROPOSE",
+    "proposedAction": "mint(uint256)"
+  },
+  "successCriteria": {
+    "yieldEvaluated": true,
+    "authorityBounded": true
+  },
+  "result": "PASS"
+}

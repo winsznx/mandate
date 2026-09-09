@@ -1,0 +1,29 @@
+{
+  "taskId": "collateral-rebalancing",
+  "mode": "agent",
+  "agentSlug": "rebalancing-a",
+  "startedAt": 1788537425000,
+  "endedAt": 1788537433000,
+  "elapsedMs": 8000,
+  "transactions": [
+    {
+      "step": "topup-underweight-leg",
+      "target": "0x2e44e12c65684d07d73066365f6be1ed1bab37d2",
+      "selector": "0xa0712d68",
+      "costTbnb": 0.0012
+    }
+  ],
+  "taskInput": {
+    "targetBand": 0.05,
+    "currentDrift": 0.075
+  },
+  "taskOutput": {
+    "decision": "PROPOSE",
+    "proposedAction": "mint(uint256)"
+  },
+  "successCriteria": {
+    "rebalanceEvaluated": true,
+    "authorityBounded": true
+  },
+  "result": "PASS"
+}

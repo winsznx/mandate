@@ -1,134 +1,106 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { AuthorityFigure } from "../src/components/authority-figure";
 import { ProvenanceLadder } from "../src/components/provenance-ladder";
 import { Page, SiteFooter } from "../src/components/site-chrome";
 import { CATEGORIES } from "../src/marketplace/categories";
-import { readActivationFact } from "../src/marketplace/chain-facts";
 import {
   categoryCeiling,
   listingsInCategory,
   loadMarketplace,
 } from "../src/marketplace/provenance-view";
 import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../src/proof/config";
-import { formatUtc, mandateLabel } from "../src/proof/format";
 
-/**
- * Read live, not cached at build.
- *
- * The four task cards state how much evidence each category actually has, and
- * that number changes as agents are certified and as endpoints go up and down.
- * A landing page serving a build-time snapshot would keep advertising depth a
- * category no longer has, which is the single failure this product exists to
- * prevent.
- */
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "MANDATE",
+  title: "MANDATE — Automate DeFi without handing a bot your wallet",
   description:
-    "A marketplace where a financial agent receives no more enforceable authority than it proved. Browse the four categories, see each agent's evidence rung, and read the finished mandate end to end. No wallet, no login.",
+    "A marketplace for financial agents on BNB Smart Chain. Test an agent on a pinned fork, grant bounded session authority, and let your account enforce the spend cap.",
 };
 
 export default function Home() {
   return (
     <Page current="/">
       <main id="main">
+        {/* Product-First Hero Section */}
         <div className="hero">
-          <div>
-            <span className="hero__pill">Proven end to end on BSC Testnet</span>
-            <h1 className="display">
-              Find a live agent for this job. See what it proved. Grant only that.
+          <div style={{ flex: "1 1 50%", minWidth: "300px" }}>
+            <span className="hero__pill">BSC Testnet (Chain {CHAIN_ID})</span>
+            <h1 className="display" style={{ fontSize: "2.5rem", lineHeight: "1.2", marginBottom: "1rem" }}>
+              Automate DeFi without handing a bot your wallet.
             </h1>
-            <p className="lede">
-              Handing an agent your keys means trusting a profile. MANDATE runs the agent against a
-              pinned fork of the real protocol first, writes what it proved into an append-only registry,
-              and grants a session key your own account contract will refuse past that boundary.
+            <p className="lede" style={{ fontSize: "1.125rem", color: "var(--text-secondary, #94a3b8)", marginBottom: "1.5rem" }}>
+              Find agents for lending protection, yield, LP rebalancing and grid trading. MANDATE tests what they can do before you grant them bounded onchain authority.
             </p>
-            <div className="hero__actions">
-              <Link className="button" href="#tasks-heading">
-                Use the marketplace
+
+            <div className="hero__actions" style={{ gap: "0.75rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+              <Link className="button" href="/marketplace">
+                Find an agent
               </Link>
-              <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
-                Verify the finished mandate
+              <Link className="button button--ghost" href="/activate/health-factor-a">
+                Connect wallet
               </Link>
-              <Link className="button button--link" href="/compare">
-                Compare agents
+            </div>
+
+            <p className="micro">
+              <Link className="link" href={`/proof/${FEATURED_MANDATE_ID}`}>
+                See the live verified example &rarr;
+              </Link>
+            </p>
+          </div>
+
+          {/* Right-Hand Real Product Preview Card */}
+          <div className="hero__figure" style={{ flex: "1 1 40%", minWidth: "280px", maxWidth: "420px" }}>
+            <div className="card" style={{ background: "var(--surface-subtle, #1e293b)", border: "1px solid var(--border, #334155)", padding: "1.5rem", borderRadius: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                <span className="eyebrow" style={{ margin: 0 }}>Protect my Venus loan</span>
+                <span className="chip" style={{ background: "rgba(16, 185, 129, 0.2)", color: "#10b981", fontWeight: "bold" }}>
+                  Mandate Verified
+                </span>
+              </div>
+              <h3 className="listing__name" style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>
+                Conservative Guardian
+              </h3>
+              <p className="micro" style={{ marginBottom: "1rem" }}>
+                Health factor: <strong>2.14</strong> &rarr; target <strong>2.50</strong>
+              </p>
+              <div style={{ background: "rgba(0,0,0,0.2)", padding: "0.75rem", borderRadius: "6px", marginBottom: "1rem" }}>
+                <span className="caption" style={{ display: "block", color: "#94a3b8" }}>Needs Authority:</span>
+                <strong style={{ fontSize: "0.9rem" }}>Repay vUSDT &middot; Max 25 USDT / UTC day</strong>
+              </div>
+              <Link className="button" href="/agents/health-factor-a" style={{ width: "100%", textAlign: "center" }}>
+                View Agent
               </Link>
             </div>
           </div>
-          <figure className="hero__figure">
-            <AuthorityFigure />
-            <figcaption>granted &sube; tested</figcaption>
-          </figure>
         </div>
 
+        {/* Task Chooser Cards (Product Focused) */}
         <section aria-labelledby="tasks-heading" className="section">
           <div className="section__head">
-            <span className="eyebrow">Start here · no wallet required</span>
+            <span className="eyebrow">Select a Task</span>
           </div>
           <h2 className="section__title" id="tasks-heading">
-            What do you want an agent to do?
+            What do you want automated?
           </h2>
-          <p className="section__note">
-            Four categories, deliberately at different depths right now, and each one says which. Browsing is
-            anonymous: nothing on this site asks you to connect, sign or log in.
-          </p>
 
           <Suspense fallback={<TaskGridPending />}>
             <TaskGrid />
           </Suspense>
         </section>
 
-        <section aria-labelledby="mandate-heading" className="section">
-          <div className="section__head">
-            <span className="eyebrow">The finished mandate</span>
+        {/* Demo Callout Banner */}
+        <section className="panel spaced" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h3 className="listing__name">Explore the Interactive Guided Demo</h3>
+            <p className="listing__summary">
+              Step through a real completed mandate lifecycle (M-001) from trial to execution and account refusal.
+            </p>
           </div>
-          <h2 className="section__title" id="mandate-heading">
-            One agent, one job, start to finish, all of it on chain
-          </h2>
-          <p className="section__note">
-            A trial on a pinned fork, a receipt in a registry with no owner, a session key bounded by the
-            wallet&rsquo;s own account contract, a permitted repayment that executed, three boundary crossings
-            the account refused before they could become transactions, and a revocation. Read it without an
-            account.
-          </p>
-          <Suspense fallback={<MandatePending />}>
-            <MandateSummary />
-          </Suspense>
-        </section>
-
-        <section aria-labelledby="audience-heading" className="section">
-          <div className="section__head">
-            <span className="eyebrow">Who this is for</span>
-          </div>
-          <h2 className="section__title" id="audience-heading">
-            Three readers, three different questions
-          </h2>
-          <div className="grid-three spaced">
-            <div className="card">
-              <h3 className="listing__name">If you hold the capital</h3>
-              <p className="listing__summary">
-                You want to know what an agent can do to your position on its worst day, not on its best.
-                Every agent page leads with the authority it would need and the boundary that stops it.
-              </p>
-            </div>
-            <div className="card">
-              <h3 className="listing__name">If you built the agent</h3>
-              <p className="listing__summary">
-                Your card is a claim until a trial makes it evidence. The ladder shows exactly which rung you
-                are on and the specific, fixable reason you are not on the next one.
-              </p>
-            </div>
-            <div className="card">
-              <h3 className="listing__name">If you are here to check</h3>
-              <p className="listing__summary">
-                Nothing is read from a MANDATE database, because there is not one. Every page reads the chain
-                and the documents it commits to, and the same checks run from a terminal.
-              </p>
-            </div>
-          </div>
+          <Link className="button button--ghost" href="/demo">
+            Launch Demo Viewer &rarr;
+          </Link>
         </section>
       </main>
 
@@ -142,120 +114,60 @@ function TaskGridPending() {
     <div aria-busy="true" className="tasks">
       {CATEGORIES.map((category) => (
         <span className="task" key={category.slug}>
-          <span className="task__title">{category.task}</span>
-          <span className="listing__summary">{category.decision}</span>
-          <span className="task__meta">
-            <span className="micro" role="status">
-              Reading the registry for this category&rsquo;s evidence…
-            </span>
-          </span>
+          <span className="task__title">{category.name}</span>
+          <span className="listing__summary">{category.task}</span>
         </span>
       ))}
     </div>
   );
 }
 
-/**
- * The four choices, each carrying its category's real depth.
- *
- * The rung shown is the strongest any agent in the category currently reaches.
- * A category with nothing published says so on the card rather than looking
- * identical to one with a finished mandate behind it, because the whole
- * argument of this site is that those two are not the same.
- */
 async function TaskGrid() {
   const marketplace = await loadMarketplace(Math.floor(Date.now() / 1000));
+
+  const TASK_TITLES: Record<string, string> = {
+    "health-factor": "Protect a loan",
+    "yield": "Earn better yield",
+    "rebalancing": "Manage an LP position",
+    "grid-trading": "Run a grid strategy",
+  };
+
+  const TASK_PROTOCOLS: Record<string, string> = {
+    "health-factor": "Venus Protocol (vUSDT)",
+    "yield": "Venus Protocol (vBNB / vUSDT)",
+    "rebalancing": "Venus Collateral Markets",
+    "grid-trading": "PancakeSwap / StableSwap Pools",
+  };
 
   return (
     <div className="tasks">
       {CATEGORIES.map((category) => {
         const listings = listingsInCategory(marketplace, category);
         const ceiling = categoryCeiling(listings);
+        const title = TASK_TITLES[category.slug] ?? category.name;
+        const protocols = TASK_PROTOCOLS[category.slug] ?? "BSC Protocols";
 
         return (
           <Link className="task" href={`/category/${category.slug}`} key={category.slug}>
-            <span className="task__title">{category.task}</span>
+            <span className="task__title">{title}</span>
             <span className="listing__summary">{category.decision}</span>
-            <span className="task__meta">
-              {ceiling === undefined ? (
-                <span className="caption">
-                  No agent published in this category yet. The page says what is missing.
-                </span>
-              ) : (
-                <>
-                  <ProvenanceLadder provenance={ceiling} />
-                  <span className="micro tabular">
-                    {listings.length} {listings.length === 1 ? "agent" : "agents"} · strongest rung shown
-                  </span>
-                </>
-              )}
+            <div style={{ marginTop: "0.75rem" }}>
+              <span className="micro" style={{ display: "block", color: "var(--text-secondary, #94a3b8)" }}>
+                Protocol: <strong>{protocols}</strong>
+              </span>
+              <span className="micro" style={{ display: "block", color: "var(--text-secondary, #94a3b8)", marginTop: "0.25rem" }}>
+                Live Agents: <strong>{listings.length} available</strong>
+              </span>
+            </div>
+            <span className="task__meta" style={{ marginTop: "1rem" }}>
+              {ceiling !== undefined && <ProvenanceLadder provenance={ceiling} />}
+              <span className="button button--ghost" style={{ marginTop: "0.5rem", width: "100%", textAlign: "center" }}>
+                Browse {category.name} &rarr;
+              </span>
             </span>
           </Link>
         );
       })}
-    </div>
-  );
-}
-
-function MandatePending() {
-  return (
-    <div aria-busy="true" className="stack spaced">
-      <div aria-hidden="true" className="skeleton skeleton--sm" />
-    </div>
-  );
-}
-
-async function MandateSummary() {
-  const activation = await readActivationFact(FEATURED_MANDATE_ID);
-
-  if (activation.observed !== "CONFIRMED") {
-    return (
-      <div className="empty spaced">
-        <h3 className="empty__title">The registry did not confirm this mandate just now.</h3>
-        <div className="empty__body">
-          <p>
-            {activation.reason ??
-              `The registry on ${NETWORK_NAME} holds no activation under ${mandateLabel(FEATURED_MANDATE_ID)}.`}
-          </p>
-          <p>
-            Nothing here is served from a cache of a previous read, so an endpoint that will not answer
-            produces this message rather than a summary that might no longer be true.
-          </p>
-        </div>
-        <div className="empty__actions">
-          <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
-            Open the proof page anyway
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="listing listing--r4 spaced">
-      <div className="listing__head">
-        <h3 className="listing__name">{mandateLabel(FEATURED_MANDATE_ID)}</h3>
-        <ProvenanceLadder provenance="Mandate-native" />
-      </div>
-      <div className="listing__body">
-        <p className="listing__summary">
-          Granted {formatUtc(activation.validFrom)}, valid until {formatUtc(activation.validUntil)},{" "}
-          {activation.revokedAt === 0
-            ? "not revoked."
-            : `revoked ${formatUtc(activation.revokedAt)}.`}{" "}
-          Read from the receipt registry on chain {CHAIN_ID} at this request, not from a stored copy.
-        </p>
-        <p className="micro">
-          The session key is gone, and the grant is still reconstructible: the activation record holds the
-          window it was valid over, so a finished mandate can be read from the registry rather than guessed at
-          from an account that now holds nothing.
-        </p>
-        <p>
-          <Link className="button" href={`/proof/${FEATURED_MANDATE_ID}`}>
-            Read the whole lifecycle
-          </Link>
-        </p>
-      </div>
     </div>
   );
 }

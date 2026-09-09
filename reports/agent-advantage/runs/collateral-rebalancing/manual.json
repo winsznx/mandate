@@ -1,0 +1,26 @@
+{
+  "taskId": "collateral-rebalancing",
+  "mode": "manual",
+  "operator": "human_reference_benchmark",
+  "startedAt": 1788537425000,
+  "endedAt": 1788538105000,
+  "elapsedMs": 680000,
+  "transactions": [
+    {
+      "step": "manual-rebalance",
+      "costTbnb": 0.0031
+    }
+  ],
+  "taskInput": {
+    "targetBand": 0.05,
+    "currentDrift": 0.075
+  },
+  "taskOutput": {
+    "calculationTimeMs": 440000,
+    "executionTimeMs": 240000
+  },
+  "successCriteria": {
+    "rebalanceEvaluated": true
+  },
+  "result": "PASS"
+}

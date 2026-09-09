@@ -13,7 +13,7 @@ import { AddressLink, HashValue } from "../../../src/components/hash-value";
 import { LifecycleList } from "../../../src/components/lifecycle-list";
 import { StepList } from "../../../src/components/step-list";
 import { VerdictBanner } from "../../../src/components/verdict-banner";
-import { CHAIN_ID, FEATURED_AGENT, NETWORK_NAME } from "../../../src/proof/config";
+import { CHAIN_ID, FEATURED_AGENT, FEATURED_MANDATE_ID, NETWORK_NAME } from "../../../src/proof/config";
 import { establishedClaims, rungDescription, withheldClaims } from "../../../src/proof/claims";
 import { formatUtc, mandateLabel, shortAddress, shortHash } from "../../../src/proof/format";
 import { buildLifecycle } from "../../../src/proof/lifecycle";
@@ -44,10 +44,11 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { mandateId } = await params;
-  if (!MANDATE_ID_PATTERN.test(mandateId)) notFound();
+  const targetId = mandateId === "M-001" ? FEATURED_MANDATE_ID : mandateId;
+  if (!MANDATE_ID_PATTERN.test(targetId)) notFound();
   return {
-    title: mandateLabel(mandateId as Hex),
-    description: `The complete lifecycle of mandate ${mandateId} on BSC testnet, verified against the chain and the published evidence.`,
+    title: mandateLabel(targetId as Hex),
+    description: `The complete lifecycle of mandate ${targetId} on BSC testnet, verified against the chain and the published evidence.`,
   };
 }
 
@@ -63,7 +64,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  */
 export default async function ProofPage({ params }: PageProps) {
   const { mandateId } = await params;
-  if (!MANDATE_ID_PATTERN.test(mandateId)) notFound();
+  const targetId = mandateId === "M-001" ? FEATURED_MANDATE_ID : mandateId;
+  if (!MANDATE_ID_PATTERN.test(targetId)) notFound();
 
   // Existence is settled before anything is flushed, so an unknown id answers
   // 404 rather than 200 with not-found copy in the body. Two reads, memoised,
@@ -72,7 +74,7 @@ export default async function ProofPage({ params }: PageProps) {
   // registry did not answer" are different facts, and the body reports the
   // second one with its own copy.
   try {
-    await resolveMandate(mandateId as Hex);
+    await resolveMandate(targetId as Hex);
   } catch (error) {
     if (error instanceof UnknownMandateError) notFound();
   }
@@ -88,7 +90,7 @@ export default async function ProofPage({ params }: PageProps) {
         </span>
       </header>
       <Suspense fallback={<ProofPending />}>
-        <ProofBody mandateId={mandateId as Hex} />
+        <ProofBody mandateId={targetId as Hex} />
       </Suspense>
     </div>
   );

@@ -6,14 +6,19 @@
     "totalTasksEvaluated": 3,
     "averageTimeReductionPercent": 98.9,
     "averageCostReductionPercent": 59.3,
-    "securityTaskIncluded": true
+    "securityTaskIncluded": true,
+    "measuredArtifactsDirectory": "reports/agent-advantage/runs/"
   },
   "tasks": [
     {
-      "taskId": "task-1-health-factor-defense",
+      "taskId": "health-factor-defense",
       "name": "Venus Health Factor Liquidation Defense",
       "category": "HEALTH_FACTOR",
       "domain": "security_and_risk",
+      "runFiles": {
+        "agent": "reports/agent-advantage/runs/health-factor-defense/agent.json",
+        "manual": "reports/agent-advantage/runs/health-factor-defense/manual.json"
+      },
       "manual": {
         "timeSeconds": 1120,
         "costTbnb": 0.0042,
@@ -40,10 +45,14 @@
       }
     },
     {
-      "taskId": "task-2-yield-optimization",
+      "taskId": "yield-optimization",
       "name": "Venus Supply Yield Optimization",
       "category": "YIELD",
       "domain": "yield_trading",
+      "runFiles": {
+        "agent": "reports/agent-advantage/runs/yield-optimization/agent.json",
+        "manual": "reports/agent-advantage/runs/yield-optimization/manual.json"
+      },
       "manual": {
         "timeSeconds": 450,
         "costTbnb": 0.0015,
@@ -69,10 +78,14 @@
       }
     },
     {
-      "taskId": "task-3-collateral-rebalancing",
+      "taskId": "collateral-rebalancing",
       "name": "Collateral Band Rebalancing",
       "category": "REBALANCING",
       "domain": "asset_management",
+      "runFiles": {
+        "agent": "reports/agent-advantage/runs/collateral-rebalancing/agent.json",
+        "manual": "reports/agent-advantage/runs/collateral-rebalancing/manual.json"
+      },
       "manual": {
         "timeSeconds": 680,
         "costTbnb": 0.0031,

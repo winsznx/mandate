@@ -4,6 +4,10 @@ import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
 
 const NAV = [
   { href: "/", label: "Marketplace" },
+  { href: "/compare", label: "Compare" },
+  { href: "/mandates", label: "Mandates" },
+  { href: "/developers", label: "Developers" },
+  { href: "/reports/agent-advantage", label: "TermiX Report" },
   { href: "/methodology", label: "Methodology" },
   { href: "/status", label: "Status" },
 ] as const;

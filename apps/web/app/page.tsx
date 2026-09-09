@@ -39,20 +39,22 @@ export default function Home() {
           <div>
             <span className="hero__pill">Proven end to end on BSC Testnet</span>
             <h1 className="display">
-              An agent is granted no more authority than its trial tested. The wallet enforces it, not us.
+              Find a live agent for this job. See what it proved. Grant only that.
             </h1>
             <p className="lede">
-              Hand an agent your keys and you are trusting a description. MANDATE runs the agent against a
-              pinned fork of the real protocol first, writes what it was tested for into a public registry,
-              and then grants a session key your own account contract will refuse to take past that envelope.
-              Every page here recomputes that relation rather than asserting it.
+              Handing an agent your keys means trusting a profile. MANDATE runs the agent against a
+              pinned fork of the real protocol first, writes what it proved into an append-only registry,
+              and grants a session key your own account contract will refuse past that boundary.
             </p>
             <div className="hero__actions">
-              <Link className="button" href={`/proof/${FEATURED_MANDATE_ID}`}>
-                Read the finished mandate
+              <Link className="button" href="#tasks-heading">
+                Use the marketplace
               </Link>
-              <Link className="button button--link" href="/methodology">
-                How the evidence ladder works
+              <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
+                Verify the finished mandate
+              </Link>
+              <Link className="button button--link" href="/compare">
+                Compare agents
               </Link>
             </div>
           </div>

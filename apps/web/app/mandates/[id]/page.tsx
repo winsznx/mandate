@@ -4,7 +4,7 @@ import { ProvenanceLadder } from "../../../src/components/provenance-ladder";
 import { Page, SiteFooter } from "../../../src/components/site-chrome";
 import { readActivationFact } from "../../../src/marketplace/chain-facts";
 import { FEATURED_MANDATE_ID, NETWORK_NAME, explorerTxUrl } from "../../../src/proof/config";
-import { formatUtc, mandateLabel } from "../../../src/proof/format";
+import { mandateLabel } from "../../../src/proof/format";
 import type { Hex } from "viem";
 
 export const dynamic = "force-dynamic";
@@ -135,20 +135,14 @@ export default async function MandateDetailPage({ params }: MandateDetailPagePro
                     <div className="timeline__content card">
                       <div className="listing__head">
                         <h3 className="listing__name">{step.title}</h3>
-                        <span
-                          className={`status-pill ${
-                            isPass
-                              ? "status-pill--verified"
-                              : "status-pill--blocked"
-                          }`}
-                        >
-                          {step.status}
+                        <span className={`status-indicator ${isPass ? "status-indicator--pass" : "status-indicator--fail"}`}>
+                          {isPass ? "● Verified" : step.status === "REVOKED" ? "× Revoked" : "× Refused"}
                         </span>
                       </div>
 
                       <p className="listing__summary spaced-sm">{step.detail}</p>
 
-                      <div className="listing__head spaced-sm">
+                      <div className="timeline__footer spaced-sm">
                         <span className="micro text-muted">{step.time}</span>
                         {step.tx && (
                           <a
@@ -171,49 +165,51 @@ export default async function MandateDetailPage({ params }: MandateDetailPagePro
           {/* Right Column: Authority Summary Card */}
           <aside aria-label="Authority Summary" className="mandate-summary-col">
             <div className="card mandate-summary-card">
-              <span className="filter-bar__label">Authority Summary</span>
-              <h3 className="listing__name spaced-sm">
+              <span className="card-label">AUTHORITY SUMMARY</span>
+              <h3 className="listing__name spaced-xs">
                 Conservative Guardian
               </h3>
               <p className="micro text-muted">ERC-8004 Token ID #1842</p>
 
-              <div className="spaced">
+              <div className="spaced-sm">
                 <ProvenanceLadder provenance={isFeatured ? "Mandate-native" : "Trial-verified"} size="lg" />
               </div>
 
-              <dl className="fact-grid spaced">
-                <div>
-                  <dt>Current Status</dt>
+              <dl className="authority-summary-dl spaced">
+                <div className="authority-summary-dl__row">
+                  <dt>Agent</dt>
+                  <dd>Conservative Guardian</dd>
+                </div>
+                <div className="authority-summary-dl__row">
+                  <dt>Status</dt>
                   <dd>
                     {activation.revokedAt === 0 ? (
-                      <span className="status-pill status-pill--verified">● ACTIVE</span>
+                      <span className="status-dot-inline status-dot-inline--live">● Active</span>
                     ) : (
-                      <span className="status-pill status-pill--blocked">× REVOKED</span>
+                      <span className="status-dot-inline status-dot-inline--revoked">× Revoked</span>
                     )}
                   </dd>
                 </div>
-                <div>
-                  <dt>Spent Today</dt>
-                  <dd className="tabular">
-                    <strong>20 USDT</strong> / 25 USDT limit
-                  </dd>
+                <div className="authority-summary-dl__row">
+                  <dt>Spend</dt>
+                  <dd className="tabular">20 / 25 USDT</dd>
                 </div>
-                <div>
-                  <dt>Target Contract</dt>
-                  <dd className="mono micro">Venus vUSDT</dd>
+                <div className="authority-summary-dl__row">
+                  <dt>Target</dt>
+                  <dd className="mono-value">Venus vUSDT</dd>
                 </div>
-                <div>
-                  <dt>Allowed Function</dt>
-                  <dd className="mono micro">repayBorrow(uint256)</dd>
+                <div className="authority-summary-dl__row">
+                  <dt>Function</dt>
+                  <dd className="mono-value">repayBorrow(uint256)</dd>
                 </div>
-                <div>
-                  <dt>Mandate ID</dt>
-                  <dd className="mono micro">{id.slice(0, 14)}…</dd>
+                <div className="authority-summary-dl__row">
+                  <dt>Mandate</dt>
+                  <dd className="mono-value">{id.slice(0, 10)}…{id.slice(-6)}</dd>
                 </div>
               </dl>
 
               <div className="spaced">
-                <Link className="button button--ghost" href={`/proof/${id}`}>
+                <Link className="button button--ghost full-width-btn" href={`/proof/${id}`}>
                   Inspect Proof &nearr;
                 </Link>
               </div>

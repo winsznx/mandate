@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Page, SiteFooter } from "../../src/components/site-chrome";
-import { FEATURED_MANDATE_ID } from "../../src/proof/config";
+import { FEATURED_MANDATE_ID, explorerTxUrl } from "../../src/proof/config";
+import type { Hex } from "viem";
 
 export default function GuidedDemoPage() {
   const [slide, setSlide] = useState<number>(1);
@@ -19,11 +20,11 @@ export default function GuidedDemoPage() {
             You are a borrower on Venus Protocol with a leveraged USDT borrow position. Market volatility threatens your loan.
           </p>
 
-          <div className="card" style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid #3b82f6", padding: "1.25rem" }}>
-            <h3 className="listing__name" style={{ margin: 0, color: "#60a5fa" }}>
+          <div className="card spaced">
+            <h3 className="listing__name">
               Task Selected: Protect Loan from Liquidation
             </h3>
-            <p className="micro" style={{ marginTop: "0.5rem" }}>
+            <p className="micro spaced-sm">
               Target Protocol: <strong>Venus Protocol (BSC Testnet)</strong> &middot; Account Borrow: 103.20 USDT &middot; Initial Health Factor: <strong>1.08</strong> (Critical Risk)
             </p>
           </div>
@@ -40,17 +41,17 @@ export default function GuidedDemoPage() {
             Choose an agent with verified trial receipts on BSC Testnet.
           </p>
 
-          <div className="card" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 className="listing__name" style={{ margin: 0 }}>Conservative Guardian</h3>
-              <span className="chip" style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981" }}>
-                Mandate Verified
+          <div className="card spaced">
+            <div className="listing__head">
+              <h3 className="listing__name">Conservative Guardian</h3>
+              <span className="status-pill status-pill--verified">
+                <span className="status__glyph">◉</span> Mandate Verified
               </span>
             </div>
-            <p className="micro" style={{ marginTop: "0.5rem" }}>
+            <p className="micro spaced-sm">
               ERC-8004 Token ID: <strong>#1842</strong> &middot; Endpoint: <code>https://mandate-agents.timjosh507.workers.dev/health-factor-a</code>
             </p>
-            <p className="listing__summary" style={{ marginTop: "0.5rem" }}>
+            <p className="listing__summary spaced-sm">
               Monitors debt position and proposes conservative 20 USDT repayments to restore Health Factor from 1.08 to 1.50.
             </p>
           </div>
@@ -67,15 +68,23 @@ export default function GuidedDemoPage() {
             Before granting any keys, MANDATE executes the agent against an archive fork of Venus Protocol at block 129090727.
           </p>
 
-          <div className="panel" style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "1.25rem" }}>
-            <h3 className="listing__name" style={{ color: "#10b981", margin: 0 }}>✓ TRIAL PASSED & RECEIPT PUBLISHED</h3>
-            <dl className="fact-grid" style={{ marginTop: "1rem" }}>
-              <dt>Agent Proposal</dt>
-              <dd>Repay 20 USDT to <code>vUSDT</code></dd>
-              <dt>Reference Model</dt>
-              <dd>Independent reference model evaluated pre-state and agreed (PASS)</dd>
-              <dt>Receipt ID</dt>
-              <dd className="tabular"><code>0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76</code></dd>
+          <div className="card spaced">
+            <span className="status-pill status-pill--verified">
+              <span className="status__glyph">●</span> TRIAL PASSED & RECEIPT PUBLISHED
+            </span>
+            <dl className="fact-grid spaced">
+              <div>
+                <dt>Agent Proposal</dt>
+                <dd>Repay 20 USDT to <code>vUSDT</code></dd>
+              </div>
+              <div>
+                <dt>Reference Model</dt>
+                <dd>Independent reference model evaluated pre-state and agreed (PASS)</dd>
+              </div>
+              <div>
+                <dt>Receipt ID</dt>
+                <dd className="tabular mono"><code>0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76</code></dd>
+              </div>
             </dl>
           </div>
         </div>
@@ -94,7 +103,7 @@ export default function GuidedDemoPage() {
           <div className="grid-two spaced">
             <div className="card">
               <h4 className="listing__name">TESTED IN TRIAL</h4>
-              <ul className="fact-list micro">
+              <ul className="bullets micro spaced-sm">
                 <li>Target: <code>vUSDT</code></li>
                 <li>Selector: <code>repayBorrow(uint256)</code></li>
                 <li>Max Spend: &le; 25 USDT / UTC day</li>
@@ -102,7 +111,7 @@ export default function GuidedDemoPage() {
             </div>
             <div className="card">
               <h4 className="listing__name">GRANTED SESSION</h4>
-              <ul className="fact-list micro">
+              <ul className="bullets micro spaced-sm">
                 <li>Target: <code>vUSDT</code></li>
                 <li>Selector: <code>repayBorrow(uint256)</code></li>
                 <li>Max Spend: &le; 25 USDT / UTC day</li>
@@ -110,8 +119,10 @@ export default function GuidedDemoPage() {
             </div>
           </div>
 
-          <div className="panel" style={{ background: "rgba(16, 185, 129, 0.08)", padding: "1rem", marginTop: "1rem" }}>
-            <strong style={{ color: "#10b981" }}>✓ SUBSET MATCH: GrantedAuthority &sube; TestedAuthority IS TRUE</strong>
+          <div className="alert-notice alert-notice--verified spaced">
+            <span className="status-pill status-pill--verified">
+              ✓ SUBSET MATCH: GrantedAuthority &sube; TestedAuthority IS TRUE
+            </span>
           </div>
         </div>
       ),
@@ -126,14 +137,21 @@ export default function GuidedDemoPage() {
             The agent signed a batch repayment of 20 USDT under its Altana session key.
           </p>
 
-          <div className="card" style={{ borderLeft: "4px solid #10b981", background: "var(--surface-subtle, #1e293b)", padding: "1.25rem" }}>
-            <h3 className="listing__name" style={{ color: "#10b981", margin: 0 }}>✓ Executed Successfully</h3>
-            <p className="listing__summary" style={{ marginTop: "0.5rem" }}>
+          <div className="card spaced">
+            <span className="status-pill status-pill--verified">
+              <span className="status__glyph">●</span> Executed Successfully
+            </span>
+            <p className="listing__summary spaced-sm">
               Debt reduced from 103.20 to 83.20 USDT. Health Factor restored to <strong>1.50</strong>.
             </p>
-            <p className="micro tabular" style={{ marginTop: "0.5rem" }}>
+            <p className="micro tabular spaced-sm">
               Tx Hash:{" "}
-              <a href="https://testnet.bscscan.com/tx/0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4" rel="noreferrer" target="_blank">
+              <a
+                className="link"
+                href={explorerTxUrl("0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4" as Hex)}
+                rel="noreferrer"
+                target="_blank"
+              >
                 0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4 &nearr;
               </a>
             </p>
@@ -152,13 +170,17 @@ export default function GuidedDemoPage() {
           </p>
 
           <div className="stack spaced">
-            <div className="card" style={{ borderLeft: "4px solid #ef4444" }}>
-              <h4 className="listing__name" style={{ color: "#ef4444" }}>× Breach Attempt (+6 USDT Spend)</h4>
-              <p className="micro">Refused by account with <code>ExceededSpendLimit</code>. No transaction broadcast.</p>
+            <div className="card">
+              <span className="status-pill status-pill--blocked">
+                <span className="status__glyph">×</span> Breach Attempt (+6 USDT Spend)
+              </span>
+              <p className="micro spaced-sm">Refused by account with <code>ExceededSpendLimit</code>. No transaction broadcast.</p>
             </div>
-            <div className="card" style={{ borderLeft: "4px solid #ef4444" }}>
-              <h4 className="listing__name" style={{ color: "#ef4444" }}>× Wrong Target / Selector Attempt</h4>
-              <p className="micro">Refused by account with <code>UnauthorizedCall</code>. No transaction broadcast.</p>
+            <div className="card">
+              <span className="status-pill status-pill--blocked">
+                <span className="status__glyph">×</span> Wrong Target / Selector Attempt
+              </span>
+              <p className="micro spaced-sm">Refused by account with <code>UnauthorizedCall</code>. No transaction broadcast.</p>
             </div>
           </div>
         </div>
@@ -174,15 +196,22 @@ export default function GuidedDemoPage() {
             The owner executed a unilateral revocation onchain. The session key was deleted from the account and KeyStore.
           </p>
 
-          <div className="card" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.25rem" }}>
-            <h3 className="listing__name" style={{ margin: 0 }}>Revocation Confirmed</h3>
-            <p className="micro tabular" style={{ marginTop: "0.5rem" }}>
+          <div className="card spaced">
+            <span className="status-pill status-pill--blocked">
+              <span className="status__glyph">×</span> Revocation Confirmed
+            </span>
+            <p className="micro tabular spaced-sm">
               Revoke Tx:{" "}
-              <a href="https://testnet.bscscan.com/tx/0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b" rel="noreferrer" target="_blank">
+              <a
+                className="link"
+                href={explorerTxUrl("0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b" as Hex)}
+                rel="noreferrer"
+                target="_blank"
+              >
                 0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b &nearr;
               </a>
             </p>
-            <p className="micro" style={{ marginTop: "0.5rem" }}>
+            <p className="micro spaced-sm">
               Subsequent repayment attempt refused with <code>KeyDoesNotExist</code>.
             </p>
           </div>
@@ -205,30 +234,30 @@ export default function GuidedDemoPage() {
         </p>
 
         {/* Demo Warning Banner */}
-        <section aria-label="Demo Warning" className="panel" style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.3)", padding: "1rem" }}>
-          <strong style={{ color: "#60a5fa" }}>VERIFIED REPLAY DEMO MODE</strong>
-          <p className="micro" style={{ margin: "0.25rem 0 0 0" }}>
+        <section aria-label="Demo Warning" className="alert-notice spaced">
+          <span className="status-pill status-pill--verified">VERIFIED REPLAY DEMO MODE</span>
+          <p className="micro spaced-sm">
             You are viewing a completed public mandate. No live transactions will be signed from this guided viewer.
           </p>
         </section>
 
         {/* Slide Viewer Card */}
-        <section aria-label="Demo Viewer" className="panel spaced" style={{ background: "var(--surface-subtle, #1e293b)", padding: "2rem", borderRadius: "8px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <span className="eyebrow" style={{ margin: 0 }}>Slide {slide} of {SLIDES.length}</span>
-            <span className="chip" style={{ background: "#3b82f6", color: "#ffffff" }}>{currentSlide?.subtitle}</span>
+        <section aria-label="Demo Viewer" className="panel spaced">
+          <div className="listing__head">
+            <span className="eyebrow">Slide {slide} of {SLIDES.length}</span>
+            <span className="status-pill status-pill--verified">{currentSlide?.subtitle}</span>
           </div>
 
-          <h2 className="section__title" style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
+          <h2 className="section__title spaced">
             {currentSlide?.title}
           </h2>
 
-          <div style={{ minHeight: "220px" }}>
+          <div className="demo-slide-content spaced">
             {currentSlide?.content}
           </div>
 
           {/* Slider Nav Controls */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--border, #334155)" }}>
+          <div className="hero__actions spaced">
             <button
               className="button button--ghost"
               disabled={slide === 1}
@@ -238,7 +267,7 @@ export default function GuidedDemoPage() {
               &larr; Previous Step
             </button>
 
-            <span className="micro" style={{ color: "#94a3b8" }}>
+            <span className="micro text-muted">
               Step {slide} / {SLIDES.length}
             </span>
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
+import { FEATURED_MANDATE_ID } from "../proof/config";
 
 interface ActivationFlowProps {
   agentName?: string;
@@ -109,10 +109,8 @@ export function ActivationFlow({
         <div className="stack spaced">
           <div className="grid-two spaced">
             <div className="card">
-              <h4 className="listing__name" style={{ color: "var(--color-green, #10b981)" }}>
-                THIS AGENT MAY
-              </h4>
-              <ul className="fact-list">
+              <span className="status-pill status-pill--verified">THIS AGENT MAY</span>
+              <ul className="fact-list spaced-sm">
                 <li>Call target: <code>vUSDT</code> (Venus Protocol)</li>
                 <li>Selector: <code>repayBorrow(uint256)</code></li>
                 <li>Spend limit: &le; {spendLimitUsdt} USDT per UTC day</li>
@@ -120,10 +118,8 @@ export function ActivationFlow({
               </ul>
             </div>
             <div className="card">
-              <h4 className="listing__name" style={{ color: "var(--color-red, #ef4444)" }}>
-                THIS AGENT MAY NOT
-              </h4>
-              <ul className="fact-list">
+              <span className="status-pill status-pill--blocked">THIS AGENT MAY NOT</span>
+              <ul className="fact-list spaced-sm">
                 <li>Call any contract other than <code>vUSDT</code></li>
                 <li>Invoke <code>borrow</code>, <code>mint</code>, or <code>redeem</code></li>
                 <li>Exceed {spendLimitUsdt} USDT cumulative daily spend</li>
@@ -132,15 +128,15 @@ export function ActivationFlow({
             </div>
           </div>
 
-          <div className="panel" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1rem" }}>
+          <div className="panel alert-notice alert-notice--verified">
             <h4 className="listing__name">TESTED vs GRANTED AUTHORITY</h4>
-            <p className="micro">
+            <p className="micro spaced-sm">
               <strong>Tested:</strong> <code>vUSDT.repayBorrow(uint256)</code>, USDT &le; 25 / UTC day
               <br />
               <strong>Granted:</strong> <code>vUSDT.repayBorrow(uint256)</code>, USDT &le; 25 / UTC day
               <br />
-              <span className="caption" style={{ color: "var(--color-green, #10b981)" }}>
-                &check; GrantedAuthority &sube; TestedAuthority (Subset Validated)
+              <span className="status-pill status-pill--verified spaced-sm">
+                ✓ GrantedAuthority &sube; TestedAuthority (Subset Validated)
               </span>
             </p>
           </div>
@@ -172,39 +168,49 @@ export function ActivationFlow({
       {walletState === "ACTIVATED" && (
         <div className="stack spaced">
           <div className="card">
-            <h4 className="listing__name" style={{ color: "var(--color-green, #10b981)" }}>
-              &bull; Session Live & Active
-            </h4>
-            <dl className="fact-grid">
-              <dt>Account</dt>
-              <dd className="tabular">{address}</dd>
-              <dt>Granted Agent</dt>
-              <dd>{agentName} (ERC-8004 #{tokenId})</dd>
-              <dt>Session Registration Tx</dt>
-              <dd className="tabular">
-                <a
-                  href={`https://testnet.bscscan.com/tx/${sessionTx}`}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {sessionTx.slice(0, 10)}…{sessionTx.slice(-8)} &nearr;
-                </a>
-              </dd>
-              <dt>Daily Spend Used</dt>
-              <dd className="tabular">
-                <strong>{spentUsdt} USDT</strong> / {spendLimitUsdt} USDT ({spendLimitUsdt - spentUsdt} USDT remaining)
-              </dd>
-              <dt>Expiry</dt>
-              <dd>{expiryDays} days remaining</dd>
+            <span className="status-pill status-pill--verified">
+              <span className="status__glyph">●</span> Session Live & Active
+            </span>
+            <dl className="fact-grid spaced">
+              <div>
+                <dt>Account</dt>
+                <dd className="tabular mono">{address}</dd>
+              </div>
+              <div>
+                <dt>Granted Agent</dt>
+                <dd>{agentName} (ERC-8004 #{tokenId})</dd>
+              </div>
+              <div>
+                <dt>Session Registration Tx</dt>
+                <dd className="tabular mono">
+                  <a
+                    className="link"
+                    href={`https://testnet.bscscan.com/tx/${sessionTx}`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {sessionTx.slice(0, 10)}…{sessionTx.slice(-8)} &nearr;
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt>Daily Spend Used</dt>
+                <dd className="tabular">
+                  <strong>{spentUsdt} USDT</strong> / {spendLimitUsdt} USDT ({spendLimitUsdt - spentUsdt} USDT remaining)
+                </dd>
+              </div>
+              <div>
+                <dt>Expiry</dt>
+                <dd>{expiryDays} days remaining</dd>
+              </div>
             </dl>
           </div>
 
           <div className="hero__actions">
             <button
-              className="button button--danger"
+              className="button button--blocked"
               disabled={isProcessing}
               onClick={handleRevokeSession}
-              style={{ background: "#dc2626", color: "#ffffff" }}
               type="button"
             >
               {isProcessing ? "Revoking Session…" : "Revoke Session Immediately"}
@@ -219,10 +225,10 @@ export function ActivationFlow({
       {/* Step 4: Post-Revoke State */}
       {walletState === "REVOKED" && (
         <div className="empty spaced">
-          <h4 className="empty__title" style={{ color: "var(--color-red, #ef4444)" }}>
-            Session Revoked On-Chain
-          </h4>
-          <p className="empty__body">
+          <span className="status-pill status-pill--blocked">
+            <span className="status__glyph">×</span> Session Revoked On-Chain
+          </span>
+          <p className="empty__body spaced">
             The session key has been removed from your Altana account and KeyStore. The agent can no longer
             execute any actions. Any subsequent attempt will be refused with <code>UnauthorizedCall</code>.
           </p>

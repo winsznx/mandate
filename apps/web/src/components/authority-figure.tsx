@@ -6,12 +6,9 @@
  * granted field. A call that breaches the granted cap is refused even though
  * its shape was tested; a call outside the tested field was never in scope at
  * all. Both are struck through, refused by the account before they are sent.
- *
- * No colour of its own: the warm ground it sits on is the system's single
- * saturated moment, and every mark here is drawn in ink.
  */
-const INK = "#1b0624";
-const MUTE = "#6f6478";
+const INK = "var(--color-aubergine-ink)";
+const MUTE = "var(--color-warm-ash)";
 const MONO = "var(--font-mono)";
 
 export function AuthorityFigure() {
@@ -50,7 +47,7 @@ export function AuthorityFigure() {
         width="272"
         height="150"
         rx="20"
-        fill="#ffffff"
+        fill="var(--color-paper-white)"
         fillOpacity="0.62"
         stroke={INK}
         strokeWidth="1.75"

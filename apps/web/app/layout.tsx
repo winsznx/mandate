@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter, Inter_Tight } from "next/font/google";
+import { Web3Providers } from "../src/web3/providers";
 import "./globals.css";
 
 /**
@@ -35,10 +36,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${displayFont.variable} ${bodyFont.variable}`}>
       <body>
-        <a className="skip-link" href="#main">
-          Skip to the proof
-        </a>
-        {children}
+        <Web3Providers>
+          <a className="skip-link" href="#main">
+            Skip to the proof
+          </a>
+          {children}
+        </Web3Providers>
       </body>
     </html>
   );

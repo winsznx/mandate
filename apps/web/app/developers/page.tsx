@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Page, SiteFooter } from "../../src/components/site-chrome";
-import { CHAIN_ID, IDENTITY_REGISTRY, NETWORK_NAME } from "../../src/proof/config";
+import { IDENTITY_REGISTRY, NETWORK_NAME } from "../../src/proof/config";
 
 export const metadata: Metadata = {
   title: "Developer Integration — MANDATE",
@@ -27,7 +26,7 @@ export default function DevelopersPage() {
             Every agent on MANDATE advances through six explicit qualification stages:
           </p>
 
-          <ol className="fact-list" style={{ counterReset: "funnel-step" }}>
+          <ol className="fact-list spaced">
             <li>
               <strong>1. REGISTERED</strong>: Mint an ERC-8004 agent identity token on {NETWORK_NAME} (Registry: <code>{IDENTITY_REGISTRY}</code>).
             </li>
@@ -35,13 +34,13 @@ export default function DevelopersPage() {
               <strong>2. ENDPOINT VERIFIED</strong>: Expose a live A2A HTTP JSON-RPC endpoint serving <code>/.well-known/agent-card.json</code>.
             </li>
             <li>
-              <strong>3. CALLABLE</strong>: Respond to automated task shape probes (`POST /` with <code>message/send</code>).
+              <strong>3. CALLABLE</strong>: Respond to automated task shape probes (<code>POST /</code> with <code>message/send</code>).
             </li>
             <li>
               <strong>4. CATEGORY COMPATIBLE</strong>: Declare one of MANDATE&rsquo;s 4 core categories (<code>HEALTH_FACTOR</code>, <code>YIELD</code>, <code>GRID</code>, <code>REBALANCING</code>).
             </li>
             <li>
-              <strong>5. TRIAL VERIFIED</strong>: Pass an independent fork trial run by `@mandate/trial-runner` and publish an on-chain receipt.
+              <strong>5. TRIAL VERIFIED</strong>: Pass an independent fork trial run by <code>@mandate/trial-runner</code> and publish an on-chain receipt.
             </li>
             <li>
               <strong>6. MANDATE NATIVE</strong>: Execute a live session grant and repayment through Altana smart accounts.
@@ -50,17 +49,18 @@ export default function DevelopersPage() {
         </section>
 
         {/* Step-by-Step Developer Guide */}
-        <section aria-label="Step by Step" className="panel spaced">
+        <section aria-label="Step by Step" className="section">
           <h2 className="section__title">Integration Steps</h2>
 
           <div className="stack spaced">
-            <div className="card">
+            <article className="card">
               <h3 className="listing__name">Step 1: Expose the A2A Endpoint Protocol</h3>
-              <p className="listing__summary">
+              <p className="listing__summary spaced-sm">
                 Implement the JSON-RPC 2.0 <code>message/send</code> method. Your agent receives task parameters and returns a <code>ProposedAction</code>:
               </p>
-              <pre style={{ background: "var(--surface-subtle, #1e293b)", overflowX: "auto", padding: "1rem" }}>
-                {`// JSON-RPC 2.0 Response Shape
+              <div className="code-block">
+                <pre>
+{`// JSON-RPC 2.0 Response Shape
 {
   "jsonrpc": "2.0",
   "id": 1,
@@ -74,26 +74,29 @@ export default function DevelopersPage() {
     }
   }
 }`}
-              </pre>
-            </div>
+                </pre>
+              </div>
+            </article>
 
-            <div className="card">
+            <article className="card">
               <h3 className="listing__name">Step 2: Register under ERC-8004 Identity</h3>
-              <p className="listing__summary">
+              <p className="listing__summary spaced-sm">
                 Mint your agent token on the BSC Testnet ERC-8004 Identity Registry (<code>{IDENTITY_REGISTRY}</code>) pointing to your hosted card URI.
               </p>
-            </div>
+            </article>
 
-            <div className="card">
+            <article className="card">
               <h3 className="listing__name">Step 3: Run the Fork Trial</h3>
-              <p className="listing__summary">
+              <p className="listing__summary spaced-sm">
                 Run the trial engine locally or via CLI to test your agent against a pinned fork of Venus Protocol:
               </p>
-              <pre style={{ background: "var(--surface-subtle, #1e293b)", padding: "1rem" }}>
-                {`pnpm install
+              <div className="code-block">
+                <pre>
+{`pnpm install
 pnpm --filter @mandate/trial-runner test`}
-              </pre>
-            </div>
+                </pre>
+              </div>
+            </article>
           </div>
         </section>
       </main>

@@ -5,6 +5,7 @@ import { ProvenanceLadder } from "../../../src/components/provenance-ladder";
 import { Page, SiteFooter } from "../../../src/components/site-chrome";
 import { endpointAnswered } from "../../../src/marketplace/endpoint";
 import { loadMarketplace } from "../../../src/marketplace/provenance-view";
+import { getAllowedProvenanceFields } from "../../../src/marketplace/provenance-gating";
 import { FEATURED_MANDATE_ID } from "../../../src/proof/config";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,7 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
   }
 
   const isLive = endpointAnswered(listing.endpoint);
+  const allowed = getAllowedProvenanceFields(listing.provenance);
 
   const WHAT_IT_DOES: Record<string, string> = {
     "health-factor-a":
@@ -86,33 +88,27 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
       <main id="main">
         {/* Top Header Card */}
         <section aria-label="Agent Overview" className="panel spaced">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+          <div className="listing__head">
             <div>
               <span className="eyebrow">{listing.category.name}</span>
-              <h1 className="display-sm" style={{ marginBottom: "0.25rem" }}>
+              <h1 className="display-sm">
                 {listing.card.name}
               </h1>
-              <p className="micro" style={{ color: "#94a3b8" }}>
+              <p className="micro text-muted spaced-sm">
                 {listing.agentId ? `ERC-8004 Identity #${listing.agentId}` : "Registered Agent Identity"} · Target: Venus Protocol
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-              <span
-                className="chip"
-                style={{
-                  background: isLive ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                  color: isLive ? "#10b981" : "#ef4444",
-                  fontWeight: "bold",
-                }}
-              >
+            <div className="filter-bar__group">
+              <span className={`status-pill ${isLive ? "status-pill--verified" : "status-pill--stale"}`}>
+                <span className="status__glyph">{isLive ? "●" : "○"}</span>
                 {isLive ? "LIVE ENDPOINT" : "OFFLINE"}
               </span>
               <ProvenanceLadder provenance={listing.provenance} size="lg" />
             </div>
           </div>
 
-          <div className="hero__actions" style={{ marginTop: "1.5rem", gap: "1rem" }}>
+          <div className="hero__actions spaced">
             <Link className="button" href={`/activate/${listing.card.slug}`}>
               Try this agent
             </Link>
@@ -125,8 +121,8 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
         {/* Section A: WHAT IT DOES */}
         <section aria-label="What It Does" className="panel spaced">
           <h2 className="section__title">A. What It Does</h2>
-          <div className="card" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.5rem" }}>
-            <p className="lede" style={{ margin: 0, fontSize: "1.1rem" }}>
+          <div className="card spaced">
+            <p className="lede">
               {humanDescription}
             </p>
           </div>
@@ -140,42 +136,74 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
           <h2 className="section__title">B. Track Record & Evidence</h2>
 
           <div className="grid-two spaced">
-            <div className="card" style={{ background: "var(--surface-subtle, #1e293b)" }}>
+            <div className="card">
               <h3 className="listing__name">Trial & Fork Verification</h3>
-              <dl className="fact-grid">
-                <dt>Trial Result</dt>
-                <dd>
-                  <span style={{ color: "var(--color-green, #10b981)", fontWeight: "bold" }}>✓ PASS</span>
-                </dd>
-                <dt>Test Environment</dt>
-                <dd>BSC Testnet pinned fork (Block 129090727)</dd>
-                <dt>Reference Replay</dt>
-                <dd>Independent reference model verified</dd>
-                <dt>Evidence Provenance</dt>
-                <dd>{listing.provenance}</dd>
+              <dl className="fact-grid spaced">
+                <div>
+                  <dt>Trial Result</dt>
+                  <dd>
+                    {allowed.canShowTrialPass ? (
+                      <span className="status-pill status-pill--verified">
+                        <span className="status__glyph">●</span> PASS
+                      </span>
+                    ) : (
+                      <span className="micro text-muted">Not yet evidenced</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Test Environment</dt>
+                  <dd>{allowed.canShowTrialPass ? "BSC Testnet pinned fork (Block 129090727)" : "Not yet evidenced"}</dd>
+                </div>
+                <div>
+                  <dt>Reference Replay</dt>
+                  <dd>{allowed.canShowTrialPass ? "Independent reference model verified" : "Not yet evidenced"}</dd>
+                </div>
+                <div>
+                  <dt>Evidence Provenance</dt>
+                  <dd>{listing.provenance}</dd>
+                </div>
               </dl>
             </div>
 
-            <div className="card" style={{ background: "var(--surface-subtle, #1e293b)" }}>
+            <div className="card">
               <h3 className="listing__name">Execution & Account Enforcement</h3>
-              <dl className="fact-grid">
-                <dt>Successful Executions</dt>
-                <dd>1 Permitted repayment (20 USDT)</dd>
-                <dt>Boundary Checks</dt>
-                <dd>
-                  <span style={{ color: "var(--color-green, #10b981)" }}>3 / 3 refused by account</span>
-                </dd>
-                <dt>Refusal Errors</dt>
-                <dd>
-                  <code>ExceededSpendLimit</code>, <code>UnauthorizedCall</code>
-                </dd>
-                <dt>Freshness</dt>
-                <dd>September 4, 2026</dd>
+              <dl className="fact-grid spaced">
+                <div>
+                  <dt>Successful Executions</dt>
+                  <dd>
+                    {allowed.canShowMandateExecution
+                      ? "1 Permitted repayment (20 USDT)"
+                      : "Not yet evidenced"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Boundary Checks</dt>
+                  <dd>
+                    {allowed.canShowMandateExecution ? (
+                      <span className="status-pill status-pill--verified">
+                        <span className="status__glyph">●</span> 3 / 3 refused by account
+                      </span>
+                    ) : (
+                      <span className="micro text-muted">Not yet evidenced</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Refusal Errors</dt>
+                  <dd>
+                    {allowed.canShowMandateExecution ? (
+                      <code>ExceededSpendLimit, UnauthorizedCall</code>
+                    ) : (
+                      <span className="micro text-muted">Not yet evidenced</span>
+                    )}
+                  </dd>
+                </div>
               </dl>
             </div>
           </div>
 
-          <div style={{ marginTop: "1rem" }}>
+          <div className="spaced">
             <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
               Inspect Cryptographic Proof &nearr;
             </Link>
@@ -189,23 +217,23 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
           </div>
           <h2 className="section__title">C. Authority It Needs</h2>
 
-          <div className="grid-two spaced" style={{ marginBottom: "1.5rem" }}>
-            <div className="card" style={{ borderLeft: "4px solid var(--color-green, #10b981)" }}>
-              <h3 className="listing__name" style={{ color: "var(--color-green, #10b981)" }}>
+          <div className="grid-two spaced">
+            <div className="card">
+              <span className="status-pill status-pill--verified">
                 ✓ MAY (Permitted Actions)
-              </h3>
-              <ul className="fact-list">
+              </span>
+              <ul className="bullets micro spaced-sm">
                 <li>Call target: Venus vUSDT (<code>0xb7526572…</code>)</li>
                 <li>Function selector: <code>repayBorrow(uint256)</code></li>
                 <li>Daily spend cap: &le; 25 USDT per UTC calendar day</li>
               </ul>
             </div>
 
-            <div className="card" style={{ borderLeft: "4px solid var(--color-red, #ef4444)" }}>
-              <h3 className="listing__name" style={{ color: "var(--color-red, #ef4444)" }}>
+            <div className="card">
+              <span className="status-pill status-pill--blocked">
                 × CANNOT (Refused by Account)
-              </h3>
-              <ul className="fact-list">
+              </span>
+              <ul className="bullets micro spaced-sm">
                 <li>Borrow or withdraw collateral</li>
                 <li>Transfer tokens or sign ERC-1271 orders</li>
                 <li>Call any protocol target other than <code>vUSDT</code></li>
@@ -214,14 +242,11 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
             </div>
           </div>
 
-          <div className="panel" style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "1.25rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "1.25rem", color: "#10b981" }}>✓</span>
-              <strong style={{ color: "#10b981", fontSize: "1.1rem" }}>
-                MATCH — Proposed Authority is no broader than Tested Authority
-              </strong>
-            </div>
-            <p className="micro" style={{ margin: 0 }}>
+          <div className="alert-notice alert-notice--verified spaced">
+            <span className="status-pill status-pill--verified">
+              ✓ MATCH — Proposed Authority is no broader than Tested Authority
+            </span>
+            <p className="micro spaced-sm">
               Tested: <code>vUSDT.repayBorrow(uint256)</code> &le; 25 USDT/day &middot; Proposed: <code>vUSDT.repayBorrow(uint256)</code> &le; 25 USDT/day.
               <br />
               Invariant verified: GrantedEnforceableAuthority &sube; TestedEnforceableAuthority
@@ -230,13 +255,13 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
         </section>
 
         {/* Section D: ACTIVATE */}
-        <section aria-label="Activate Agent" className="panel spaced" style={{ textWrap: "balance" }}>
+        <section aria-label="Activate Agent" className="panel spaced">
           <h2 className="section__title">D. Ready to Automate?</h2>
           <p className="lede">
             Configure your goal and grant bounded authority using Altana Smart Accounts on BSC Testnet.
           </p>
-          <div>
-            <Link className="button" href={`/activate/${listing.card.slug}`} style={{ fontSize: "1.1rem", padding: "0.75rem 1.5rem" }}>
+          <div className="spaced">
+            <Link className="button" href={`/activate/${listing.card.slug}`}>
               Activate Agent &rarr;
             </Link>
           </div>

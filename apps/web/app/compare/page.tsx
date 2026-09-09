@@ -4,6 +4,7 @@ import { ProvenanceLadder } from "../../src/components/provenance-ladder";
 import { Page, SiteFooter } from "../../src/components/site-chrome";
 import { endpointAnswered } from "../../src/marketplace/endpoint";
 import { loadMarketplace } from "../../src/marketplace/provenance-view";
+import { formatTrialOutcome, getAllowedProvenanceFields } from "../../src/marketplace/provenance-gating";
 
 export const dynamic = "force-dynamic";
 
@@ -54,19 +55,18 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
           Compare agents side-by-side on factual boundaries, protocol targets, spend ceilings, and trial execution results.
         </p>
 
-        {/* Agent Selection Dropdowns */}
-        <section aria-label="Select Agents to Compare" className="panel spaced" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.25rem", borderRadius: "8px" }}>
+        {/* Agent Selection Controls */}
+        <section aria-label="Select Agents to Compare" className="filter-bar">
           <form action="/compare" className="grid-two" method="get">
             <div>
-              <label className="caption" htmlFor="select-a" style={{ display: "block", marginBottom: "0.25rem" }}>
+              <label className="filter-bar__label" htmlFor="select-a">
                 Select Agent A:
               </label>
               <select
-                className="input"
+                className="select-control spaced-sm"
                 defaultValue={agentA?.card.slug}
                 id="select-a"
                 name="a"
-                style={{ width: "100%", padding: "0.5rem", background: "rgba(0,0,0,0.3)", color: "inherit", borderRadius: "4px" }}
               >
                 {marketplace.listings.map((item) => (
                   <option key={`a-${item.card.slug}`} value={item.card.slug}>
@@ -77,15 +77,14 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
             </div>
 
             <div>
-              <label className="caption" htmlFor="select-b" style={{ display: "block", marginBottom: "0.25rem" }}>
+              <label className="filter-bar__label" htmlFor="select-b">
                 Select Agent B:
               </label>
               <select
-                className="input"
+                className="select-control spaced-sm"
                 defaultValue={agentB?.card.slug}
                 id="select-b"
                 name="b"
-                style={{ width: "100%", padding: "0.5rem", background: "rgba(0,0,0,0.3)", color: "inherit", borderRadius: "4px" }}
               >
                 {marketplace.listings.map((item) => (
                   <option key={`b-${item.card.slug}`} value={item.card.slug}>
@@ -95,7 +94,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
               </select>
             </div>
 
-            <div style={{ gridColumn: "1 / -1", marginTop: "0.5rem" }}>
+            <div className="grid-full spaced">
               <button className="button" type="submit">
                 Compare Selected Agents
               </button>
@@ -104,113 +103,153 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         </section>
 
         {/* Comparison Table */}
-        {agentA && agentB && (
-          <section aria-label="Side-by-Side Comparison" className="panel spaced">
-            <table className="table" style={{ borderCollapse: "collapse", width: "100%" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid var(--border, #334155)", textAlign: "left" }}>
-                  <th style={{ padding: "0.75rem" }}>Dimension</th>
-                  <th style={{ padding: "0.75rem", width: "40%" }}>{agentA.card.name}</th>
-                  <th style={{ padding: "0.75rem", width: "40%" }}>{agentB.card.name}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Evidence Tier</td>
-                  <td style={{ padding: "0.75rem" }}><ProvenanceLadder provenance={agentA.provenance} /></td>
-                  <td style={{ padding: "0.75rem" }}><ProvenanceLadder provenance={agentB.provenance} /></td>
-                </tr>
+        {agentA && agentB && (() => {
+          const allowedA = getAllowedProvenanceFields(agentA.provenance);
+          const allowedB = getAllowedProvenanceFields(agentB.provenance);
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Live Status</td>
-                  <td style={{ padding: "0.75rem" }}>
-                    {endpointAnswered(agentA.endpoint) ? (
-                      <span style={{ color: "var(--color-green, #10b981)", fontWeight: "bold" }}>✓ LIVE ENDPOINT</span>
-                    ) : (
-                      <span style={{ color: "var(--color-red, #ef4444)" }}>× OFFLINE</span>
-                    )}
-                  </td>
-                  <td style={{ padding: "0.75rem" }}>
-                    {endpointAnswered(agentB.endpoint) ? (
-                      <span style={{ color: "var(--color-green, #10b981)", fontWeight: "bold" }}>✓ LIVE ENDPOINT</span>
-                    ) : (
-                      <span style={{ color: "var(--color-red, #ef4444)" }}>× OFFLINE</span>
-                    )}
-                  </td>
-                </tr>
+          return (
+            <section aria-label="Side-by-Side Comparison" className="section">
+              <div className="compare-container">
+                <table className="compare-table">
+                  <thead>
+                    <tr>
+                      <th className="compare-table__feature">Dimension</th>
+                      <th>{agentA.card.name}</th>
+                      <th>{agentB.card.name}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="compare-table__feature">Evidence Tier</td>
+                      <td><ProvenanceLadder provenance={agentA.provenance} /></td>
+                      <td><ProvenanceLadder provenance={agentB.provenance} /></td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Supported Protocol</td>
-                  <td style={{ padding: "0.75rem" }}>Venus Protocol (BSC Testnet)</td>
-                  <td style={{ padding: "0.75rem" }}>Venus Protocol (BSC Testnet)</td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Live Endpoint</td>
+                      <td>
+                        <span className={`status-pill ${endpointAnswered(agentA.endpoint) ? "status-pill--verified" : "status-pill--stale"}`}>
+                          <span className="status__glyph">{endpointAnswered(agentA.endpoint) ? "●" : "○"}</span>
+                          {endpointAnswered(agentA.endpoint) ? "LIVE" : "OFFLINE"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${endpointAnswered(agentB.endpoint) ? "status-pill--verified" : "status-pill--stale"}`}>
+                          <span className="status__glyph">{endpointAnswered(agentB.endpoint) ? "●" : "○"}</span>
+                          {endpointAnswered(agentB.endpoint) ? "LIVE" : "OFFLINE"}
+                        </span>
+                      </td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Authority Required</td>
-                  <td style={{ padding: "0.75rem" }}>{agentA.category.authorityShape}</td>
-                  <td style={{ padding: "0.75rem" }}>{agentB.category.authorityShape}</td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Supported Protocol</td>
+                      <td>Venus Protocol (BSC Testnet)</td>
+                      <td>Venus Protocol (BSC Testnet)</td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Spend Ceiling</td>
-                  <td style={{ padding: "0.75rem" }}>&le; 25 USDT / UTC Day</td>
-                  <td style={{ padding: "0.75rem" }}>&le; 25 USDT / UTC Day</td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Authority Required</td>
+                      <td className="mono">{agentA.category.authorityShape}</td>
+                      <td className="mono">{agentB.category.authorityShape}</td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Trial Outcome</td>
-                  <td style={{ padding: "0.75rem" }}>
-                    <span style={{ color: "var(--color-green, #10b981)", fontWeight: "bold" }}>✓ PASS</span>
-                  </td>
-                  <td style={{ padding: "0.75rem" }}>
-                    <span style={{ color: "var(--color-green, #10b981)", fontWeight: "bold" }}>✓ PASS</span>
-                  </td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Spend Ceiling</td>
+                      <td className="tabular">&le; 25 USDT / UTC Day</td>
+                      <td className="tabular">&le; 25 USDT / UTC Day</td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Observed Executions</td>
-                  <td style={{ padding: "0.75rem" }}>{agentA.receipt ? "1 Permitted Execution (20 USDT)" : "Strategy Trial Verified"}</td>
-                  <td style={{ padding: "0.75rem" }}>{agentB.receipt ? "1 Permitted Execution (20 USDT)" : "Strategy Trial Verified"}</td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Trial Outcome</td>
+                      <td>
+                        {allowedA.canShowTrialPass ? (
+                          <span className="status-pill status-pill--verified">
+                            <span className="status__glyph">●</span> PASS
+                          </span>
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                      <td>
+                        {allowedB.canShowTrialPass ? (
+                          <span className="status-pill status-pill--verified">
+                            <span className="status__glyph">●</span> PASS
+                          </span>
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Boundary Tests</td>
-                  <td style={{ padding: "0.75rem" }}>{agentA.receipt ? "3 / 3 Refused by Account" : "Tested in Trial"}</td>
-                  <td style={{ padding: "0.75rem" }}>{agentB.receipt ? "3 / 3 Refused by Account" : "Tested in Trial"}</td>
-                </tr>
+                    <tr>
+                      <td className="compare-table__feature">Observed Executions</td>
+                      <td>
+                        {allowedA.canShowMandateExecution ? (
+                          agentA.receipt ? "1 Permitted Execution (20 USDT)" : "Strategy Trial Verified"
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                      <td>
+                        {allowedB.canShowMandateExecution ? (
+                          agentB.receipt ? "1 Permitted Execution (20 USDT)" : "Strategy Trial Verified"
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                    </tr>
 
-                <tr style={{ borderBottom: "1px solid var(--border, #334155)" }}>
-                  <td style={{ fontWeight: "bold", padding: "0.75rem" }}>Best For</td>
-                  <td style={{ padding: "0.75rem" }}>{BEST_FOR[agentA.card.slug] ?? agentA.card.description}</td>
-                  <td style={{ padding: "0.75rem" }}>{BEST_FOR[agentB.card.slug] ?? agentB.card.description}</td>
-                </tr>
-              </tbody>
-            </table>
+                    <tr>
+                      <td className="compare-table__feature">Boundary Tests</td>
+                      <td>
+                        {allowedA.canShowMandateExecution ? (
+                          agentA.receipt ? "3 / 3 Refused by Account" : "Tested in Trial"
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                      <td>
+                        {allowedB.canShowMandateExecution ? (
+                          agentB.receipt ? "3 / 3 Refused by Account" : "Tested in Trial"
+                        ) : (
+                          <span className="micro text-muted">Not yet evidenced</span>
+                        )}
+                      </td>
+                    </tr>
 
-            {/* Factual Recommendation Box */}
-            <div className="panel" style={{ background: "rgba(59, 130, 246, 0.08)", border: "1px solid rgba(59, 130, 246, 0.3)", padding: "1.25rem", marginTop: "1.5rem" }}>
-              <strong style={{ color: "#60a5fa", fontSize: "1.1rem" }}>Factual Comparison Analysis:</strong>
-              <p className="micro" style={{ marginTop: "0.5rem" }}>
-                Choose <strong>{agentA.card.name}</strong> if you require higher proven evidence tier ({agentA.provenance}) and completed onchain execution history.
-                <br />
-                Both agents operate strictly within the bounded spend cap of 25 USDT/day on {agentA.category.name}.
-              </p>
-            </div>
+                    <tr>
+                      <td className="compare-table__feature">Best For</td>
+                      <td>{BEST_FOR[agentA.card.slug] ?? agentA.card.description}</td>
+                      <td>{BEST_FOR[agentB.card.slug] ?? agentB.card.description}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
-              <Link className="button button--ghost" href={`/agents/${agentA.card.slug}`}>
-                View {agentA.card.name}
-              </Link>
-              <Link className="button button--ghost" href={`/agents/${agentB.card.slug}`}>
-                View {agentB.card.name}
-              </Link>
-              <Link className="button" href={`/activate/${agentA.card.slug}`}>
-                Activate Selected Agent &rarr;
-              </Link>
-            </div>
-          </section>
-        )}
+              {/* Factual Analysis Box */}
+              <div className="alert-notice spaced">
+                <h3 className="listing__name">Factual Comparison Analysis</h3>
+                <p className="listing__summary spaced-sm">
+                  Choose <strong>{agentA.card.name}</strong> if you require higher proven evidence tier ({agentA.provenance}) and completed onchain execution history.
+                  Both agents operate strictly within the bounded spend cap of 25 USDT/day on {agentA.category.name}.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="hero__actions spaced">
+                <Link className="button button--ghost" href={`/agents/${agentA.card.slug}`}>
+                  View {agentA.card.name}
+                </Link>
+                <Link className="button button--ghost" href={`/agents/${agentB.card.slug}`}>
+                  View {agentB.card.name}
+                </Link>
+                <Link className="button" href={`/activate/${agentA.card.slug}`}>
+                  Activate Selected Agent &rarr;
+                </Link>
+              </div>
+            </section>
+          );
+        })()}
       </main>
 
       <SiteFooter />

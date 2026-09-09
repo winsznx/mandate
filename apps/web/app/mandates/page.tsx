@@ -1,21 +1,13 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { ProvenanceLadder } from "../../src/components/provenance-ladder";
+import { useAccount } from "wagmi";
 import { Page, SiteFooter } from "../../src/components/site-chrome";
-import { readActivationFact } from "../../src/marketplace/chain-facts";
-import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../../src/proof/config";
-import { formatUtc, mandateLabel } from "../../src/proof/format";
+import { FEATURED_MANDATE_ID } from "../../src/proof/config";
+import { mandateLabel } from "../../src/proof/format";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "My Mandates — Control Center — MANDATE",
-  description: "Manage active DeFi agent mandates, monitor daily spend usage against caps, and revoke session keys on demand.",
-};
-
-export default async function MandatesPage() {
-  const featuredActivation = await readActivationFact(FEATURED_MANDATE_ID);
-  const isRevoked = featuredActivation.revokedAt > 0;
+export default function MandatesPage() {
+  const { address, isConnected } = useAccount();
 
   return (
     <Page current="/mandates">
@@ -28,83 +20,102 @@ export default async function MandatesPage() {
           Monitor active agent sessions, inspect daily token spend limits, and exercise unilateral onchain revocation control.
         </p>
 
-        {/* Dashboard Stats */}
-        <section aria-label="Mandate Metrics" className="panel spaced" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.25rem", borderRadius: "8px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-            <div>
-              <span className="caption" style={{ color: "#94a3b8" }}>Active Mandates</span>
-              <h2 style={{ fontSize: "2rem", margin: "0.25rem 0 0 0", color: isRevoked ? "#94a3b8" : "#10b981" }}>
-                {isRevoked ? "0 Active" : "1 Active"}
-              </h2>
+        {isConnected ? (
+          <>
+            {/* Connected Account Metrics */}
+            <div className="metric-strip">
+              <div className="metric-card">
+                <span className="metric-card__label">Active Mandates</span>
+                <div className="metric-card__value tabular">0 Active</div>
+              </div>
+              <div className="metric-card">
+                <span className="metric-card__label">Capital Authorized</span>
+                <div className="metric-card__value tabular">0 USDT / Day</div>
+              </div>
+              <div className="metric-card">
+                <span className="metric-card__label">Connected Address</span>
+                <div className="metric-card__value mono micro text-muted">
+                  {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Connected"}
+                </div>
+              </div>
             </div>
 
-            <div>
-              <span className="caption" style={{ color: "#94a3b8" }}>Capital Currently Authorized</span>
-              <h2 style={{ fontSize: "2rem", margin: "0.25rem 0 0 0" }}>25 USDT / Day</h2>
-            </div>
+            {/* Connected Account Mandate List */}
+            <section aria-label="Account Mandates" className="section">
+              <div className="empty">
+                <h3 className="empty__title">No mandates yet</h3>
+                <p className="empty__body">
+                  No active or historical session grants found for connected address {address}. Browse verified agents to set up a bounded mandate.
+                </p>
+                <div className="empty__actions">
+                  <Link className="button" href="/marketplace">
+                    Browse Agents &rarr;
+                  </Link>
+                </div>
+              </div>
+            </section>
+          </>
+        ) : (
+          /* Disconnected State */
+          <section aria-label="Connect Prompt" className="alert-notice spaced">
+            <h3 className="listing__name">Connect your wallet to view mandates</h3>
+            <p className="listing__summary spaced-sm">
+              Connect your wallet to view mandates tied to your account and manage active spend caps.
+            </p>
+          </section>
+        )}
 
-            <div>
-              <span className="caption" style={{ color: "#94a3b8" }}>Expiring Soon</span>
-              <h2 style={{ fontSize: "2rem", margin: "0.25rem 0 0 0", color: "#60a5fa" }}>1 Mandate</h2>
-            </div>
+        {/* Public Verified Example (M-001) */}
+        <section aria-label="Public Example Mandate" className="section">
+          <div className="section__head">
+            <span className="eyebrow">Public Verified Example</span>
           </div>
-        </section>
-
-        {/* Mandates List */}
-        <section aria-label="Mandate Cards" className="section">
-          <div className="listing listing--r4 spaced" style={{ background: "var(--surface-subtle, #1e293b)", border: "1px solid var(--border, #334155)", padding: "1.5rem", borderRadius: "8px" }}>
-            <div className="listing__head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <article className="card">
+            <div className="listing__head">
               <div>
-                <span className="eyebrow">Example Verified Mandate</span>
-                <h3 className="listing__name" style={{ fontSize: "1.25rem", margin: 0 }}>
+                <h3 className="listing__name">
                   Conservative Guardian &middot; {mandateLabel(FEATURED_MANDATE_ID)}
                 </h3>
+                <p className="micro">Venus Protocol Borrow Protection</p>
               </div>
-              <span
-                className="chip"
-                style={{
-                  background: isRevoked ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                  color: isRevoked ? "#ef4444" : "#10b981",
-                  fontWeight: "bold",
-                }}
-              >
-                {isRevoked ? "REVOKED ONCHAIN" : "ACTIVE SESSION"}
+              <span className="status-pill status-pill--blocked">
+                <span className="status__glyph">×</span>
+                REVOKED ONCHAIN
               </span>
             </div>
 
-            <div className="listing__body" style={{ marginTop: "1rem" }}>
+            <div className="listing__body spaced">
               <p className="listing__summary">
-                Protect Venus loan position via <code>vUSDT.repayBorrow(uint256)</code> top-ups.
+                A completed public demonstration mandate protecting a Venus loan position via <code>vUSDT.repayBorrow(uint256)</code> top-ups.
               </p>
 
-              <dl className="fact-grid" style={{ marginTop: "1rem" }}>
-                <dt>Authority Scope</dt>
-                <dd>Target: Venus vUSDT &middot; Selector: <code>repayBorrow</code> &middot; Spend: &le; 25 USDT/day</dd>
-
-                <dt>Spent This UTC Day</dt>
-                <dd className="tabular">
-                  <strong>20 USDT</strong> / 25 USDT (5 USDT headroom remaining)
-                </dd>
-
-                <dt>Validity Window</dt>
-                <dd>
-                  {formatUtc(featuredActivation.validFrom)} to {formatUtc(featuredActivation.validUntil)}
-                </dd>
-
-                <dt>Last Action</dt>
-                <dd>Repaid 20 USDT (Tx <code>0x7f8c499d…</code>)</dd>
+              <dl className="fact-grid spaced">
+                <div>
+                  <dt>Authority Scope</dt>
+                  <dd className="mono">Target: Venus vUSDT &middot; Selector: repayBorrow &middot; Spend: &le; 25 USDT/day</dd>
+                </div>
+                <div>
+                  <dt>Spent This UTC Day</dt>
+                  <dd className="tabular">
+                    <strong>20 USDT</strong> / 25 USDT (5 USDT headroom remaining)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Lifecycle Status</dt>
+                  <dd>Mandate activated onchain, executed 1 permitted top-up, and was revoked by the account owner.</dd>
+                </div>
               </dl>
 
-              <div className="hero__actions" style={{ marginTop: "1.5rem", gap: "0.75rem" }}>
+              <div className="hero__actions spaced">
                 <Link className="button" href={`/mandates/${FEATURED_MANDATE_ID}`}>
-                  Open Mandate Dashboard &rarr;
+                  View Lifecycle &rarr;
                 </Link>
                 <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
                   Inspect Proof &nearr;
                 </Link>
               </div>
             </div>
-          </div>
+          </article>
         </section>
       </main>
 

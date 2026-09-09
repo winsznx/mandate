@@ -28,17 +28,9 @@ export function AgentListingCard({ listing }: { listing: AgentListing }) {
             </Link>
           )}
         </h3>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <span
-            className="micro"
-            style={{
-              padding: "0.2rem 0.5rem",
-              borderRadius: "4px",
-              background: isLive ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-              color: isLive ? "var(--color-green, #10b981)" : "var(--color-red, #ef4444)",
-              fontWeight: "bold",
-            }}
-          >
+        <div className="filter-bar__group">
+          <span className={`status-pill ${isLive ? "status-pill--verified" : "status-pill--stale"}`}>
+            <span className="status__glyph">{isLive ? "●" : "○"}</span>
             {isLive ? "LIVE ENDPOINT" : "OFFLINE"}
           </span>
           <ProvenanceLadder provenance={listing.provenance} size={rank >= 3 ? "lg" : "sm"} />
@@ -50,7 +42,7 @@ export function AgentListingCard({ listing }: { listing: AgentListing }) {
 
         <div className="chips">
           {listing.agentId && (
-            <span className="chip" style={{ background: "var(--surface-subtle, #1e293b)" }}>
+            <span className="chip">
               ERC-8004 #{listing.agentId}
             </span>
           )}
@@ -105,7 +97,7 @@ export function AgentListingCard({ listing }: { listing: AgentListing }) {
           </p>
         ) : null}
 
-        <div className="hero__actions" style={{ marginTop: "1rem", gap: "0.5rem" }}>
+        <div className="hero__actions spaced">
           {detailHref !== undefined && (
             <Link className="button button--ghost" href={detailHref}>
               Inspect Evidence &nearr;

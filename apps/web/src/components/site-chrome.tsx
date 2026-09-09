@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
+import { WalletControl } from "./wallet-control";
 
 const NAV = [
   { href: "/marketplace", label: "Marketplace" },
@@ -12,12 +13,20 @@ const NAV = [
 export function Masthead({ current }: { current?: string | undefined }) {
   return (
     <header className="masthead">
-      <Link className="wordmark" href="/">
-        <span aria-hidden="true" className="wordmark__mark">
-          ✱
-        </span>
-        MANDATE
-      </Link>
+      <div className="masthead__top-row">
+        <Link className="wordmark" href="/">
+          <span aria-hidden="true" className="wordmark__mark">
+            ✱
+          </span>
+          MANDATE
+        </Link>
+        <div className="masthead__actions">
+          <span className="masthead__meta">
+            {NETWORK_NAME} ({CHAIN_ID})
+          </span>
+          <WalletControl />
+        </div>
+      </div>
       <nav aria-label="Sections" className="masthead__nav">
         {NAV.map((item) => (
           <Link
@@ -30,14 +39,6 @@ export function Masthead({ current }: { current?: string | undefined }) {
           </Link>
         ))}
       </nav>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <span className="masthead__meta" style={{ background: "rgba(59, 130, 246, 0.12)", padding: "0.25rem 0.5rem", borderRadius: "4px", color: "#60a5fa" }}>
-          {NETWORK_NAME} (97)
-        </span>
-        <Link className="masthead__cta" href="/activate/health-factor-a">
-          Connect Wallet
-        </Link>
-      </div>
     </header>
   );
 }
@@ -45,7 +46,7 @@ export function Masthead({ current }: { current?: string | undefined }) {
 export function SiteFooter({ children }: { children?: ReactNode }) {
   return (
     <footer className="site-footer">
-      <div className="site-footer__row" style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+      <div className="site-footer__row">
         <Link className="masthead__link" href="/demo">
           Guided Demo Mode
         </Link>
@@ -75,7 +76,7 @@ export function Page({ current, children }: { current?: string | undefined; chil
   return (
     <div className="page">
       <Masthead current={current} />
-      {children}
+      <main id="main">{children}</main>
     </div>
   );
 }

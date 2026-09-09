@@ -57,176 +57,135 @@ export default async function MarketplacePage({ searchParams }: MarketplacePageP
         </p>
 
         {/* Filters Bar */}
-        <section aria-label="Filters" className="panel spaced" style={{ background: "var(--surface-subtle, #1e293b)", padding: "1.25rem", borderRadius: "8px" }}>
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-            {/* Category Filter Pills */}
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <section aria-label="Filters" className="filter-bar">
+          <div className="filter-bar__group">
+            <span className="filter-bar__label">Category:</span>
+            <Link
+              className={`filter-pill ${activeCategory === "ALL" ? "filter-pill--active" : ""}`}
+              href="/marketplace"
+            >
+              All Categories
+            </Link>
+            {CATEGORIES.map((cat) => (
               <Link
-                className={`button ${activeCategory === "ALL" ? "" : "button--ghost"}`}
-                href="/marketplace"
-                style={{ fontSize: "0.875rem", padding: "0.4rem 0.8rem" }}
+                className={`filter-pill ${activeCategory === cat.slug ? "filter-pill--active" : ""}`}
+                href={`/marketplace?category=${cat.slug}`}
+                key={cat.slug}
               >
-                All Categories
+                {cat.name}
               </Link>
-              {CATEGORIES.map((cat) => (
-                <Link
-                  className={`button ${activeCategory === cat.slug ? "" : "button--ghost"}`}
-                  href={`/marketplace?category=${cat.slug}`}
-                  key={cat.slug}
-                  style={{ fontSize: "0.875rem", padding: "0.4rem 0.8rem" }}
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
+            ))}
+          </div>
 
-            {/* Secondary Controls */}
-            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-              <Link
-                className={`button ${liveOnly ? "" : "button--ghost"}`}
-                href={liveOnly ? "/marketplace" : "/marketplace?live=true"}
-                style={{ fontSize: "0.875rem", padding: "0.4rem 0.8rem" }}
-              >
-                {liveOnly ? "✓ Live Only" : "Show Live Endpoints Only"}
-              </Link>
-            </div>
+          <div className="filter-bar__group">
+            <Link
+              className={`filter-pill ${liveOnly ? "filter-pill--active" : ""}`}
+              href={liveOnly ? "/marketplace" : "/marketplace?live=true"}
+            >
+              {liveOnly ? "✓ Live Endpoints Only" : "Show Live Endpoints Only"}
+            </Link>
           </div>
         </section>
 
         {/* Marketplace Grid */}
         <section aria-label="Marketplace Agents" className="section">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+          <div className="grid-three">
             {filteredListings.map((listing) => {
               const isLive = endpointAnswered(listing.endpoint);
               const bestFor = BEST_FOR_DESCRIPTIONS[listing.card.slug] ?? listing.card.description;
 
               return (
-                <div
-                  className="card"
-                  key={listing.card.slug}
-                  style={{
-                    background: "var(--surface-subtle, #1e293b)",
-                    border: "1px solid var(--border, #334155)",
-                    borderRadius: "8px",
-                    padding: "1.5rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    {/* Header: Name, Token ID, Badges */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
-                      <div>
-                        <h3 className="listing__name" style={{ fontSize: "1.25rem", margin: 0 }}>
-                          {listing.card.name}
-                        </h3>
-                        <span className="micro" style={{ color: "#94a3b8" }}>
-                          {listing.category.name} {listing.agentId ? `· ERC-8004 #${listing.agentId}` : ""}
-                        </span>
-                      </div>
-                      <span
-                        className="chip"
-                        style={{
-                          background: isLive ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                          color: isLive ? "#10b981" : "#ef4444",
-                          fontWeight: "bold",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        {isLive ? "LIVE ENDPOINT" : "OFFLINE"}
-                      </span>
-                    </div>
-
-                    {/* Trust Badge */}
-                    <div style={{ marginBottom: "1rem" }}>
-                      <span
-                        className="chip"
-                        style={{
-                          background: "rgba(59, 130, 246, 0.15)",
-                          color: "#60a5fa",
-                          fontSize: "0.8rem",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Evidence: {listing.provenance}
-                      </span>
-                    </div>
-
-                    {/* Best-For */}
-                    <div style={{ marginBottom: "1rem" }}>
-                      <span className="caption" style={{ color: "#94a3b8", display: "block" }}>Best For:</span>
-                      <p className="listing__summary" style={{ fontSize: "0.9rem", margin: 0 }}>
-                        {bestFor}
+                <article className="card" key={listing.card.slug}>
+                  <div className="listing__head">
+                    <div>
+                      <h3 className="listing__name">
+                        {listing.card.name}
+                      </h3>
+                      <p className="micro">
+                        {listing.category.name} {listing.agentId ? `· ERC-8004 #${listing.agentId}` : ""}
                       </p>
                     </div>
-
-                    {/* Authority Needed */}
-                    <div style={{ background: "rgba(0, 0, 0, 0.2)", padding: "0.75rem", borderRadius: "6px", marginBottom: "1rem" }}>
-                      <span className="caption" style={{ color: "#94a3b8", display: "block" }}>Authority Needed:</span>
-                      <strong style={{ fontSize: "0.85rem" }}>{listing.category.authorityShape}</strong>
-                    </div>
-
-                    {/* Evidence Facts Summary */}
-                    <div style={{ marginBottom: "1rem" }}>
-                      <span className="caption" style={{ color: "#94a3b8", display: "block" }}>Evidence Facts:</span>
-                      <ul className="bullets micro" style={{ margin: 0, paddingLeft: "1.2rem" }}>
-                        {listing.provenance === "Mandate-verified" ? (
-                          <>
-                            <li>Mandate execution + independent replay verified</li>
-                            <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
-                            <li>1 Permitted execution + 3 boundary refusals recorded</li>
-                          </>
-                        ) : listing.provenance === "Mandate-native" ? (
-                          <>
-                            <li>Live mandate execution recorded</li>
-                            <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
-                          </>
-                        ) : listing.provenance === "Trial-verified" ? (
-                          <>
-                            <li>Trial passed on pinned BSC Testnet fork</li>
-                            {listing.receipt?.receiptId && (
-                              <li>Receipt: {listing.receipt.receiptId.slice(0, 10)}…</li>
-                            )}
-                          </>
-                        ) : listing.provenance === "Identity-bound" ? (
-                          <>
-                            <li>Execution identity linked to ERC-8004 identity #{listing.agentId ?? "registered"}</li>
-                            <li>No completed MANDATE trial yet</li>
-                          </>
-                        ) : listing.provenance === "Public Activity" ? (
-                          <>
-                            <li>Public activity observed on BSC Testnet</li>
-                            <li>Unverified by MANDATE trial runner</li>
-                          </>
-                        ) : (
-                          <>
-                            <li>Developer-supplied capability only</li>
-                            <li>Unverified assertion</li>
-                          </>
-                        )}
-                      </ul>
-                    </div>
+                    <span className={`status-pill ${isLive ? "status-pill--verified" : "status-pill--stale"}`}>
+                      <span className="status__glyph">{isLive ? "●" : "○"}</span>
+                      {isLive ? "LIVE" : "OFFLINE"}
+                    </span>
                   </div>
 
-                  {/* Card Actions */}
-                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+                  <div className="spaced-sm">
+                    <span className="status-pill status-pill--verified">
+                      Evidence: {listing.provenance}
+                    </span>
+                  </div>
+
+                  <div className="spaced">
+                    <span className="eyebrow">Best For</span>
+                    <p className="caption spaced-sm">
+                      {bestFor}
+                    </p>
+                  </div>
+
+                  <div className="panel spaced">
+                    <span className="filter-bar__label">Required Authority</span>
+                    <p className="mono tabular spaced-sm">
+                      {listing.category.authorityShape}
+                    </p>
+                  </div>
+
+                  <div className="spaced">
+                    <span className="eyebrow">Evidence Facts</span>
+                    <ul className="bullets micro spaced-sm">
+                      {listing.provenance === "Mandate-verified" ? (
+                        <>
+                          <li>Mandate execution + independent replay verified</li>
+                          <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
+                          <li>1 Permitted execution + 3 boundary refusals recorded</li>
+                        </>
+                      ) : listing.provenance === "Mandate-native" ? (
+                        <>
+                          <li>Live mandate execution recorded</li>
+                          <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
+                        </>
+                      ) : listing.provenance === "Trial-verified" ? (
+                        <>
+                          <li>Trial passed on pinned BSC Testnet fork</li>
+                          {listing.receipt?.receiptId && (
+                            <li>Receipt: {listing.receipt.receiptId.slice(0, 10)}…</li>
+                          )}
+                        </>
+                      ) : listing.provenance === "Identity-bound" ? (
+                        <>
+                          <li>Execution identity linked to ERC-8004 identity #{listing.agentId ?? "registered"}</li>
+                          <li>No completed MANDATE trial yet</li>
+                        </>
+                      ) : listing.provenance === "Public Activity" ? (
+                        <>
+                          <li>Public activity observed on BSC Testnet</li>
+                          <li>Unverified by MANDATE trial runner</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>Developer-supplied capability only</li>
+                          <li>Unverified assertion</li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="hero__actions spaced">
                     <Link
                       className="button"
                       href={`/agents/${listing.card.slug}`}
-                      style={{ flex: 1, textAlign: "center", fontSize: "0.875rem" }}
                     >
                       View Agent
                     </Link>
                     <Link
                       className="button button--ghost"
                       href={`/compare?a=${listing.card.slug}`}
-                      style={{ fontSize: "0.875rem" }}
                     >
                       Compare
                     </Link>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>

@@ -1,0 +1,134 @@
+{
+  "projectName": "MANDATE by winsznx",
+  "repo": "https://github.com/winsznx/mandate",
+  "liveUrl": "https://mandate-web.timjosh507.workers.dev",
+  "proofUrl": "https://mandate-web.timjosh507.workers.dev/proof/0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b",
+  "network": {
+    "chainId": 97,
+    "name": "BSC Testnet"
+  },
+  "registry": "0x0791af52629206b5434a6865e9e1536a493854ca",
+  "identityRegistry": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
+  "featuredMandateId": "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b",
+  "featuredAgentId": 1842,
+  "gatewayBaseUrl": "https://mandate-agents.timjosh507.workers.dev",
+  "contracts": [
+    {
+      "name": "MandateReceiptRegistry",
+      "address": "0x0791af52629206b5434a6865e9e1536a493854ca",
+      "verified": true,
+      "sourcifyUrl": "https://testnet.bscscan.com/address/0x0791af52629206b5434a6865e9e1536a493854ca"
+    },
+    {
+      "name": "ERC-8004 IdentityRegistry",
+      "address": "0x8004a818bfb912233c491871b3d84c89a494bd9e",
+      "verified": true,
+      "sourcifyUrl": "https://testnet.bscscan.com/address/0x8004a818bfb912233c491871b3d84c89a494bd9e"
+    }
+  ],
+  "transactions": {
+    "receiptCommitment": "0x49455881216a503f509f123d91b94f099fd11ecbf2b94cb909f5f9c12227775a",
+    "activationRegistration": "0xa929284b16cc0605eeb0fb4fe1cf29c0deda266421a999ac72d97d0d54eff905",
+    "permittedExecution": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4",
+    "revocationRegistration": "0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b"
+  },
+  "referenceAgents": [
+    {
+      "slug": "health-factor-a",
+      "name": "Conservative Guardian",
+      "category": "HEALTH_FACTOR",
+      "tokenId": 1842,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/health-factor-a",
+      "provenanceTier": "Mandate-verified"
+    },
+    {
+      "slug": "health-factor-b",
+      "name": "Efficient Guardian",
+      "category": "HEALTH_FACTOR",
+      "tokenId": 1843,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/health-factor-b",
+      "provenanceTier": "Identity-bound"
+    },
+    {
+      "slug": "rebalancing-a",
+      "name": "Narrow Band Allocator",
+      "category": "REBALANCING",
+      "tokenId": 1844,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/rebalancing-a",
+      "provenanceTier": "Trial-verified"
+    },
+    {
+      "slug": "rebalancing-b",
+      "name": "Wide Band Allocator",
+      "category": "REBALANCING",
+      "tokenId": 1845,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/rebalancing-b",
+      "provenanceTier": "Identity-bound"
+    },
+    {
+      "slug": "grid-a",
+      "name": "Tight Grid",
+      "category": "GRID",
+      "tokenId": 1846,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/grid-a",
+      "provenanceTier": "Trial-verified"
+    },
+    {
+      "slug": "grid-b",
+      "name": "Wide Grid",
+      "category": "GRID",
+      "tokenId": 1847,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/grid-b",
+      "provenanceTier": "Identity-bound"
+    },
+    {
+      "slug": "yield-a",
+      "name": "Cost-Aware Optimizer",
+      "category": "YIELD",
+      "tokenId": 1848,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/yield-a",
+      "provenanceTier": "Trial-verified"
+    },
+    {
+      "slug": "yield-b",
+      "name": "Diversified Optimizer",
+      "category": "YIELD",
+      "tokenId": 1849,
+      "endpoint": "https://mandate-agents.timjosh507.workers.dev/yield-b",
+      "provenanceTier": "Identity-bound"
+    }
+  ],
+  "categories": {
+    "HEALTH_FACTOR": "Health Factor Monitoring",
+    "YIELD": "Yield Optimisation",
+    "GRID": "Grid Trading",
+    "REBALANCING": "Rebalancing"
+  },
+  "partnerQualifications": {
+    "altana": {
+      "qualified": true,
+      "summary": "Proven Altana passkey wallet & session enforcement, spend caps, target/selector allowlists, KeyStore session registration, and in-product revocation control."
+    },
+    "termiX": {
+      "qualified": true,
+      "summary": "TermiX Agent Advantage Report filed with 3 real paired tasks comparing automated execution against manual execution (time, cost, risk metrics)."
+    },
+    "altLayer": {
+      "qualified": true,
+      "summary": "ERC-8004 identity integration and verification on BSC testnet rollups & agent runtime."
+    },
+    "pancakeSwap": {
+      "qualified": false,
+      "summary": "Interest track retained. Rebalancing built on Venus mint/redeem to guarantee calldata guard safety; arbitrary Pancake router calls are NOT claimed as fully guarded."
+    }
+  },
+  "claimLedger": "claims/ledger.json",
+  "agentAdvantageReport": "reports/agent-advantage/REPORT.md",
+  "videoUrl": null,
+  "limitations": [
+    "Tested and verified on BSC Testnet (chain 97). No mainnet claim.",
+    "Refused intents occur during validation before broadcast, producing no reverted transaction hash.",
+    "Reference agents hosted on MANDATE infrastructure.",
+    "Session key enforces call target, selector, spend cap, and expiry; calldata parameters remain unconstrained without target guards."
+  ]
+}

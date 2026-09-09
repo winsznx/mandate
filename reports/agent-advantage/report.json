@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "mandate.agent-advantage-report/1",
+  "generatedAt": "2026-09-08",
+  "projectName": "MANDATE by winsznx",
+  "summary": {
+    "totalTasksEvaluated": 3,
+    "averageTimeReductionPercent": 98.9,
+    "averageCostReductionPercent": 59.3,
+    "securityTaskIncluded": true
+  },
+  "tasks": [
+    {
+      "taskId": "task-1-health-factor-defense",
+      "name": "Venus Health Factor Liquidation Defense",
+      "category": "HEALTH_FACTOR",
+      "domain": "security_and_risk",
+      "manual": {
+        "timeSeconds": 1120,
+        "costTbnb": 0.0042,
+        "stepsCount": 5,
+        "riskLevel": "HIGH_LIQUIDATION_RISK"
+      },
+      "agent": {
+        "slug": "health-factor-a",
+        "timeSeconds": 12,
+        "costTbnb": 0.0018,
+        "stepsCount": 1,
+        "provenanceTier": "Mandate-verified"
+      },
+      "advantage": {
+        "timeSavedSeconds": 1108,
+        "timeReductionPercent": 98.9,
+        "costSavedTbnb": 0.0024,
+        "costReductionPercent": 57.1,
+        "qualitativeResult": "100% liquidation avoidance within 12s vs 18.6m human delay"
+      },
+      "evidence": {
+        "txHash": "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4",
+        "mandateId": "0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f6d8d9b"
+      }
+    },
+    {
+      "taskId": "task-2-yield-optimization",
+      "name": "Venus Supply Yield Optimization",
+      "category": "YIELD",
+      "domain": "yield_trading",
+      "manual": {
+        "timeSeconds": 450,
+        "costTbnb": 0.0015,
+        "stepsCount": 3,
+        "riskLevel": "SUBOPTIMAL_APY"
+      },
+      "agent": {
+        "slug": "yield-a",
+        "timeSeconds": 4,
+        "costTbnb": 0.0006,
+        "stepsCount": 1,
+        "provenanceTier": "Trial-verified"
+      },
+      "advantage": {
+        "timeSavedSeconds": 446,
+        "timeReductionPercent": 99.1,
+        "costSavedTbnb": 0.0009,
+        "costReductionPercent": 60.0,
+        "qualitativeResult": "Instant APY math and optimal mint execution"
+      },
+      "evidence": {
+        "trialReceiptId": "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76"
+      }
+    },
+    {
+      "taskId": "task-3-collateral-rebalancing",
+      "name": "Collateral Band Rebalancing",
+      "category": "REBALANCING",
+      "domain": "asset_management",
+      "manual": {
+        "timeSeconds": 680,
+        "costTbnb": 0.0031,
+        "stepsCount": 3,
+        "riskLevel": "CALCULATION_ERROR"
+      },
+      "agent": {
+        "slug": "rebalancing-a",
+        "timeSeconds": 8,
+        "costTbnb": 0.0012,
+        "stepsCount": 1,
+        "provenanceTier": "Trial-verified"
+      },
+      "advantage": {
+        "timeSavedSeconds": 672,
+        "timeReductionPercent": 98.8,
+        "costSavedTbnb": 0.0019,
+        "costReductionPercent": 61.3,
+        "qualitativeResult": "Automated allocation check eliminating manual math errors"
+      },
+      "evidence": {
+        "trialReceiptId": "0x8c2f934fddaab41890260adec051df7795bf5a4e6dbd290515749ad76f286b76"
+      }
+    }
+  ]
+}

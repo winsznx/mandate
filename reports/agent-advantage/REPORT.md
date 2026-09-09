@@ -9,6 +9,9 @@
 
 ## Executive Summary
 
+> [!NOTE]
+> **Framework Status & Disclosure**: Agent Advantage Report framework included; complete three-task human baseline not independently measured before submission.
+
 This report measures the quantifiable advantage of operating autonomous DeFi agents under MANDATE's **Trial-Bound Authority** compared to manual, un-automated human workflows across three distinct tasks.
 
 All measurements reflect observed testnet execution and timed manual benchmarks on BNB Smart Chain testnet (chain 97).

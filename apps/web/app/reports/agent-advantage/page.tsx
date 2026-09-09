@@ -17,8 +17,15 @@ export default function AgentAdvantageReportPage() {
         </div>
         <h1 className="display-sm">TermiX Agent Advantage Report</h1>
         <p className="lede">
-          Comparing real observed performance, execution latency, gas cost, and risk outcomes for 3 real DeFi tasks: automated execution under MANDATE vs manual human execution on {NETWORK_NAME}.
+          Comparing observed performance, execution latency, gas cost, and risk outcomes for 3 DeFi tasks: automated execution under MANDATE vs manual human execution on {NETWORK_NAME}.
         </p>
+
+        <div className="panel" style={{ background: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.4)", padding: "1.25rem", marginBottom: "1.5rem" }}>
+          <strong style={{ color: "#eab308", fontSize: "1.05rem" }}>FRAMEWORK STATUS & PROVENANCE DISCLOSURE</strong>
+          <p className="micro" style={{ margin: "0.5rem 0 0 0", color: "#fef08a" }}>
+            Agent Advantage Report framework included; complete three-task human baseline not independently measured before submission.
+          </p>
+        </div>
 
         {/* Benchmark Overview Table */}
         <section aria-label="Benchmark Summary" className="panel spaced">

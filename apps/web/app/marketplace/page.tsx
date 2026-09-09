@@ -171,14 +171,39 @@ export default async function MarketplacePage({ searchParams }: MarketplacePageP
                     <div style={{ marginBottom: "1rem" }}>
                       <span className="caption" style={{ color: "#94a3b8", display: "block" }}>Evidence Facts:</span>
                       <ul className="bullets micro" style={{ margin: 0, paddingLeft: "1.2rem" }}>
-                        {listing.receipt?.receiptId ? (
+                        {listing.provenance === "Mandate-verified" ? (
                           <>
-                            <li>Trial Passed (Receipt {listing.receipt.receiptId.slice(0, 8)}…)</li>
-                            <li>1 Permitted execution confirmed</li>
-                            <li>3 Account boundary refusals recorded</li>
+                            <li>Mandate execution + independent replay verified</li>
+                            <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
+                            <li>1 Permitted execution + 3 boundary refusals recorded</li>
+                          </>
+                        ) : listing.provenance === "Mandate-native" ? (
+                          <>
+                            <li>Live mandate execution recorded</li>
+                            <li>Trial Passed (Receipt {listing.receipt?.receiptId?.slice(0, 8)}…)</li>
+                          </>
+                        ) : listing.provenance === "Trial-verified" ? (
+                          <>
+                            <li>Trial passed on pinned BSC Testnet fork</li>
+                            {listing.receipt?.receiptId && (
+                              <li>Receipt: {listing.receipt.receiptId.slice(0, 10)}…</li>
+                            )}
+                          </>
+                        ) : listing.provenance === "Identity-bound" ? (
+                          <>
+                            <li>Execution identity linked to ERC-8004 identity #{listing.agentId ?? "registered"}</li>
+                            <li>No completed MANDATE trial yet</li>
+                          </>
+                        ) : listing.provenance === "Public Activity" ? (
+                          <>
+                            <li>Public activity observed on BSC Testnet</li>
+                            <li>Unverified by MANDATE trial runner</li>
                           </>
                         ) : (
-                          <li>Strategy Trial Executed & Verified</li>
+                          <>
+                            <li>Developer-supplied capability only</li>
+                            <li>Unverified assertion</li>
+                          </>
                         )}
                       </ul>
                     </div>

@@ -55,9 +55,7 @@ export function Masthead({ current }: { current?: string | undefined }) {
 
         <nav aria-label="Main Navigation" className="masthead__desktop-nav">
           {NAV.map((item) => {
-            const isActive =
-              item.href === current ||
-              (item.href === "/marketplace" && current === "/");
+            const isActive = item.href === current;
             return (
               <Link
                 aria-current={isActive ? "page" : undefined}

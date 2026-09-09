@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const BASE_URL = process.env.BASE_URL || 'https://mandate-web.timjosh507.workers.dev';
-const STAGE = process.argv[2] || 'before'; // 'before' or 'after'
+const STAGE = process.argv[2] || 'after';
 
 const ROUTES = [
   '/',
@@ -55,7 +55,8 @@ async function capture() {
       const targetPath = path.join(outputDir, filename);
 
       try {
-        await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle', timeout: 15000 });
+        await page.goto(`${BASE_URL}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(500);
         await page.screenshot({ path: targetPath, fullPage: false });
         console.log(`Captured: ${STAGE}/${filename}`);
       } catch (err) {

@@ -94,6 +94,7 @@ a {
   display: flex;
   align-items: center;
   gap: var(--spacing-32);
+  height: 100%;
 }
 
 .wordmark {
@@ -117,6 +118,7 @@ a {
   display: none;
   align-items: center;
   gap: var(--spacing-24);
+  height: 100%;
 }
 
 @media (min-width: 760px) {
@@ -126,12 +128,16 @@ a {
 }
 
 .masthead__link {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   color: var(--text-muted);
   text-decoration: none;
-  padding: var(--spacing-8) 0;
+  padding: 0 var(--spacing-4);
   border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
@@ -1765,66 +1771,7 @@ a {
 
 /* --- product extensions (Duna system) ------------------------------------ */
 
-.masthead {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-16);
-  padding: var(--spacing-16) 0;
-  border-bottom: 1px solid var(--border-hairline);
-}
 
-.masthead__top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-16);
-  width: 100%;
-}
-
-.masthead__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-12);
-}
-
-.masthead__meta {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--spacing-4) var(--spacing-12);
-  border-radius: var(--radius-badges);
-  border: 1px solid var(--border-hairline);
-  background: var(--surface-panel);
-  font-size: var(--text-micro);
-  color: var(--text-muted);
-}
-
-.masthead__nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-16);
-  overflow-x: auto;
-  padding-bottom: var(--spacing-4);
-  -webkit-overflow-scrolling: touch;
-}
-
-@media (min-width: 768px) {
-  .masthead {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-12) 0 var(--spacing-16);
-  }
-
-  .masthead__top-row {
-    width: auto;
-  }
-
-  .masthead__nav {
-    overflow-x: visible;
-    padding-bottom: 0;
-  }
-}
 
 /* Wallet Control */
 .wallet-control {

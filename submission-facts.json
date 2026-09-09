@@ -110,12 +110,14 @@
       "summary": "Proven Altana passkey wallet & session enforcement, spend caps, target/selector allowlists, KeyStore session registration, and in-product revocation control."
     },
     "termiX": {
-      "qualified": true,
-      "summary": "TermiX Agent Advantage Report filed with 3 real paired tasks comparing automated execution against manual execution (time, cost, risk metrics)."
+      "qualified": false,
+      "summary": "Agent Advantage Report framework included; complete three-task human baseline not independently measured before submission."
     },
     "altLayer": {
-      "qualified": true,
-      "summary": "ERC-8004 identity integration and verification on BSC testnet rollups & agent runtime."
+      "interested": true,
+      "integration": "8004scan / ERC-8004 discovery",
+      "qualified": false,
+      "summary": "8004scan ERC-8004 discovery integration."
     },
     "pancakeSwap": {
       "qualified": false,

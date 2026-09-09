@@ -29,8 +29,8 @@ https://mandate-web.timjosh507.workers.dev/proof/0xae988cd9815bb6db588dc09423d94
 Working MVP (Proven end-to-end on BSC Testnet, chain 97)
 
 ## Sub-Prize / Partner Track Interests
-- [x] **TermiX Agent Advantage Track** (Report filed: `reports/agent-advantage/REPORT.md`)
-- [x] **AltLayer Agent Track** (ERC-8004 identity & agent infrastructure)
+- [ ] **TermiX Agent Advantage Track** (Framework included in `reports/agent-advantage/REPORT.md`; complete human baseline not independently measured before submission)
+- [ ] **AltLayer / 8004scan Track** (8004scan / ERC-8004 discovery integration)
 - [x] **Altana Session & Passkey Track** (Live Altana session proof & account enforcement)
 - [ ] **PancakeSwap Track** (Interest track declared; rebalancing built safely on Venus to preserve strict target/selector guards without calldata injection risks)
 
@@ -73,9 +73,9 @@ pnpm verify:mandate 0xae988cd9815bb6db588dc09423d94a339cc029d29a69d27e679f631c2f
 The independent CLI verifier re-reads the chain, re-fetches evidence, re-hashes documents, re-runs the reference model, and recomputes the subset relation.
 
 ### 6. Partner Qualifications Summary
-- **TermiX**: Filed `reports/agent-advantage/REPORT.md` analyzing 3 real tasks with vs. without agent (automated health factor monitoring saved ~18 minutes and prevented liquidation; yield optimizer improved APY calculation accuracy; grid manager eliminated manual recalculations).
 - **Altana**: Implemented native Altana session management, KeyStore registration, spend limits per UTC day, and live browser revocation.
-- **AltLayer / ERC-8004**: All 8 reference agents registered on chain on BSC testnet ERC-8004 registry.
+- **TermiX**: Agent Advantage Report framework included (`reports/agent-advantage/REPORT.md`); complete three-task human baseline not independently measured before submission.
+- **AltLayer / ERC-8004**: All 8 reference agents registered on chain on BSC testnet ERC-8004 registry (`0x8004a818bfb912233c491871b3d84c89a494bd9e`) with 8004scan discovery integration.
 
 ### 7. Honest Disclosures & Limitations
 - All proofs demonstrated on **BSC Testnet (chain 97)**.

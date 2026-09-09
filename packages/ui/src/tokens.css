@@ -3,18 +3,8 @@
  *
  * The system is "Duna": a warm, near-achromatic editorial surface. Elevation
  * comes from hairline borders and background tint rather than shadow, controls
- * are pill-shaped, and display type carries aggressive negative tracking. The
+ * are cleanly bounded, and display type carries negative tracking. The
  * intent is a document you would trust with money, not a dashboard.
- *
- * One deliberate extension is recorded here rather than buried in components.
- * Duna asks for a 99% achromatic interface and forbids a blue or green accent.
- * MANDATE still has to distinguish SUCCESS from BLOCKED at a glance, and doing
- * that in pure greyscale would be both unreadable and — since colour alone must
- * never carry status — insufficient anyway. So status uses three signals
- * together: a glyph, a text label, and a desaturated warm tone drawn from the
- * same family as the neutrals. `--status-blocked` is a muted terracotta, not a
- * signal red; `--status-verified` is the aubergine ink already in the palette.
- * Neither is ever used as a decorative accent.
  */
 
 :root {
@@ -65,15 +55,12 @@
   --status-stale-surface: rgba(137, 134, 131, 0.08);
 
   /* --- Typography ----------------------------------------------------- */
-  /* `--font-*-loaded` are set by next/font in the web app; the stack degrades
-     cleanly anywhere the variables are absent. */
   --font-display:
     var(--font-display-loaded), "GT America", "Inter Tight", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-body:
     var(--font-body-loaded), "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
-  /* Tabular figures keep spend counters from shifting as they tick. */
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   --font-weight-regular: 400;
@@ -128,16 +115,14 @@
   --card-padding: 32px;
   --element-gap: 16px;
 
-  /* --- Radius --------------------------------------------------------- */
+  /* --- Radius Hierarchy ----------------------------------------------- */
   --radius-inputs: 8px;
-  --radius-cards: 16px;
-  --radius-images: 24px;
-  --radius-large-buttons: 60px;
-  --radius-buttons: 999px;
+  --radius-buttons: 10px;
+  --radius-cards: 14px;
+  --radius-images: 16px;
   --radius-badges: 999px;
 
   /* --- Elevation ------------------------------------------------------ */
-  /* Duna's entire elevation system is a 1px inset ring. There is no drop shadow. */
   --shadow-subtle: rgba(0, 0, 0, 0.05) 0 0 0 1px inset;
 
   /* --- Motion --------------------------------------------------------- */
@@ -155,12 +140,6 @@
   }
 }
 
-/**
- * The palette is a single committed light theme. Duna's warmth is load-bearing
- * for the product's tone, and a mechanically inverted dark variant would read as
- * a different, colder product. Surfaces are painted explicitly so the page never
- * inherits a host background.
- */
 html {
   color-scheme: light;
 }
@@ -187,7 +166,6 @@ h4,
   font-weight: var(--font-weight-medium);
 }
 
-/* Numeric readouts must not reflow as digits change. */
 .tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum", "zero";

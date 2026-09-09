@@ -44,8 +44,8 @@ export default function GuidedDemoPage() {
           <div className="card spaced">
             <div className="listing__head">
               <h3 className="listing__name">Conservative Guardian</h3>
-              <span className="status-pill status-pill--verified">
-                <span className="status__glyph">◉</span> Mandate Verified
+              <span className="status-indicator status-indicator--pass">
+                ● Mandate Verified
               </span>
             </div>
             <p className="micro spaced-sm">
@@ -69,8 +69,8 @@ export default function GuidedDemoPage() {
           </p>
 
           <div className="card spaced">
-            <span className="status-pill status-pill--verified">
-              <span className="status__glyph">●</span> TRIAL PASSED & RECEIPT PUBLISHED
+            <span className="status-indicator status-indicator--pass">
+              ● TRIAL PASSED & RECEIPT PUBLISHED
             </span>
             <dl className="fact-grid spaced">
               <div>
@@ -100,28 +100,38 @@ export default function GuidedDemoPage() {
             The compiler validates that granted permissions do not exceed the tested envelope.
           </p>
 
+          <div className="authority-envelope-visual spaced">
+            <img
+              alt="Authority Envelope Illustration"
+              className="authority-envelope-img"
+              height="280"
+              src="/brand/authority-envelope.svg"
+              width="520"
+            />
+          </div>
+
           <div className="grid-two spaced">
             <div className="card">
-              <h4 className="listing__name">TESTED IN TRIAL</h4>
+              <h4 className="card-label">TESTED IN TRIAL</h4>
               <ul className="bullets micro spaced-sm">
                 <li>Target: <code>vUSDT</code></li>
                 <li>Selector: <code>repayBorrow(uint256)</code></li>
-                <li>Max Spend: &le; 25 USDT / UTC day</li>
+                <li>Max Spend: ≤ 25 USDT / UTC day</li>
               </ul>
             </div>
             <div className="card">
-              <h4 className="listing__name">GRANTED SESSION</h4>
+              <h4 className="card-label">GRANTED SESSION</h4>
               <ul className="bullets micro spaced-sm">
                 <li>Target: <code>vUSDT</code></li>
                 <li>Selector: <code>repayBorrow(uint256)</code></li>
-                <li>Max Spend: &le; 25 USDT / UTC day</li>
+                <li>Max Spend: ≤ 25 USDT / UTC day</li>
               </ul>
             </div>
           </div>
 
           <div className="alert-notice alert-notice--verified spaced">
-            <span className="status-pill status-pill--verified">
-              ✓ SUBSET MATCH: GrantedAuthority &sube; TestedAuthority IS TRUE
+            <span className="status-indicator status-indicator--pass">
+              ✓ SUBSET MATCH: GrantedAuthority ⊆ TestedAuthority IS TRUE
             </span>
           </div>
         </div>
@@ -138,8 +148,8 @@ export default function GuidedDemoPage() {
           </p>
 
           <div className="card spaced">
-            <span className="status-pill status-pill--verified">
-              <span className="status__glyph">●</span> Executed Successfully
+            <span className="status-indicator status-indicator--pass">
+              ● Executed Successfully
             </span>
             <p className="listing__summary spaced-sm">
               Debt reduced from 103.20 to 83.20 USDT. Health Factor restored to <strong>1.50</strong>.
@@ -171,14 +181,14 @@ export default function GuidedDemoPage() {
 
           <div className="stack spaced">
             <div className="card">
-              <span className="status-pill status-pill--blocked">
-                <span className="status__glyph">×</span> Breach Attempt (+6 USDT Spend)
+              <span className="status-indicator status-indicator--fail">
+                × Breach Attempt (+6 USDT Spend)
               </span>
               <p className="micro spaced-sm">Refused by account with <code>ExceededSpendLimit</code>. No transaction broadcast.</p>
             </div>
             <div className="card">
-              <span className="status-pill status-pill--blocked">
-                <span className="status__glyph">×</span> Wrong Target / Selector Attempt
+              <span className="status-indicator status-indicator--fail">
+                × Wrong Target / Selector Attempt
               </span>
               <p className="micro spaced-sm">Refused by account with <code>UnauthorizedCall</code>. No transaction broadcast.</p>
             </div>
@@ -197,8 +207,8 @@ export default function GuidedDemoPage() {
           </p>
 
           <div className="card spaced">
-            <span className="status-pill status-pill--blocked">
-              <span className="status__glyph">×</span> Revocation Confirmed
+            <span className="status-indicator status-indicator--fail">
+              × Revocation Confirmed
             </span>
             <p className="micro tabular spaced-sm">
               Revoke Tx:{" "}
@@ -235,7 +245,7 @@ export default function GuidedDemoPage() {
 
         {/* Demo Warning Banner */}
         <section aria-label="Demo Warning" className="alert-notice spaced">
-          <span className="status-pill status-pill--verified">VERIFIED REPLAY DEMO MODE</span>
+          <span className="status-indicator status-indicator--pass">VERIFIED REPLAY DEMO MODE</span>
           <p className="micro spaced-sm">
             You are viewing a completed public mandate. No live transactions will be signed from this guided viewer.
           </p>
@@ -245,7 +255,7 @@ export default function GuidedDemoPage() {
         <section aria-label="Demo Viewer" className="panel spaced">
           <div className="listing__head">
             <span className="eyebrow">Slide {slide} of {SLIDES.length}</span>
-            <span className="status-pill status-pill--verified">{currentSlide?.subtitle}</span>
+            <span className="status-indicator status-indicator--pass">{currentSlide?.subtitle}</span>
           </div>
 
           <h2 className="section__title spaced">

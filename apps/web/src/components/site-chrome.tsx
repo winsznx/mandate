@@ -6,17 +6,17 @@ import { CHAIN_ID, FEATURED_MANDATE_ID, NETWORK_NAME } from "../proof/config";
 import { WalletControl } from "./wallet-control";
 
 const NAV = [
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/mandates", label: "My Mandates" },
-  { href: "/compare", label: "Compare" },
-  { href: "/developers", label: "Developers" },
+  { href: "/marketplace", label: "Marketplace", icon: "/brand/icons/marketplace.svg" },
+  { href: "/mandates", label: "My Mandates", icon: "/brand/icons/mandates.svg" },
+  { href: "/compare", label: "Compare", icon: "/brand/icons/compare.svg" },
+  { href: "/developers", label: "Developers", icon: "/brand/icons/developers.svg" },
 ] as const;
 
 const SECONDARY_NAV = [
-  { href: "/demo", label: "Guided demo" },
-  { href: `/proof/${FEATURED_MANDATE_ID}`, label: "Proof verification" },
-  { href: "/status", label: "System status" },
-  { href: "/methodology", label: "Methodology & provenance" },
+  { href: "/demo", label: "Guided demo", icon: "/brand/icons/status.svg" },
+  { href: `/proof/${FEATURED_MANDATE_ID}`, label: "Proof verification", icon: "/brand/icons/proof.svg" },
+  { href: "/status", label: "System status", icon: "/brand/icons/status.svg" },
+  { href: "/methodology", label: "Methodology & provenance", icon: "/brand/icons/proof.svg" },
 ] as const;
 
 export function Masthead({ current }: { current?: string | undefined }) {
@@ -47,10 +47,14 @@ export function Masthead({ current }: { current?: string | undefined }) {
     <header className="masthead">
       <div className="masthead__brand-group">
         <Link className="wordmark" href="/" onClick={closeMenu}>
-          <span aria-hidden="true" className="wordmark__mark">
-            ✱
-          </span>
-          MANDATE
+          <img
+            alt=""
+            className="wordmark__mark-img"
+            height="22"
+            src="/brand/mark.svg"
+            width="22"
+          />
+          <span className="wordmark__text">MANDATE</span>
         </Link>
 
         <nav aria-label="Main Navigation" className="masthead__desktop-nav">
@@ -97,10 +101,14 @@ export function Masthead({ current }: { current?: string | undefined }) {
           >
             <div className="mobile-sheet__header">
               <span className="wordmark">
-                <span aria-hidden="true" className="wordmark__mark">
-                  ✱
-                </span>{" "}
-                MANDATE
+                <img
+                  alt=""
+                  className="wordmark__mark-img"
+                  height="22"
+                  src="/brand/mark.svg"
+                  width="22"
+                />
+                <span className="wordmark__text">MANDATE</span>
               </span>
               <button
                 aria-label="Close menu"
@@ -123,6 +131,7 @@ export function Masthead({ current }: { current?: string | undefined }) {
                     key={item.href}
                     onClick={closeMenu}
                   >
+                    <img alt="" className="mobile-sheet__icon" height="16" src={item.icon} width="16" />
                     {item.label}
                   </Link>
                 );
@@ -142,6 +151,7 @@ export function Masthead({ current }: { current?: string | undefined }) {
                   key={item.href}
                   onClick={closeMenu}
                 >
+                  <img alt="" className="mobile-sheet__icon" height="14" src={item.icon} width="14" />
                   {item.label}
                 </Link>
               ))}
@@ -164,11 +174,14 @@ export function SiteFooter({ children }: { children?: ReactNode }) {
     <footer className="site-footer">
       <div className="site-footer__grid">
         <div className="site-footer__brand-col">
-          <Link className="wordmark" href="/">
-            <span aria-hidden="true" className="wordmark__mark">
-              ✱
-            </span>
-            MANDATE
+          <Link className="site-footer__brand-link" href="/">
+            <img
+              alt="MANDATE"
+              className="site-footer__logo"
+              height="24"
+              src="/brand/logo-horizontal.svg"
+              width="130"
+            />
           </Link>
           <p className="caption site-footer__tagline">
             Evidence-bound authority for financial agents.
@@ -211,6 +224,14 @@ export function SiteFooter({ children }: { children?: ReactNode }) {
             <Link className="site-footer__link" href="/status">
               System Status
             </Link>
+            <a
+              className="site-footer__link"
+              href="https://github.com/winsznx/mandate"
+              rel="noreferrer"
+              target="_blank"
+            >
+              GitHub &nearr;
+            </a>
           </nav>
         </div>
       </div>

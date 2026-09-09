@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Compare Agents — MANDATE",
-  description: "Which agent is right for your capital? Compare DeFi agents side-by-side on evidence, protocol targets, spend caps, and trial results.",
+  description:
+    "Which agent is right for your capital? Compare DeFi agents side-by-side on evidence, protocol targets, spend caps, and trial results.",
 };
 
 interface ComparePageProps {
@@ -25,30 +26,40 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
   const slugA = params.a ?? "health-factor-a";
   const slugB = params.b ?? "health-factor-b";
 
-  const agentA = marketplace.listings.find(
-    (l) => l.card.slug === slugA || l.card.name.toLowerCase() === slugA.toLowerCase(),
-  ) ?? marketplace.listings[0];
+  const agentA =
+    marketplace.listings.find(
+      (l) => l.card.slug === slugA || l.card.name.toLowerCase() === slugA.toLowerCase(),
+    ) ?? marketplace.listings[0];
 
-  const agentB = marketplace.listings.find(
-    (l) => l.card.slug === slugB || l.card.name.toLowerCase() === slugB.toLowerCase(),
-  ) ?? marketplace.listings[1];
+  const agentB =
+    marketplace.listings.find(
+      (l) => l.card.slug === slugB || l.card.name.toLowerCase() === slugB.toLowerCase(),
+    ) ?? marketplace.listings[1];
 
   const BEST_FOR: Record<string, string> = {
-    "health-factor-a": "Borrowers seeking conservative 20 USDT debt top-ups with full mandate-native onchain proof.",
-    "health-factor-b": "Borrowers seeking dynamic debt repayment sizing during volatile market conditions.",
-    "yield-a": "Lenders seeking cost-aware supply yield optimization between Venus vBNB and vUSDT.",
-    "yield-b": "Lenders seeking multi-market yield allocation with gas drag protection.",
-    "grid-a": "Traders wanting tight grid order ladders around narrow price ranges.",
-    "grid-b": "Traders wanting wide grid coverage across broader price swings.",
-    "rebalancing-a": "LP allocators wanting strict 5% target band rebalancing.",
-    "rebalancing-b": "LP allocators minimizing transaction frequency.",
+    "health-factor-a":
+      "Borrowers seeking conservative 20 USDT debt top-ups with full mandate-native onchain proof.",
+    "health-factor-b":
+      "Borrowers seeking dynamic debt repayment sizing during volatile market conditions.",
+    "yield-a":
+      "Lenders seeking cost-aware supply yield optimization between Venus vBNB and vUSDT.",
+    "yield-b":
+      "Lenders seeking multi-market yield allocation with gas drag protection.",
+    "grid-a":
+      "Traders wanting tight grid order ladders around narrow price ranges.",
+    "grid-b":
+      "Traders wanting wide grid coverage across broader price swings.",
+    "rebalancing-a":
+      "LP allocators wanting strict 5% target band rebalancing.",
+    "rebalancing-b":
+      "LP allocators minimizing transaction frequency.",
   };
 
   return (
     <Page current="/compare">
       <main id="main">
         <div className="section__head">
-          <span className="eyebrow">Decision Matrix</span>
+          <span className="eyebrow">Compare agents</span>
         </div>
         <h1 className="display-sm">Which is better for your job?</h1>
         <p className="lede">
@@ -56,11 +67,11 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         </p>
 
         {/* Agent Selection Controls */}
-        <section aria-label="Select Agents to Compare" className="filter-bar">
+        <section aria-label="Select Agents to Compare" className="panel spaced">
           <form action="/compare" className="grid-two" method="get">
             <div>
               <label className="filter-bar__label" htmlFor="select-a">
-                Select Agent A:
+                First Agent (Agent A)
               </label>
               <select
                 className="select-control spaced-sm"
@@ -78,7 +89,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
             <div>
               <label className="filter-bar__label" htmlFor="select-b">
-                Select Agent B:
+                Second Agent (Agent B)
               </label>
               <select
                 className="select-control spaced-sm"
@@ -109,8 +120,8 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
           return (
             <section aria-label="Side-by-Side Comparison" className="section">
-              <div className="compare-container">
-                <table className="compare-table">
+              <div className="compare-container table-container">
+                <table className="compare-table" style={{ minWidth: "720px" }}>
                   <thead>
                     <tr>
                       <th className="compare-table__feature">Dimension</th>

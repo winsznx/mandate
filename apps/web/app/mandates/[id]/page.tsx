@@ -29,64 +29,72 @@ export default async function MandateDetailPage({ params }: MandateDetailPagePro
   const TIMELINE_STEPS = [
     {
       num: 1,
-      title: "1. Trial Passed on Pinned Fork",
-      time: "September 4, 2026 15:52 UTC",
+      title: "Trial passed on pinned fork",
+      time: "Sep 4, 2026 15:52 UTC",
       detail: "Tested against archive fork at block 129090727. Evaluator confirmed 20 USDT repayment restores HF from 1.08 to 1.50.",
       status: "PASS" as const,
       tx: null,
     },
     {
       num: 2,
-      title: "2. Receipt Published Onchain",
-      time: "September 4, 2026 15:57 UTC",
+      title: "Receipt published onchain",
+      time: "Sep 4, 2026 15:57 UTC",
       detail: "Immutable receipt commitment recorded on MandateReceiptRegistry contract.",
       status: "PASS" as const,
       tx: "0x49455881216a503f509f123d91b94f099fd11ecbf2b94cb909f5f9c12227775a" as Hex,
     },
     {
       num: 3,
-      title: "3. Session Authority Granted",
-      time: "September 4, 2026 15:59 UTC",
-      detail: "Owner granted Altana session key 0x6a32aba7… restricted to vUSDT.repayBorrow &le; 25 USDT/day.",
+      title: "Authority granted",
+      time: "Sep 4, 2026 15:59 UTC",
+      detail: "Owner granted Altana session key 0x6a32aba7… restricted to vUSDT.repayBorrow ≤ 25 USDT/day.",
       status: "PASS" as const,
       tx: "0xa929284b16cc0605eeb0fb4fe1cf29c0deda266421a999ac72d97d0d54eff905" as Hex,
     },
     {
       num: 4,
-      title: "4. Permitted Repayment Executed",
-      time: "September 4, 2026 15:59 UTC",
+      title: "20 USDT repaid (Permitted)",
+      time: "Sep 4, 2026 15:59 UTC",
       detail: "Agent invoked vUSDT.repayBorrow(20 USDT). Transaction succeeded; debt reduced from 103.20 to 83.20 USDT.",
       status: "PASS" as const,
       tx: "0x7f8c499de898b0a618972e6b30e05710fc28e7880e94162c7ea0afba7f120ea4" as Hex,
     },
     {
       num: 5,
-      title: "5. Daily Spend Limit Breach Refused",
-      time: "September 4, 2026 15:59 UTC",
-      detail: "Agent attempted +6 USDT repayment (totaling 26 USDT). Smart Account validation refused intent with ExceededSpendLimit before broadcast.",
+      title: "+6 USDT refused (Limit breach)",
+      time: "Sep 4, 2026 15:59 UTC",
+      detail: "Agent attempted +6 USDT repayment (totaling 26 USDT). Smart Account refused intent with ExceededSpendLimit.",
       status: "REFUSED" as const,
       tx: null,
     },
     {
       num: 6,
-      title: "6. Unauthorized Call Targets Refused",
-      time: "September 4, 2026 15:59 UTC",
-      detail: "Out-of-scope contract and selector attempts refused by Smart Account validation with UnauthorizedCall before broadcast.",
+      title: "Wrong target refused",
+      time: "Sep 4, 2026 15:59 UTC",
+      detail: "Attempt to call non-permissioned contract target refused with UnauthorizedCall before broadcast.",
       status: "REFUSED" as const,
       tx: null,
     },
     {
       num: 7,
-      title: "7. Session Revoked Onchain",
-      time: "September 4, 2026 15:59 UTC",
+      title: "Wrong selector refused",
+      time: "Sep 4, 2026 15:59 UTC",
+      detail: "Attempt to invoke unapproved function selector refused with UnauthorizedCall before broadcast.",
+      status: "REFUSED" as const,
+      tx: null,
+    },
+    {
+      num: 8,
+      title: "Revoked onchain",
+      time: "Sep 4, 2026 15:59 UTC",
       detail: "Owner unilaterally revoked session. Session key removed from account and KeyStore.",
       status: "REVOKED" as const,
       tx: "0xb00e0f9392af8a3d46be0336d6e5b125986ab7b1661c18aa41a9dd8b7503ba2b" as Hex,
     },
     {
-      num: 8,
-      title: "8. Post-Revocation Attempt Refused",
-      time: "September 4, 2026 15:59 UTC",
+      num: 9,
+      title: "Post-revoke refused",
+      time: "Sep 4, 2026 15:59 UTC",
       detail: "Subsequent repayment attempt with revoked key rejected by relay and validator (KeyDoesNotExist).",
       status: "REFUSED" as const,
       tx: null,
@@ -97,112 +105,121 @@ export default async function MandateDetailPage({ params }: MandateDetailPagePro
     <Page current="/mandates">
       <main id="main">
         <div className="section__head">
-          <span className="eyebrow">Mandate Lifecycle & Dashboard</span>
+          <span className="eyebrow">Mandate Lifecycle</span>
         </div>
         <h1 className="display-sm">{mandateLabel((id.startsWith("0x") ? id : `0x${id}`) as Hex)}</h1>
         <p className="lede">
           Detailed product timeline of trial verification, session grant, permitted execution, pre-broadcast account refusals, and revocation on {NETWORK_NAME}.
         </p>
 
-        {/* Overview Header Card */}
-        <section aria-label="Mandate Summary" className="panel spaced">
-          <div className="listing__head">
-            <div>
-              <h2 className="section__title">
-                Conservative Guardian (ERC-8004 #1842)
-              </h2>
-              <p className="micro spaced-sm">
-                Mandate ID: <code>{id}</code>
-              </p>
-            </div>
-            <ProvenanceLadder provenance={isFeatured ? "Mandate-native" : "Trial-verified"} size="lg" />
-          </div>
+        <div className="mandate-detail-grid spaced">
+          {/* Left Column: Visual Status Timeline */}
+          <section aria-label="Execution Timeline" className="mandate-timeline-col">
+            <h2 className="section__title spaced-sm">Lifecycle Timeline</h2>
+            <div className="timeline">
+              {TIMELINE_STEPS.map((step) => {
+                const isPass = step.status === "PASS";
+                const isRefused = step.status === "REFUSED" || step.status === "REVOKED";
 
-          <dl className="fact-grid spaced">
-            <div>
-              <dt>Lifecycle Status</dt>
-              <dd>
-                {activation.revokedAt === 0 ? (
-                  <span className="status-pill status-pill--verified">
-                    <span className="status__glyph">●</span> ACTIVE SESSION
-                  </span>
-                ) : (
-                  <span className="status-pill status-pill--blocked">
-                    <span className="status__glyph">×</span> REVOKED at {formatUtc(activation.revokedAt)}
-                  </span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Daily Spend Usage</dt>
-              <dd className="tabular">
-                <strong>20 USDT</strong> spent / <strong>25 USDT daily limit</strong> (per UTC calendar day)
-              </dd>
-            </div>
-            <div>
-              <dt>Authority Scope</dt>
-              <dd className="mono">Target: Venus vUSDT &middot; Selector: repayBorrow &middot; Max Spend: 25 USDT/day</dd>
-            </div>
-          </dl>
-        </section>
-
-        {/* Product-Oriented Timeline */}
-        <section aria-label="Lifecycle Timeline" className="panel spaced">
-          <h2 className="section__title">Mandate Execution & Enforcement Timeline</h2>
-          <p className="section__note">
-            Every step in this timeline is backed by an onchain event or account validation trace.
-          </p>
-
-          <div className="stack spaced">
-            {TIMELINE_STEPS.map((step) => (
-              <div className="card" key={step.num}>
-                <div className="listing__head">
-                  <h3 className="listing__name">
-                    {step.title}
-                  </h3>
-                  <span
-                    className={`status-pill ${
-                      step.status === "PASS"
-                        ? "status-pill--verified"
-                        : step.status === "REFUSED" || step.status === "REVOKED"
-                        ? "status-pill--blocked"
-                        : "status-pill--stale"
-                    }`}
+                return (
+                  <div
+                    className={`timeline__item ${isPass ? "timeline__item--pass" : isRefused ? "timeline__item--refused" : ""}`}
+                    key={step.num}
                   >
-                    <span className="status__glyph">
-                      {step.status === "PASS" ? "●" : step.status === "REFUSED" || step.status === "REVOKED" ? "×" : "○"}
-                    </span>
-                    {step.status}
-                  </span>
-                </div>
+                    <div className="timeline__marker">
+                      <span className="timeline__glyph">
+                        {isPass ? "●" : "×"}
+                      </span>
+                    </div>
 
-                <p className="listing__summary spaced-sm">
-                  {step.detail}
-                </p>
+                    <div className="timeline__content card">
+                      <div className="listing__head">
+                        <h3 className="listing__name">{step.title}</h3>
+                        <span
+                          className={`status-pill ${
+                            isPass
+                              ? "status-pill--verified"
+                              : "status-pill--blocked"
+                          }`}
+                        >
+                          {step.status}
+                        </span>
+                      </div>
 
-                <div className="listing__head spaced-sm">
-                  <span className="micro">{step.time}</span>
-                  {step.tx && (
-                    <a
-                      className="micro link"
-                      href={explorerTxUrl(step.tx)}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      Tx: {step.tx.slice(0, 10)}… &nearr;
-                    </a>
-                  )}
-                </div>
+                      <p className="listing__summary spaced-sm">{step.detail}</p>
+
+                      <div className="listing__head spaced-sm">
+                        <span className="micro text-muted">{step.time}</span>
+                        {step.tx && (
+                          <a
+                            className="micro link"
+                            href={explorerTxUrl(step.tx)}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            Tx: {step.tx.slice(0, 10)}… &nearr;
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Right Column: Authority Summary Card */}
+          <aside aria-label="Authority Summary" className="mandate-summary-col">
+            <div className="card mandate-summary-card">
+              <span className="filter-bar__label">Authority Summary</span>
+              <h3 className="listing__name spaced-sm">
+                Conservative Guardian
+              </h3>
+              <p className="micro text-muted">ERC-8004 Token ID #1842</p>
+
+              <div className="spaced">
+                <ProvenanceLadder provenance={isFeatured ? "Mandate-native" : "Trial-verified"} size="lg" />
               </div>
-            ))}
-          </div>
 
-          <div className="spaced">
-            <Link className="button button--ghost" href={`/proof/${id}`}>
-              Inspect Cryptographic Proof &nearr;
-            </Link>
-          </div>
-        </section>
+              <dl className="fact-grid spaced">
+                <div>
+                  <dt>Current Status</dt>
+                  <dd>
+                    {activation.revokedAt === 0 ? (
+                      <span className="status-pill status-pill--verified">● ACTIVE</span>
+                    ) : (
+                      <span className="status-pill status-pill--blocked">× REVOKED</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Spent Today</dt>
+                  <dd className="tabular">
+                    <strong>20 USDT</strong> / 25 USDT limit
+                  </dd>
+                </div>
+                <div>
+                  <dt>Target Contract</dt>
+                  <dd className="mono micro">Venus vUSDT</dd>
+                </div>
+                <div>
+                  <dt>Allowed Function</dt>
+                  <dd className="mono micro">repayBorrow(uint256)</dd>
+                </div>
+                <div>
+                  <dt>Mandate ID</dt>
+                  <dd className="mono micro">{id.slice(0, 14)}…</dd>
+                </div>
+              </dl>
+
+              <div className="spaced">
+                <Link className="button button--ghost" href={`/proof/${id}`}>
+                  Inspect Proof &nearr;
+                </Link>
+              </div>
+            </div>
+          </aside>
+        </div>
       </main>
 
       <SiteFooter />

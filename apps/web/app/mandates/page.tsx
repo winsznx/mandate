@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Page, SiteFooter } from "../../src/components/site-chrome";
 import { FEATURED_MANDATE_ID } from "../../src/proof/config";
 import { mandateLabel } from "../../src/proof/format";
@@ -13,7 +14,7 @@ export default function MandatesPage() {
     <Page current="/mandates">
       <main id="main">
         <div className="section__head">
-          <span className="eyebrow">Control Center</span>
+          <span className="eyebrow">My Mandates</span>
         </div>
         <h1 className="display-sm">My Mandates</h1>
         <p className="lede">
@@ -23,7 +24,7 @@ export default function MandatesPage() {
         {isConnected ? (
           <>
             {/* Connected Account Metrics */}
-            <div className="metric-strip">
+            <div className="metric-strip spaced">
               <div className="metric-card">
                 <span className="metric-card__label">Active Mandates</span>
                 <div className="metric-card__value tabular">0 Active</div>
@@ -43,7 +44,7 @@ export default function MandatesPage() {
             {/* Connected Account Mandate List */}
             <section aria-label="Account Mandates" className="section">
               <div className="empty">
-                <h3 className="empty__title">No mandates yet</h3>
+                <h3 className="empty__title">No active mandates found</h3>
                 <p className="empty__body">
                   No active or historical session grants found for connected address {address}. Browse verified agents to set up a bounded mandate.
                 </p>
@@ -57,16 +58,25 @@ export default function MandatesPage() {
           </>
         ) : (
           /* Disconnected State */
-          <section aria-label="Connect Prompt" className="alert-notice spaced">
-            <h3 className="listing__name">Connect your wallet to view mandates</h3>
+          <section aria-label="Connect Prompt" className="card spaced">
+            <h3 className="listing__name">Connect your wallet to view mandates you control</h3>
             <p className="listing__summary spaced-sm">
-              Connect your wallet to view mandates tied to your account and manage active spend caps.
+              Connecting your wallet displays active sessions, spend limits, and account enforcement controls tied to your address.
             </p>
+            <div className="spaced">
+              <ConnectButton.Custom>
+                {({ openConnectModal }) => (
+                  <button onClick={openConnectModal} className="button" type="button">
+                    Connect wallet
+                  </button>
+                )}
+              </ConnectButton.Custom>
+            </div>
           </section>
         )}
 
         {/* Public Verified Example (M-001) */}
-        <section aria-label="Public Example Mandate" className="section">
+        <section aria-label="Public Verified Example" className="section">
           <div className="section__head">
             <span className="eyebrow">Public Verified Example</span>
           </div>
@@ -76,7 +86,7 @@ export default function MandatesPage() {
                 <h3 className="listing__name">
                   Conservative Guardian &middot; {mandateLabel(FEATURED_MANDATE_ID)}
                 </h3>
-                <p className="micro">Venus Protocol Borrow Protection</p>
+                <p className="micro text-muted">Venus Protocol Borrow Protection</p>
               </div>
               <span className="status-pill status-pill--blocked">
                 <span className="status__glyph">×</span>

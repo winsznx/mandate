@@ -86,54 +86,78 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
   return (
     <Page current="/marketplace">
       <main id="main">
-        {/* Top Header Card */}
-        <section aria-label="Agent Overview" className="panel spaced">
-          <div className="listing__head">
-            <div>
+        {/* Top 2-Column Hero & Hiring Decision Card */}
+        <section aria-label="Agent Overview & Decision" className="agent-hero-grid spaced">
+          {/* Left Column: Identity & Explanation */}
+          <div className="agent-hero-left">
+            <div className="section__head">
               <span className="eyebrow">{listing.category.name}</span>
-              <h1 className="display-sm">
-                {listing.card.name}
-              </h1>
-              <p className="micro text-muted spaced-sm">
-                {listing.agentId ? `ERC-8004 Identity #${listing.agentId}` : "Registered Agent Identity"} · Target: Venus Protocol
-              </p>
             </div>
+            <h1 className="display-sm">{listing.card.name}</h1>
+            <p className="micro text-muted spaced-sm">
+              {listing.agentId ? `ERC-8004 Identity #${listing.agentId}` : "Registered Agent Identity"} · Venus Protocol
+            </p>
 
-            <div className="filter-bar__group">
+            <div className="filter-bar__group spaced">
               <span className={`status-pill ${isLive ? "status-pill--verified" : "status-pill--stale"}`}>
                 <span className="status__glyph">{isLive ? "●" : "○"}</span>
                 {isLive ? "LIVE ENDPOINT" : "OFFLINE"}
               </span>
               <ProvenanceLadder provenance={listing.provenance} size="lg" />
             </div>
-          </div>
 
-          <div className="hero__actions spaced">
-            <Link className="button" href={`/activate/${listing.card.slug}`}>
-              Try this agent
-            </Link>
-            <Link className="button button--ghost" href={`/compare?a=${listing.card.slug}`}>
-              Compare with another agent
-            </Link>
-          </div>
-        </section>
-
-        {/* Section A: WHAT IT DOES */}
-        <section aria-label="What It Does" className="panel spaced">
-          <h2 className="section__title">A. What It Does</h2>
-          <div className="card spaced">
-            <p className="lede">
+            <p className="lede spaced">
               {humanDescription}
             </p>
+
+            <div className="hero__actions spaced">
+              <Link className="button button--ghost" href={`/compare?a=${listing.card.slug}`}>
+                Compare with another agent
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Sticky Activation Decision Card */}
+          <div className="agent-hero-right">
+            <div className="card activation-decision-card">
+              <span className="filter-bar__label">Activation Bounds</span>
+              <h3 className="listing__name spaced-sm">Authority Needed</h3>
+
+              <div className="activation-decision-bounds spaced-sm">
+                <div className="bound-row bound-row--may">
+                  <span className="micro font-weight-medium">MAY CALL:</span>
+                  <span className="mono micro">vUSDT.repayBorrow(uint256)</span>
+                </div>
+
+                <div className="bound-row bound-row--cannot">
+                  <span className="micro font-weight-medium">CANNOT:</span>
+                  <span className="micro text-muted">Borrow, transfer funds, or call non-vUSDT targets</span>
+                </div>
+
+                <div className="bound-row">
+                  <span className="micro font-weight-medium">SPEND CAP:</span>
+                  <span className="tabular micro">≤ 25 USDT / UTC Day</span>
+                </div>
+
+                <div className="bound-row">
+                  <span className="micro font-weight-medium">EXPIRES:</span>
+                  <span className="micro text-muted">24h from grant (or account revocation)</span>
+                </div>
+              </div>
+
+              <Link className="button spaced" href={`/activate/${listing.card.slug}`}>
+                Activate Agent &rarr;
+              </Link>
+            </div>
           </div>
         </section>
 
-        {/* Section B: TRACK RECORD / EVIDENCE */}
-        <section aria-label="Track Record & Evidence" className="panel spaced">
+        {/* Track Record & Evidence */}
+        <section aria-label="Track Record & Evidence" className="section">
           <div className="section__head">
             <span className="eyebrow">Onchain Proof & Verification</span>
           </div>
-          <h2 className="section__title">B. Track Record & Evidence</h2>
+          <h2 className="section__title">Track Record & Evidence</h2>
 
           <div className="grid-two spaced">
             <div className="card">
@@ -160,7 +184,7 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
                   <dd>{allowed.canShowTrialPass ? "Independent reference model verified" : "Not yet evidenced"}</dd>
                 </div>
                 <div>
-                  <dt>Evidence Provenance</dt>
+                  <dt>Evidence Tier</dt>
                   <dd>{listing.provenance}</dd>
                 </div>
               </dl>
@@ -203,66 +227,18 @@ export default async function AgentSlugPage({ params }: AgentSlugPageProps) {
             </div>
           </div>
 
-          <div className="spaced">
-            <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
-              Inspect Cryptographic Proof &nearr;
-            </Link>
-          </div>
-        </section>
-
-        {/* Section C: AUTHORITY IT NEEDS */}
-        <section aria-label="Authority Needed" className="panel spaced">
-          <div className="section__head">
-            <span className="eyebrow">Account Enforcement Boundaries</span>
-          </div>
-          <h2 className="section__title">C. Authority It Needs</h2>
-
-          <div className="grid-two spaced">
-            <div className="card">
-              <span className="status-pill status-pill--verified">
-                ✓ MAY (Permitted Actions)
-              </span>
-              <ul className="bullets micro spaced-sm">
-                <li>Call target: Venus vUSDT (<code>0xb7526572…</code>)</li>
-                <li>Function selector: <code>repayBorrow(uint256)</code></li>
-                <li>Daily spend cap: &le; 25 USDT per UTC calendar day</li>
-              </ul>
-            </div>
-
-            <div className="card">
-              <span className="status-pill status-pill--blocked">
-                × CANNOT (Refused by Account)
-              </span>
-              <ul className="bullets micro spaced-sm">
-                <li>Borrow or withdraw collateral</li>
-                <li>Transfer tokens or sign ERC-1271 orders</li>
-                <li>Call any protocol target other than <code>vUSDT</code></li>
-                <li>Exceed 25 USDT daily cumulative spend</li>
-              </ul>
-            </div>
-          </div>
-
           <div className="alert-notice alert-notice--verified spaced">
             <span className="status-pill status-pill--verified">
-              ✓ MATCH — Proposed Authority is no broader than Tested Authority
+              ✓ MATCH — Granted Authority ⊆ Tested Authority
             </span>
             <p className="micro spaced-sm">
               Tested: <code>vUSDT.repayBorrow(uint256)</code> &le; 25 USDT/day &middot; Proposed: <code>vUSDT.repayBorrow(uint256)</code> &le; 25 USDT/day.
-              <br />
-              Invariant verified: GrantedEnforceableAuthority &sube; TestedEnforceableAuthority
             </p>
           </div>
-        </section>
 
-        {/* Section D: ACTIVATE */}
-        <section aria-label="Activate Agent" className="panel spaced">
-          <h2 className="section__title">D. Ready to Automate?</h2>
-          <p className="lede">
-            Configure your goal and grant bounded authority using Altana Smart Accounts on BSC Testnet.
-          </p>
           <div className="spaced">
-            <Link className="button" href={`/activate/${listing.card.slug}`}>
-              Activate Agent &rarr;
+            <Link className="button button--ghost" href={`/proof/${FEATURED_MANDATE_ID}`}>
+              Inspect Cryptographic Proof &nearr;
             </Link>
           </div>
         </section>

@@ -18,7 +18,7 @@ export function WalletControl() {
 
         if (!ready) {
           return (
-            <button disabled className="button button--ghost" type="button">
+            <button disabled className="button button--ghost wallet-btn" type="button">
               <span className="status__glyph">◌</span>
               Connecting...
             </button>
@@ -29,7 +29,7 @@ export function WalletControl() {
           return (
             <button
               onClick={openConnectModal}
-              className="button"
+              className="button wallet-btn"
               type="button"
             >
               Connect wallet
@@ -41,7 +41,7 @@ export function WalletControl() {
           return (
             <button
               onClick={openChainModal}
-              className="button button--blocked"
+              className="button button--blocked wallet-btn"
               type="button"
             >
               <span className="status__glyph">×</span>
@@ -51,24 +51,23 @@ export function WalletControl() {
         }
 
         return (
-          <div className="wallet-control">
-            <button
-              onClick={openChainModal}
-              className="wallet-control__chain"
-              type="button"
-              title={`Connected to ${chain.name}`}
+          <button
+            onClick={openAccountModal}
+            className="button button--ghost wallet-btn wallet-btn--connected"
+            type="button"
+            title={`Connected to ${chain.name} (${chain.id})`}
+          >
+            <span
+              className="status__glyph"
+              style={{ color: "var(--status-verified)" }}
             >
-              <span className="status__glyph">●</span>
-              {chain.name} ({chain.id})
-            </button>
-            <button
-              onClick={openAccountModal}
-              className="button button--ghost wallet-control__account"
-              type="button"
-            >
-              <span className="tabular mono">{account.displayName}</span>
-            </button>
-          </div>
+              ●
+            </span>
+            <span className="tabular mono">{account.displayName}</span>
+            <span aria-hidden="true" className="wallet-btn__chevron">
+              ▾
+            </span>
+          </button>
         );
       }}
     </ConnectButton.Custom>
